@@ -1,0 +1,474 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-04-23 11:21:36.914685",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "product_and_contact_details_section",
+  "product",
+  "contact_number",
+  "designation",
+  "preferred_communication",
+  "approved_product_grades",
+  "column_break_qeyg",
+  "contact_person",
+  "contact_person_email_id",
+  "decision_role",
+  "product_concentration",
+  "naming_series",
+  "section_break_kkde",
+  "product_demand_table",
+  "business_classification_section",
+  "type_of_buyer",
+  "end_use",
+  "specify_end_use",
+  "column_break_phky",
+  "industry_segment",
+  "techno_commercial_approval_section",
+  "approved_country_of_destinations",
+  "approved_packing",
+  "approved_inco_terms",
+  "column_break_nexf",
+  "approved_port_of_destinations",
+  "customer_payment_terms_section",
+  "approved_payment_terms",
+  "document_submitted",
+  "attach_wisj",
+  "approval_button",
+  "column_break_rdcc",
+  "credit_limit",
+  "attach",
+  "attach_fiqt",
+  "show_accounts_section",
+  "account_section",
+  "approval_status",
+  "edit_request_html",
+  "credit_limit_accounts",
+  "accounts_remark",
+  "credit_approvals_checklist_section",
+  "check_one",
+  "check_two",
+  "check_three",
+  "column_break_fiec",
+  "remark_one",
+  "remark_two",
+  "remark_three",
+  "regulatory_requirements_section",
+  "reg_requirement",
+  "column_break_ewpt",
+  "reg_req_approval",
+  "sourcing_information_section",
+  "region",
+  "column_break_zqgh",
+  "current_supplier",
+  "bill_to_party",
+  "bill_to_party_name",
+  "bill_to_party_address",
+  "primary_address",
+  "column_break_vbnt",
+  "bill_to_party_country",
+  "contact",
+  "primary_contact",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "product_and_contact_details_section",
+   "fieldtype": "Section Break",
+   "label": "Product and Contact Details"
+  },
+  {
+   "fieldname": "product",
+   "fieldtype": "Link",
+   "label": "Product",
+   "options": "Item"
+  },
+  {
+   "fieldname": "contact_number",
+   "fieldtype": "Phone",
+   "label": "Contact Number"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "preferred_communication",
+   "fieldtype": "Select",
+   "label": "Preferred Communication",
+   "options": "\nEmail\nPhone Call\nWhatsapp\nVideo Call"
+  },
+  {
+   "fieldname": "approved_product_grades",
+   "fieldtype": "Table MultiSelect",
+   "label": "Approved Product Grades ",
+   "options": "Product Grades Multi Select"
+  },
+  {
+   "fieldname": "column_break_qeyg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact_person",
+   "fieldtype": "Link",
+   "label": "Contact Person for Qualified Lead",
+   "options": "Contact"
+  },
+  {
+   "fetch_from": "contact_person.email_id",
+   "fieldname": "contact_person_email_id",
+   "fieldtype": "Data",
+   "label": "Contact Person Email ID"
+  },
+  {
+   "fieldname": "decision_role",
+   "fieldtype": "Select",
+   "label": "Decision Role",
+   "options": "\nDecision maker (final authority)\nInfluencer (recommends)\nBuyer / Procurement"
+  },
+  {
+   "fieldname": "product_concentration",
+   "fieldtype": "Percent",
+   "label": "Product Concentration"
+  },
+  {
+   "fieldname": "section_break_kkde",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "product_demand_table",
+   "fieldtype": "Table",
+   "label": "Product Demand Table",
+   "options": "L3 Product Demand"
+  },
+  {
+   "fieldname": "business_classification_section",
+   "fieldtype": "Section Break",
+   "label": "Business Classification"
+  },
+  {
+   "fieldname": "type_of_buyer",
+   "fieldtype": "Select",
+   "label": "Type of Buyer",
+   "options": "\nEnd User\nStockist / Distributor\nAgent\nTrader"
+  },
+  {
+   "fieldname": "end_use",
+   "fieldtype": "Select",
+   "label": "End Use",
+   "options": "\nAgriculture\nPharma\nTextile\nConstruction\nOther"
+  },
+  {
+   "depends_on": "eval:doc.end_use == 'Other'",
+   "fieldname": "specify_end_use",
+   "fieldtype": "Data",
+   "label": "Specify End Use"
+  },
+  {
+   "fieldname": "column_break_phky",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "industry_segment",
+   "fieldtype": "Link",
+   "label": "Industry Segment",
+   "options": "Industry Type"
+  },
+  {
+   "fieldname": "techno_commercial_approval_section",
+   "fieldtype": "Section Break",
+   "label": "Techno Commercial Approval"
+  },
+  {
+   "fieldname": "approved_country_of_destinations",
+   "fieldtype": "Table MultiSelect",
+   "label": "Approved Country of Destinations",
+   "options": "Country Multi Select"
+  },
+  {
+   "fieldname": "column_break_nexf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approved_packing",
+   "fieldtype": "Table MultiSelect",
+   "label": "Approved Packing",
+   "options": "Packing Multi Select"
+  },
+  {
+   "fieldname": "approved_inco_terms",
+   "fieldtype": "Select",
+   "label": "Approved Inco-Terms",
+   "options": "\nEXW\nFOB\nCIF\nCFR\nDAP"
+  },
+  {
+   "fieldname": "approved_port_of_destinations",
+   "fieldtype": "Table MultiSelect",
+   "label": "Approved Port of Destinations",
+   "options": "Port of Destinations Multi Select"
+  },
+  {
+   "fieldname": "customer_payment_terms_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Payment Terms"
+  },
+  {
+   "fieldname": "approved_payment_terms",
+   "fieldtype": "Select",
+   "label": "Approved Payment Terms",
+   "options": "\n100% Advance\n15% Advance & 85% Against Scanned Copy of Documents\n20% Advance & 80% Against Scanned Copy of Documents\n25% Advance & 75% Against Scanned Copy of Documents\n30% Advance & 70% Against Scanned Copy of Documents\n50% Advance & 50% Against Scanned Copy of Documents\n100% Against Scanned Copy of Documents\n100% Against CAD (Documents through Bank)\nLC at Sight (Once Scanned Copy of Documents Sent to Buyers Bank)\n21 Days from BL Date\n30 Days from BL Date\n45 Days from BL Date\n60 Days from BL Date\n90 Days from BL Date"
+  },
+  {
+   "fieldname": "document_submitted",
+   "fieldtype": "Data",
+   "label": "Document Submitted"
+  },
+  {
+   "fieldname": "attach",
+   "fieldtype": "Data",
+   "label": "Any specific details available which helps us in credit check"
+  },
+  {
+   "fieldname": "attach_wisj",
+   "fieldtype": "Attach",
+   "label": "Attach Submitted Doc"
+  },
+  {
+   "fieldname": "attach_fiqt",
+   "fieldtype": "Attach",
+   "label": "Other Specific Doc"
+  },
+  {
+   "fieldname": "column_break_rdcc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:in_list([\n    \"100% Advance\",\n    \"15% Advance & 85% Against Scanned Copy of Documents\",\n    \"20% Advance & 80% Against Scanned Copy of Documents\",\n    \"25% Advance & 75% Against Scanned Copy of Documents\",\n    \"30% Advance & 70% Against Scanned Copy of Documents\",\n    \"50% Advance & 50% Against Scanned Copy of Documents\",\n    \"100% Against Scanned Copy of Documents\",\n    \"100% Against CAD (Documents through Bank)\",\n    \"LC at Sight (Once Scanned Copy of Documents Sent to Buyers Bank)\",\n    \"21 Days from BL Date\",\n    \"30 Days from BL Date\",\n    \"45 Days from BL Date\",\n    \"60 Days from BL Date\",\n    \"90 Days from BL Date\"\n], doc.approved_payment_terms)",
+   "fieldname": "approval_button",
+   "fieldtype": "Button",
+   "label": "Request for Approval (Accounts Team)"
+  },
+  {
+   "depends_on": "eval:in_list([\n    \"21 Days from BL Date\",\n    \"30 Days from BL Date\",\n    \"45 Days from BL Date\",\n    \"60 Days from BL Date\",\n    \"90 Days from BL Date\"\n], doc.approved_payment_terms)",
+   "fieldname": "credit_limit",
+   "fieldtype": "Float",
+   "label": "If payment terms on credit suggest credit limit"
+  },
+  {
+   "fieldname": "account_section",
+   "fieldtype": "Section Break",
+   "label": "Accounts Team Approval Workflow (Simulation)"
+  },
+  {
+   "fieldname": "approval_status",
+   "fieldtype": "Select",
+   "label": "Accounts Approval Status",
+   "options": "\nPending\nApproved\nRejected\nModify Limit"
+  },
+  {
+   "depends_on": "eval: in_list(['Rejected', 'Modify Limit'], doc.approval_status)",
+   "fieldname": "accounts_remark",
+   "fieldtype": "Small Text",
+   "label": "Accounts Remark"
+  },
+  {
+   "depends_on": "eval: doc.approval_status == 'Modify Limit'",
+   "fieldname": "credit_limit_accounts",
+   "fieldtype": "Float",
+   "label": "If payment terms on credit suggest credit limit by account team"
+  },
+  {
+   "depends_on": "eval:in_list([\n    \"21 Days from BL Date\",\n    \"30 Days from BL Date\",\n    \"45 Days from BL Date\",\n    \"60 Days from BL Date\",\n    \"90 Days from BL Date\"\n], doc.approved_payment_terms)",
+   "fieldname": "credit_approvals_checklist_section",
+   "fieldtype": "Section Break",
+   "label": "Credit Approvals Checklist"
+  },
+  {
+   "fieldname": "check_one",
+   "fieldtype": "Select",
+   "label": "Credit check Approval if Open Credit",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "check_two",
+   "fieldtype": "Select",
+   "label": "Credit Rating report approval",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "check_three",
+   "fieldtype": "Select",
+   "label": "Credit Insurance Covered",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "column_break_fiec",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "remark_one",
+   "fieldtype": "Data",
+   "label": "Remark"
+  },
+  {
+   "fieldname": "remark_two",
+   "fieldtype": "Data",
+   "label": "Remark"
+  },
+  {
+   "fieldname": "remark_three",
+   "fieldtype": "Data",
+   "label": "Remark"
+  },
+  {
+   "fieldname": "edit_request_html",
+   "fieldtype": "HTML"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_accounts_section",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Account Section"
+  },
+  {
+   "fieldname": "regulatory_requirements_section",
+   "fieldtype": "Section Break",
+   "label": "Regulatory Requirements"
+  },
+  {
+   "fieldname": "reg_requirement",
+   "fieldtype": "Select",
+   "label": "Regulatory Requirements if Any",
+   "options": "\nREACH Compliance\nFDA Approval\nGMP Certification\nISO 9001\nHalal\nKosher\nThird-Party Inspection\nSGS / BV Inspection\nAny Other"
+  },
+  {
+   "fieldname": "column_break_ewpt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reg_req_approval",
+   "fieldtype": "Table MultiSelect",
+   "label": "Regulatory Requirements Approval",
+   "options": "Regulatory Requirements Multi Select"
+  },
+  {
+   "fieldname": "sourcing_information_section",
+   "fieldtype": "Section Break",
+   "label": "Sourcing Information"
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Table MultiSelect",
+   "label": "Existing Buying Region/Country",
+   "options": "Region Multi Select"
+  },
+  {
+   "fieldname": "column_break_zqgh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_supplier",
+   "fieldtype": "Link",
+   "label": "Current Supplier",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "bill_to_party",
+   "fieldtype": "Section Break",
+   "label": "Bill to Party Details if Multiple"
+  },
+  {
+   "fieldname": "bill_to_party_name",
+   "fieldtype": "Link",
+   "label": "Bill to Party Name",
+   "options": "Customer"
+  },
+  {
+   "fetch_from": "bill_to_party_name.customer_primary_address",
+   "fieldname": "bill_to_party_address",
+   "fieldtype": "Data",
+   "label": "Bill to Party Address"
+  },
+  {
+   "fetch_from": "bill_to_party_name.primary_address",
+   "fieldname": "primary_address",
+   "fieldtype": "Text Editor",
+   "label": "Primary Address"
+  },
+  {
+   "fieldname": "column_break_vbnt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bill_to_party_country",
+   "fieldtype": "Table MultiSelect",
+   "label": "Bill to Party Country",
+   "options": "Country Multi Select"
+  },
+  {
+   "fieldname": "primary_contact",
+   "fieldtype": "Text Editor",
+   "label": "Primary Contact"
+  },
+  {
+   "fetch_from": "bill_to_party_name.customer_primary_contact",
+   "fieldname": "contact",
+   "fieldtype": "Data",
+   "label": "Bill to Party Contact",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "L3 - Qualified Lead",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "L3QL-.####."
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-04-23 16:35:11.349644",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "L3 - Qualified Lead",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

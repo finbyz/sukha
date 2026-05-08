@@ -1,0 +1,55 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-23 17:28:25.916644",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "country",
+  "grade",
+  "gradetpa",
+  "packing"
+ ],
+ "fields": [
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Link",
+   "label": "Grade",
+   "options": "Product Grades"
+  },
+  {
+   "fieldname": "gradetpa",
+   "fieldtype": "Link",
+   "label": "Grade (MTPA)",
+   "options": "Product Grades"
+  },
+  {
+   "fieldname": "packing",
+   "fieldtype": "Select",
+   "label": "Packing",
+   "options": "IBC\nDrums\nISO Tank\nBulk\nPE Bags\nStandard Packing"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-07 16:30:01.566606",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Product Demand Table",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

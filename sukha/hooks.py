@@ -7,7 +7,10 @@ app_license = "mit"
 
 # Apps
 # ------------------
-
+fixtures = [
+    {"dt": "Custom Field", "filters": [["module", "in", ["Sukha"]]]},
+    {"dt": "Property Setter", "filters": [["module", "in", ["Sukha"]]]},
+]
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
@@ -43,7 +46,11 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    "Opportunity": "public/js/opportunity.js",
+    "Lead": "public/js/lead.js",
+    "Prospect": "public/js/prospect.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -133,12 +140,20 @@ app_license = "mit"
 # Hook on document methods and events
 
 # doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
+#     "Prospect": {
+#         "before_save": "sukha.doc_events.prospect.on_submit"
+#     }
 # }
+# Override standard ERPNext methods
+override_doctype_class = {
+    "Lead": "sukha.override.lead_override.CustomLead"
+}
+
+# Override whitelisted methods
+override_whitelisted_methods = {
+    "erpnext.crm.doctype.lead.lead.make_opportunity": "sukha.override.lead_override.make_opportunity"
+}
+
 
 # Scheduled Tasks
 # ---------------
@@ -169,6 +184,10 @@ app_license = "mit"
 # Extend DocType Class
 # ------------------------------
 #
+
+# Specify custom mixins to extend the standard doctype controller.
+
+
 # Specify custom mixins to extend the standard doctype controller.
 # extend_doctype_class = {
 # 	"Task": "sukha.custom.task.CustomTaskMixin"

@@ -1,0 +1,54 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-07 14:42:41.379896",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "approved_packing",
+  "approved_port_of_destinations",
+  "approved_country_of_destinations"
+ ],
+ "fields": [
+  {
+   "fieldname": "approved_country_of_destinations",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Approved Country of Destinations",
+   "options": "Country",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approved_port_of_destinations",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Approved Port of Destinations",
+   "options": "Port of Destinations",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approved_packing",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Approved Packing",
+   "options": "Packing",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-07 16:31:31.176445",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Techno Approval Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

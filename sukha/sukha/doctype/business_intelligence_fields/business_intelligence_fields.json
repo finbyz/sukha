@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-07 20:12:57.718889",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "customer_category",
+  "annual_consuption",
+  "product_wise_consumption_mapping",
+  "key_products_purchased"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Customer Category",
+   "options": "\nTrader\nEnd User\nExporter"
+  },
+  {
+   "fieldname": "annual_consuption",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Annual Consuption"
+  },
+  {
+   "fieldname": "product_wise_consumption_mapping",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Product-wise Consumption Mapping",
+   "options": "Item"
+  },
+  {
+   "fieldname": "key_products_purchased",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Key Products Purchased",
+   "options": "Item"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-07 20:15:19.852053",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Business Intelligence Fields",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

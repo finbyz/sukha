@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-06 13:22:21.420779",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "product_grade",
+  "desired_packing",
+  "port_destination",
+  "country_of_destination",
+  "desired_buying_region_country"
+ ],
+ "fields": [
+  {
+   "fieldname": "product_grade",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Product Grade",
+   "options": "Product Grades"
+  },
+  {
+   "fieldname": "desired_packing",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Desired Packing",
+   "options": "Desired Packing"
+  },
+  {
+   "fieldname": "port_destination",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Port Destination",
+   "options": "Port of Destinations"
+  },
+  {
+   "fieldname": "country_of_destination",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Country of Destination",
+   "options": "Country"
+  },
+  {
+   "fieldname": "desired_buying_region_country",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Desired Buying Region/ Country",
+   "options": "Country"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-06 15:48:31.492721",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Commertial and Logistics Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

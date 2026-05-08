@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-23 11:38:48.959101",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "country",
+  "grade",
+  "packing",
+  "demand_tpa"
+ ],
+ "fields": [
+  {
+   "fieldname": "grade",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Grade",
+   "options": "\nHCL - Virgin / Membrane\nHCL - 30%\nHCL - 33%\nHCL - 35%\nHCL - CP Grade\nHCL - By-Product Grade\nNitric Acid - 45%\nNitric Acid - 60%\nNitric Acid - 64%\nNitric Acid - 68%\nNitric Acid - 72%\nCaustic Soda - Liquid 48%\nCaustic Soda - Flakes\nCaustic Soda - Prills\nAcetic Acid - Glacial Acetic Acid\nAcetic Acid - Food Grade\nAcetic Acid - Industrial Grade"
+  },
+  {
+   "fieldname": "packing",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Packing",
+   "options": "\nIBC\nDrums\nISO Tank\nBulk\nPE Bags\nStandard Packing"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "fieldname": "demand_tpa",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Demand (TPA)",
+   "options": "Packing"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-07 14:35:12.745515",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "L3 Product Demand",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-28 15:10:55.026968",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_a5nr",
+  "contact_person_name",
+  "contact_number",
+  "contact_email_id"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_a5nr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "contact_person_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Contact Person Name",
+   "options": "Contact",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contact_number",
+   "fieldtype": "Phone",
+   "in_list_view": 1,
+   "label": "Contact Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contact_email_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contact Email ID",
+   "options": "Email",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-28 15:15:19.804546",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Soft Inquiry Contacts",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -7,13 +7,9 @@ app_license = "mit"
 
 # Apps
 # ------------------
-# fixtures = [
-#     {"dt": "Custom Field", "filters": [["module", "in", ["Sukha"]]]},
-#     {"dt": "Property Setter", "filters": [["module", "in", ["Sukha"]]]},
-# ]
 fixtures = [
-    "Custom Field",
-    "Property Setter"
+    {"dt": "Custom Field", "filters": [["module", "in", ["Sukha"]]]},
+    {"dt": "Property Setter", "filters": [["module", "in", ["Sukha"]]]},
 ]
 # required_apps = []
 

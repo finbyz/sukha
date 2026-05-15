@@ -8,8 +8,9 @@
  "field_order": [
   "product_grade",
   "desired_packing",
-  "port_destination",
   "country_of_destination",
+  "port_destination",
+  "final_destination",
   "desired_buying_region_country"
  ],
  "fields": [
@@ -45,7 +46,14 @@
    "fieldname": "desired_buying_region_country",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Desired Buying Region/ Country",
+   "label": "Quantity (MTPA)",
+   "options": "Country"
+  },
+  {
+   "fieldname": "final_destination",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Final Destination ",
    "options": "Country"
   }
  ],
@@ -53,7 +61,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-06 15:48:31.492721",
+ "modified": "2026-05-14 12:34:42.993638",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Commertial and Logistics Details",

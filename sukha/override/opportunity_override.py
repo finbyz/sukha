@@ -237,6 +237,8 @@ def create_prospect_from_opportunity(opportunity_name, lead_name, prospect_name,
             options = [o for o in field.options.split("\n") if o]
             if options and value not in options:
                 return
+        if field.unique and frappe.db.get_value("Prospect", {prospect_field: value}, "name"):
+            return
         prospect.set(prospect_field, value)
 
     def fill_if_empty(prospect_field, value):

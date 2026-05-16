@@ -1,5 +1,5 @@
 frappe.ui.form.on('Lead', {
-    onload: function(frm) {
+    onload: function (frm) {
         set_port_filter(frm);
         // Show popup only for new document
         if (frm.is_new()) {
@@ -42,12 +42,66 @@ frappe.ui.form.on('Lead', {
                     d.hide();
                 }
             });
-            
+
             d.show();
         }
     },
-    custom_create_contact(frm)
-    {
+    custom_save_l0: async function (frm) {
+        try {
+            await frm.set_value(
+                "custom_l0_status",
+                "Saved"
+            );
+            frm.set_value("custom_export_lead_status", "L0")
+
+            frm.ignore_permission_validation = true;
+            await frm.save();
+            frappe.show_alert({
+                message: __("L0 Saved Successfully"),
+                indicator: "green"
+            });
+
+        } catch (e) {
+
+            console.error(e);
+
+            frappe.msgprint({
+                title: __("Error"),
+                message: __("Failed to Save L0"),
+                indicator: "red"
+            });
+
+        } 
+    },
+    custom_save_l1: async function (frm) {
+        if (frm.doc.custom_l0_status !== "Saved") {
+            frappe.msgprint({
+                title: "Validation",
+                message: "Please save L0 details first.",
+                indicator: "red"
+            });
+            return;
+        }
+           frm.set_value("custom_l1_status", "Saved");
+        frm.set_value("custom_export_lead_status", "L1");
+        await frm.save();
+        let variants = get_variant_products(frm);
+        if (variants && variants.length > 0) {
+
+            frappe.show_alert({
+                message: __("Creating Variant Leads..."),
+                indicator: "blue"
+            });
+
+            await make_variant_leads(frm);
+        }
+
+        frappe.show_alert({
+            message: __("L1 Saved Successfully"),
+            indicator: "green"
+        });
+    },
+    custom_create_contact(frm) {
         const dialog = new frappe.ui.Dialog({
             title: __('Create Contact'),
             fields: [
@@ -115,21 +169,15 @@ frappe.ui.form.on('Lead', {
                 }
             },
             secondary_action_label: __('Cancel'),
-            secondary_action: function() {
+            secondary_action: function () {
                 dialog.hide();
             }
         });
 
         dialog.show();
     },
-    custom_namee_of_the_company(frm)
-    {
-        frm.set_value("custom_bill_to_party_name",frm.doc.custom_namee_of_the_company)
-        render_lead_top_summary(frm);
-
-    },
-    custom_product(frm){
-        frm.set_value("custom_product_name",frm.doc.custom_product)
+    custom_product(frm) {
+        frm.set_value("custom_product_name", frm.doc.custom_product)
         render_lead_top_summary(frm);
 
     },
@@ -167,11 +215,11 @@ frappe.ui.form.on('Lead', {
                 if (frm.layout && frm.layout.refresh) {
                     frm.layout.refresh();
                 }
-                $(".form-section .section-head.collapsed").each(function() {
+                $(".form-section .section-head.collapsed").each(function () {
                     $(this).trigger("click");
                 });
 
-                $(".form-dashboard-section .collapsed").each(function() {
+                $(".form-dashboard-section .collapsed").each(function () {
                     $(this).trigger("click");
                 });
 
@@ -183,26 +231,25 @@ frappe.ui.form.on('Lead', {
             }, 200);
         }
     },
-    first_name(frm)
-    {
-        frm.set_value("custom_first_name_s",frm.doc.first_name)
+    first_name(frm) {
+        frm.set_value("custom_first_name_s", frm.doc.first_name)
     },
-    type(frm)
-    {
-        frm.set_value("custom_lead_type_s",frm.doc.type)
+    type(frm) {
+        frm.set_value("custom_lead_type_s", frm.doc.type)
     },
     custom_first_name_s(frm) {
-    frm.set_value("first_name", frm.doc.custom_first_name_s)
+        frm.set_value("first_name", frm.doc.custom_first_name_s)
+        frm.set_value("custom_bill_to_party_name", frm.doc.custom_first_name_s)
+        render_lead_top_summary(frm);
     },
     custom_lead_type_s(frm) {
         frm.set_value("type", frm.doc.custom_lead_type_s)
     },
-    custom_product_name(frm)
-    {
-        frm.set_value("custom_product_from_l1",frm.doc.custom_product_name)
+    custom_product_name(frm) {
+        frm.set_value("custom_product_from_l1", frm.doc.custom_product_name)
         render_lead_top_summary(frm);
     },
-    make_opportunity_direct: function(frm) {
+    make_opportunity_direct: function (frm) {
 
         let buyer_type = frm.doc.custom_buyer_type;
         let sales_type = frm.doc.custom_sales_type;
@@ -224,15 +271,43 @@ frappe.ui.form.on('Lead', {
                 sales_type: sales_type
             },
             freeze: true,
-            callback: function(r) {
+            callback: function (r) {
                 if (!r.exc && r.message) {
                     frappe.set_route("Form", "Opportunity", r.message);
                 }
             }
         });
     },
-    custom_contact_person: async function(frm) {
-        frm.set_value('custom_contact_person_for_soft_inquiry',frm.doc.custom_contact_person)
+    custom_save: async function (frm) {
+        try {
+            await frm.set_value(
+                "custom_l2_status",
+                "Saved"
+            );
+            frm.set_value("custom_export_lead_status", "L2")
+            frm.set_value("custom_l2_status", "Saved")
+
+            frm.ignore_permission_validation = true;
+            await frm.save();
+            frappe.show_alert({
+                message: __("L2 Saved Successfully"),
+                indicator: "green"
+            });
+
+        } catch (e) {
+
+            console.error(e);
+
+            frappe.msgprint({
+                title: __("Error"),
+                message: __("Failed to Save L2"),
+                indicator: "red"
+            });
+
+        } 
+    },
+    custom_contact_person: async function (frm) {
+        frm.set_value('custom_contact_person_for_soft_inquiry', frm.doc.custom_contact_person)
 
         if (!frm.doc.custom_contact_person) {
             return;
@@ -303,19 +378,19 @@ frappe.ui.form.on('Lead', {
             });
         }
     },
-    custom_contact_person_phone_number(frm){
-        frm.set_value('custom_contact_number',frm.doc.custom_contact_person_phone_number)
+    custom_contact_person_phone_number(frm) {
+        frm.set_value('custom_contact_number', frm.doc.custom_contact_person_phone_number)
     },
-    custom_contact_person_phone_email_id(frm){
-        frm.set_value('custom_contact_person_email_id',frm.doc.custom_contact_person_phone_email_id)
+    custom_contact_person_phone_email_id(frm) {
+        frm.set_value('custom_contact_person_email_id', frm.doc.custom_contact_person_phone_email_id)
     },
-    custom_contact_person_designation__department(frm){
-        frm.set_value('custom_designation',frm.doc.custom_contact_person)
+    custom_contact_person_designation__department(frm) {
+        frm.set_value('custom_designation', frm.doc.custom_contact_person_designation__department)
     },
-    
-    
+
+
     // Keep your existing functions below
-    custom_same_as_phone: function(frm) {
+    custom_same_as_phone: function (frm) {
         if (frm.doc.custom_same_as_phone) {
             if (frm.doc.custom_contact_person_phone_number) {
                 frm.set_value(
@@ -332,10 +407,10 @@ frappe.ui.form.on('Lead', {
             }
         }
     },
-    
-    custom_source_of_the_lead: function(frm) {
+
+    custom_source_of_the_lead: function (frm) {
         let source = frm.doc.custom_source_of_the_lead;
-        
+
         let options_map = {
             "Digital Sources": [
                 "Website Inquiry",
@@ -360,25 +435,44 @@ frappe.ui.form.on('Lead', {
                 "Internal Database",
                 "Previous Inquiry"
             ],
-           
+
         };
-        
+
         if (source && options_map[source]) {
             frm.set_df_property(
                 "custom_specific_source",
                 "options",
                 options_map[source].join("\n")
             );
-            
+
             frm.set_df_property("custom_specific_source", "hidden", 0);
         }
     },
 
-    
-    refresh: function(frm) {
+
+    refresh: function (frm) {
+        if (frm.doc.custom_sales_type === "Direct Export Sales") {
+            if (
+                frm.doc.custom_l0_status === "Saved" &&
+                frm.doc.custom_l1_status === "Saved"
+            ) {
+
+                frm.enable_save();
+                frm.page.btn_primary.show();
+            } else {
+                frm.disable_save();
+                frm.page.btn_primary.hide();
+            }
+
+        } else {
+            frm.enable_save();
+            frm.page.btn_primary.show();
+        }
+
+
         render_lead_top_summary(frm);
 
-        frm.set_query("port_destination", "custom_commercials__logistic", function(doc, cdt, cdn) {
+        frm.set_query("port_destination", "custom_commercials__logistic", function (doc, cdt, cdn) {
             const row = locals[cdt][cdn];
             return {
                 filters: {
@@ -410,10 +504,10 @@ frappe.ui.form.on('Lead', {
             }
         }, 100);
     },
-    
+
     async make_opportunity(frm) {
         console.log("Making Opportunity from Lead");
-        
+
         let existing_prospect = (
             await frappe.db.get_value(
                 "Prospect Lead",
@@ -421,9 +515,9 @@ frappe.ui.form.on('Lead', {
                 "name"
             )
         ).message?.name;
-        
+
         let fields = [];
-        
+
         if (!existing_prospect) {
             fields.push(
                 {
@@ -442,9 +536,9 @@ frappe.ui.form.on('Lead', {
                 }
             );
         }
-        
+
         await frm.reload_doc();
-        
+
         let existing_contact = (
             await frappe.db.get_value(
                 "Contact",
@@ -455,7 +549,7 @@ frappe.ui.form.on('Lead', {
                 "name"
             )
         ).message?.name;
-        
+
         if (!existing_contact) {
             fields.push({
                 label: "Create Contact",
@@ -464,12 +558,12 @@ frappe.ui.form.on('Lead', {
                 default: "1",
             });
         }
-        
+
         if (fields.length) {
             const d = new frappe.ui.Dialog({
                 title: __("Create Opportunity"),
                 fields: fields,
-                primary_action: function(data) {
+                primary_action: function (data) {
                     frappe.call({
                         method: "sukha.doc_events.prospect.create_prospect_and_contact",
                         args: {
@@ -477,7 +571,7 @@ frappe.ui.form.on('Lead', {
                             data: data
                         },
                         freeze: true,
-                        callback: function(r) {
+                        callback: function (r) {
                             if (!r.exc) {
                                 frappe.model.open_mapped_doc({
                                     method: "erpnext.crm.doctype.lead.lead.make_opportunity",
@@ -490,7 +584,7 @@ frappe.ui.form.on('Lead', {
                 },
                 primary_action_label: __("Create"),
             });
-            
+
             d.show();
         } else {
             frappe.model.open_mapped_doc({
@@ -561,6 +655,17 @@ function render_lead_top_summary(frm) {
         frm.doc.custom_product_name_m ? frm.doc.custom_product : null,
         frm.doc.custom_product_category
     ].filter(Boolean).join(" | ");
+    let lead_status = "";
+
+    if (frm.doc.custom_l2_status === "Saved") {
+        lead_status = "L2";
+
+    } else if (frm.doc.custom_l1_status === "Saved") {
+        lead_status = "L1";
+
+    } else if (frm.doc.custom_l0_status === "Saved") {
+        lead_status = "L0";
+    }
 
     const other_products_html = other_products.map(row => {
         const meta = [
@@ -627,7 +732,7 @@ function render_lead_top_summary(frm) {
                         font-size:13px;
                         font-weight:600;
                     ">
-                        ${lead_summary_value(frm.doc.status || "Lead")}
+                        ${lead_summary_value(lead_status || frm.doc.status )}
                     </span>
                     ${action_html}
                 </div>
@@ -641,13 +746,13 @@ function render_lead_top_summary(frm) {
                 ${lead_summary_item("Company", frm.doc.first_name || frm.doc.custom_namee_of_the_company || company_name)}
                 ${lead_summary_item("Product", frm.doc.custom_product || frm.doc.custom_product_name_m)}
                 ${lead_summary_item(
-                                    frm.doc.custom_buyer_type
-                                        ? "Buyer Type"
-                                        : "Type of Buyer",
+        frm.doc.custom_buyer_type
+            ? "Buyer Type"
+            : "Type of Buyer",
 
-                                    frm.doc.custom_buyer_type ||
-                                    frm.doc.custom_type_of_buyer
-                                )}
+        frm.doc.custom_buyer_type ||
+        frm.doc.custom_type_of_buyer
+    )}
                 ${lead_summary_item("Country", frm.doc.custom_country_of_hq)}
                 ${lead_summary_item("Volume Range", frm.doc.custom_volume_range)}
             </div>
@@ -687,124 +792,84 @@ function lead_summary_item(label, value) {
 }
 
 async function make_variant_leads(frm) {
+
     const variant_products = get_variant_products(frm);
 
     if (!variant_products.length) {
-        frappe.msgprint({
-            title: __("Info"),
-            indicator: "orange",
-            message: __("No variant products found.")
-        });
         return;
     }
 
     if (frm.is_new() || (frm.is_dirty && frm.is_dirty())) {
-        frappe.msgprint({
-            title: __("Save Required"),
-            indicator: "orange",
-            message: __("Please save the Lead before creating variant Leads.")
-        });
-        return;
+        await frm.save();
     }
 
-    const products_html = variant_products
-        .map(product => `<li>${lead_summary_value(product)}</li>`)
-        .join("");
+    frappe.dom.freeze(__("Creating Variants..."));
 
-    frappe.confirm(
-        `
-            <div>
-                <p>${__("Duplicate Leads will be created for:")}</p>
-                <ul>${products_html}</ul>
-            </div>
-        `,
-        async () => {
-            frappe.dom.freeze(__("Creating Variants..."));
+    try {
 
-            try {
-                const created_leads = [];
+        const created_leads = [];
 
-                for (const product of variant_products) {
-                    const new_doc = frappe.model.copy_doc(frm.doc);
+        for (const product of variant_products) {
 
-                    delete new_doc.name;
-                    delete new_doc.creation;
-                    delete new_doc.modified;
-                    delete new_doc.modified_by;
-                    delete new_doc.owner;
-                    delete new_doc.docstatus;
+            const new_doc = frappe.model.copy_doc(frm.doc);
 
-                    new_doc.custom_other_products = [];
-                    new_doc.custom_product = product;
-                    new_doc.custom_product_name = product;
-                    new_doc.custom_product_from_l1 = product;
+            delete new_doc.name;
+            delete new_doc.creation;
+            delete new_doc.modified;
+            delete new_doc.modified_by;
+            delete new_doc.owner;
+            delete new_doc.docstatus;
+            new_doc.custom_export_lead_status = "L0";
+            new_doc.custom_l0_status = "";
+            new_doc.custom_l1_status = "";
+            new_doc.custom_l2_status = "";
 
-                    const inserted = await frappe.call({
-                        method: "frappe.client.insert",
-                        args: {
-                            doc: new_doc
-                        }
-                    });
 
-                    if (inserted.message) {
-                        created_leads.push(inserted.message.name);
-                    }
+            // RESET CHILD TABLE
+            new_doc.custom_other_products = [];
+
+            // SET PRODUCT
+            new_doc.custom_product = product;
+            new_doc.custom_product_name = product;
+            new_doc.custom_product_from_l1 = product;
+
+            const inserted = await frappe.call({
+                method: "frappe.client.insert",
+                args: {
+                    doc: new_doc
                 }
+            });
 
-                if (created_leads.length) {
-                    const lead_links = created_leads.map(lead => {
-                        const escaped_lead = lead_summary_value(lead);
-                        const route = `/app/lead/${encodeURIComponent(lead)}`;
-
-                        return `
-                            <div style="margin-bottom:8px;">
-                                <a href="${route}" target="_blank" style="
-                                    color:#2490ef;
-                                    font-weight:600;
-                                    text-decoration:none;
-                                ">
-                                    ${escaped_lead}
-                                </a>
-                            </div>
-                        `;
-                    }).join("");
-
-                    frappe.msgprint({
-                        title: __("Success"),
-                        indicator: "green",
-                        message: `
-                            <div>
-                                <b>${created_leads.length}</b>
-                                ${__("Variant Leads Created")}
-                                <br><br>
-                                ${lead_links}
-                            </div>
-                        `
-                    });
-
-                    frm.reload_doc();
-                } else {
-                    frappe.msgprint({
-                        title: __("Info"),
-                        indicator: "orange",
-                        message: __("No Variants Created")
-                    });
-                }
-            } catch (e) {
-                console.error(e);
-
-                frappe.msgprint({
-                    title: __("Error"),
-                    indicator: "red",
-                    message: __("Failed to create variant leads")
-                });
-            } finally {
-                frappe.dom.unfreeze();
+            if (inserted.message) {
+                created_leads.push(inserted.message.name);
             }
         }
-    );
-}
 
+        if (created_leads.length) {
+
+            frappe.show_alert({
+                message: __("{0} Variant Leads Created", [created_leads.length]),
+                indicator: "green"
+            });
+
+            frm.reload_doc();
+        }
+
+    } catch (e) {
+
+        console.error(e);
+
+        frappe.msgprint({
+            title: __("Error"),
+            indicator: "red",
+            message: __("Failed to create variant leads")
+        });
+
+    } finally {
+
+        frappe.dom.unfreeze();
+    }
+}
 function set_port_filter(frm) {
     frm.set_query("custom_port_of_destination", function () {
         return {

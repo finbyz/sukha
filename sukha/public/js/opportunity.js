@@ -236,23 +236,8 @@ frappe.ui.form.on('Opportunity', {
 
     },
     create_prospect_from_opportunity: async function(frm, prospect_type) {
-        // Check if prospect already exists for this lead
-        let existing = await frappe.db.get_value(
-            "Prospect Lead",
-            { lead: frm.doc.party_name },
-            "parent"
-        );
-
-        if (existing && existing.message && existing.message.parent) {
-            frappe.msgprint({
-                title:     __('Prospect Already Exists'),
-                message:   __('A Prospect <a href="/app/prospect/{0}">{0}</a> already exists for this Lead.',
-                               [existing.message.parent]),
-                indicator: 'orange'
-            });
-            return;
-        }
-
+        // Removed validation - Allow multiple Prospects per Lead
+        
         // Get lead details to pre-fill dialog
         let lead = await frappe.db.get_doc("Lead", frm.doc.party_name);
 

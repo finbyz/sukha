@@ -190,11 +190,7 @@ def create_prospect_from_opportunity(opportunity_name, lead_name, prospect_name,
     opportunity = frappe.get_doc("Opportunity", opportunity_name)
     lead = frappe.get_doc("Lead", lead_name) if lead_name and frappe.db.exists("Lead", lead_name) else None
 
-    # Check if prospect already exists for this lead
-    if lead:
-        existing_prospect = frappe.db.get_value("Prospect Lead", {"lead": lead.name}, "parent")
-        if existing_prospect:
-            frappe.throw(_("Prospect {0} already exists for this Lead").format(existing_prospect))
+    # Removed validation - Allow multiple Prospects per Lead
 
     # Create Contact if requested
     if lead and frappe.utils.cint(create_contact):

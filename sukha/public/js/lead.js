@@ -691,11 +691,11 @@ function render_lead_top_summary(frm) {
         `;
     }).join("");
 
-    const action_html = variant_products.length ? `
-        <button type="button" class="btn btn-sm btn-primary lead-make-variants">
-            ${__("Make Variants")}
-        </button>
-    ` : "";
+    // const action_html = variant_products.length ? `
+    //     <button type="button" class="btn btn-sm btn-primary lead-make-variants">
+    //         ${__("Make Variants")}
+    //     </button>
+    // ` : "";
 
     const html = `
         <div id="lead-top-summary" style="
@@ -734,7 +734,6 @@ function render_lead_top_summary(frm) {
                     ">
                         ${lead_summary_value(lead_status || frm.doc.status )}
                     </span>
-                    ${action_html}
                 </div>
             </div>
 
@@ -773,9 +772,9 @@ function render_lead_top_summary(frm) {
     const $target = $body.find(".layout-main-section").first();
     ($target.length ? $target : $body).prepend(html);
 
-    $body.find("#lead-top-summary .lead-make-variants").on("click", () => {
-        make_variant_leads(frm);
-    });
+    // $body.find("#lead-top-summary .lead-make-variants").on("click", () => {
+    //     make_variant_leads(frm);
+    // });
 }
 
 function lead_summary_item(label, value) {

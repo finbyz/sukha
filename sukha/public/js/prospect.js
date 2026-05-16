@@ -216,7 +216,8 @@ async function render_prospect_top_summary(frm) {
                     leads.push(lead);
 
                 } catch (e) {
-                    console.error(e);
+                    // Silently skip if lead doesn't exist
+                    console.warn(`Lead ${row.lead} not found or inaccessible`);
                 }
             }
         }
@@ -242,7 +243,8 @@ async function render_prospect_top_summary(frm) {
                     opportunities.push(opp);
 
                 } catch (e) {
-                    console.error(e);
+                    // Silently skip if opportunity doesn't exist
+                    console.warn(`Opportunity ${row.opportunity} not found or inaccessible`);
                 }
             }
         }

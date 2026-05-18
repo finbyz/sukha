@@ -1,5 +1,9 @@
 frappe.ui.form.on('Lead', {
+    before_load: function (frm) {
+        clear_lead_top_summary(frm);
+    },
     onload: function (frm) {
+        clear_lead_top_summary(frm);
         set_port_filter(frm);
         // Show popup only for new document
         if (frm.is_new()) {
@@ -657,7 +661,7 @@ function get_lead_level_status(frm) {
 }
 
 function get_lead_display_status(frm) {
-    return get_lead_level_status(frm) || frm.doc.status || "";
+    return get_lead_level_status(frm);
 }
 
 function refresh_lead_status_display(frm) {
@@ -665,18 +669,29 @@ function refresh_lead_status_display(frm) {
     set_lead_page_indicator(frm);
 }
 
+function clear_lead_top_summary(frm) {
+    if (!frm?.page?.body) {
+        return;
+    }
+
+    $(frm.page.body).find("#lead-top-summary").remove();
+}
+
 function set_lead_page_indicator(frm) {
-    if (!frm?.page || frm.is_new()) {
+    if (!frm?.page) {
         return;
     }
 
     const display_status = get_lead_display_status(frm);
 
     if (!display_status) {
+        setTimeout(() => {
+            frm.page.clear_indicator();
+        }, 0);
         return;
     }
 
-    const color_status = get_lead_level_status(frm) || frm.doc.status || display_status;
+    const color_status = get_lead_level_status(frm) || display_status;
     const color = frappe.utils.guess_colour(color_status);
 
     setTimeout(() => {
@@ -732,7 +747,7 @@ function render_lead_top_summary(frm) {
                 min-width:180px;
             ">
                 <div style="font-size:13px;font-weight:600;color:#111827;">
-                    ${lead_summary_value(row.product_name || custom_product_name_m)}
+                    ${lead_summary_value(row.product_name || frm.doc.custom_product_name_m)}
                 </div>
                 <div style="font-size:12px;color:#6b7280;margin-top:2px;">
                     ${meta || "No category or volume"}
@@ -782,7 +797,7 @@ function render_lead_top_summary(frm) {
                         font-size:13px;
                         font-weight:600;
                     ">
-                        ${lead_summary_value(display_status)}
+                        ${display_status ? lead_summary_value(display_status) : ""}
                     </span>
                 </div>
             </div>
@@ -792,7 +807,7 @@ function render_lead_top_summary(frm) {
                 grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
                 gap:14px;
             ">
-                ${lead_summary_item("Company", frm.doc.first_name || frm.doc.custom_namee_of_the_company || company_name)}
+                ${lead_summary_item("Company", frm.doc.first_name || frm.doc.custom_namee_of_the_company || frm.doc.company_name)}
                 ${lead_summary_item("Product", frm.doc.custom_product || frm.doc.custom_product_name_m)}
                 ${lead_summary_item(
                 frm.doc.custom_buyer_type
@@ -822,7 +837,7 @@ function render_lead_top_summary(frm) {
         </div>
     `;
 
-    $body.find("#lead-top-summary").remove();
+    clear_lead_top_summary(frm);
 
     const $target = $body.find(".layout-main-section").first();
     ($target.length ? $target : $body).prepend(html);

@@ -253,16 +253,6 @@ frappe.ui.form.on('Opportunity', {
                     reqd:        1,
                     description: __('Name of the company / prospect')
                 },
-                {
-                    fieldtype: 'Section Break'
-                },
-                {
-                    label:       __('Create Contact'),
-                    fieldname:   'create_contact',
-                    fieldtype:   'Check',
-                    default:     1,
-                    description: __('Create a contact from Lead information')
-                }
             ],
             primary_action_label: __('Create Prospect'),
             primary_action: function(values) {

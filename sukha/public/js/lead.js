@@ -204,7 +204,19 @@ frappe.ui.form.on('Lead', {
         render_lead_top_summary(frm);
     },
     status(frm) {
-        render_lead_top_summary(frm);
+        refresh_lead_status_display(frm);
+    },
+    custom_export_lead_status(frm) {
+        refresh_lead_status_display(frm);
+    },
+    custom_l0_status(frm) {
+        refresh_lead_status_display(frm);
+    },
+    custom_l1_status(frm) {
+        refresh_lead_status_display(frm);
+    },
+    custom_l2_status(frm) {
+        refresh_lead_status_display(frm);
     },
     custom_sales_type(frm) {
         frm.refresh_fields();
@@ -470,7 +482,7 @@ frappe.ui.form.on('Lead', {
         }
 
 
-        render_lead_top_summary(frm);
+        refresh_lead_status_display(frm);
 
         frm.set_query("port_destination", "custom_commercials__logistic", function (doc, cdt, cdn) {
             const row = locals[cdt][cdn];
@@ -624,6 +636,54 @@ function lead_summary_value(value) {
     return frappe.utils.escape_html(value);
 }
 
+function get_lead_level_status(frm) {
+    if (frm.doc.custom_export_lead_status) {
+        return frm.doc.custom_export_lead_status;
+    }
+
+    if (frm.doc.custom_l2_status === "Saved") {
+        return "L2";
+    }
+
+    if (frm.doc.custom_l1_status === "Saved") {
+        return "L1";
+    }
+
+    if (frm.doc.custom_l0_status === "Saved") {
+        return "L0";
+    }
+
+    return "";
+}
+
+function get_lead_display_status(frm) {
+    return get_lead_level_status(frm) || frm.doc.status || "";
+}
+
+function refresh_lead_status_display(frm) {
+    render_lead_top_summary(frm);
+    set_lead_page_indicator(frm);
+}
+
+function set_lead_page_indicator(frm) {
+    if (!frm?.page || frm.is_new()) {
+        return;
+    }
+
+    const display_status = get_lead_display_status(frm);
+
+    if (!display_status) {
+        return;
+    }
+
+    const color_status = get_lead_level_status(frm) || frm.doc.status || display_status;
+    const color = frappe.utils.guess_colour(color_status);
+
+    setTimeout(() => {
+        frm.page.set_indicator(__(display_status), color);
+    }, 0);
+}
+
 function get_variant_products(frm) {
     const main_products = [
         frm.doc.custom_product_name_m,
@@ -655,17 +715,7 @@ function render_lead_top_summary(frm) {
         frm.doc.custom_product_name_m ? frm.doc.custom_product : null,
         frm.doc.custom_product_category
     ].filter(Boolean).join(" | ");
-    let lead_status = "";
-
-    if (frm.doc.custom_l2_status === "Saved") {
-        lead_status = "L2";
-
-    } else if (frm.doc.custom_l1_status === "Saved") {
-        lead_status = "L1";
-
-    } else if (frm.doc.custom_l0_status === "Saved") {
-        lead_status = "L0";
-    }
+    const display_status = get_lead_display_status(frm);
 
     const other_products_html = other_products.map(row => {
         const meta = [
@@ -732,7 +782,7 @@ function render_lead_top_summary(frm) {
                         font-size:13px;
                         font-weight:600;
                     ">
-                        ${lead_summary_value(lead_status || frm.doc.status )}
+                        ${lead_summary_value(display_status)}
                     </span>
                 </div>
             </div>
@@ -745,13 +795,18 @@ function render_lead_top_summary(frm) {
                 ${lead_summary_item("Company", frm.doc.first_name || frm.doc.custom_namee_of_the_company || company_name)}
                 ${lead_summary_item("Product", frm.doc.custom_product || frm.doc.custom_product_name_m)}
                 ${lead_summary_item(
-        frm.doc.custom_buyer_type
-            ? "Buyer Type"
-            : "Type of Buyer",
+                frm.doc.custom_buyer_type
+                    ? "Buyer Type"
+                    : (
+                        frm.doc.custom_type_of_buyer
+                            ? "Type of Buyer"
+                            : "Buyer Type"
+                    ),
 
-        frm.doc.custom_buyer_type ||
-        frm.doc.custom_type_of_buyer
-    )}
+                frm.doc.custom_buyer_type
+                    || frm.doc.custom_type_of_buyer
+                    || "-"
+            )}
                 ${lead_summary_item("Country", frm.doc.custom_country_of_hq)}
                 ${lead_summary_item("Volume Range", frm.doc.custom_volume_range)}
             </div>

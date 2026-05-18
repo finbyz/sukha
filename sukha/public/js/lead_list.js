@@ -1,17 +1,26 @@
-/* lead_list.js */
+(() => {
+	const lead_list_settings = frappe.listview_settings["Lead"] || {};
 
-frappe.listview_settings["Lead"] = {
+	const remove_status_columns = (listview) => {
+		if (!Array.isArray(listview.columns)) return;
 
-    get_indicator() {
-        return null;
-    },
+		listview.columns = listview.columns.filter((column) => {
+			return column.type !== "Status" && column.df?.fieldname !== "status";
+		});
+	};
 
-    before_render() {
+	frappe.listview_settings["Lead"] = {
+		...lead_list_settings,
+		onload(listview) {
+			const setup_columns = listview.setup_columns.bind(listview);
 
-        // Hide Status column header
-        $('[data-fieldname="status"]').hide();
+			listview.setup_columns = () => {
+				setup_columns();
+				remove_status_columns(listview);
+			};
 
-        // Hide Status cells
-        $('[data-col="status"]').hide();
-    }
-};
+			remove_status_columns(listview);
+			lead_list_settings.onload?.(listview);
+		},
+	};
+})();

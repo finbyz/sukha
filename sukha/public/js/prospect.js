@@ -697,14 +697,10 @@ async function render_prospect_top_summary(frm) {
                 </div>
             `);
 
-            return; // stop here — no L0/L1/L2 tabs needed
+            return; 
         }
 
-        // ─────────────────────────────────────────────────────────
-        // BRANCH B: custom_type_of_buyer is filled  →  Export L0/L1/L2 tabs
-        // ─────────────────────────────────────────────────────────
 
-        // ── L0 fields ────────────────────────────────────────────
         const l0Fields = `
             ${prospect_summary_item("Organisation", lead.custom_organisations)}
             ${prospect_summary_item("Name of Company", lead.custom_first_name_s)}
@@ -723,8 +719,6 @@ async function render_prospect_top_summary(frm) {
             ${prospect_summary_item("Specific Source", lead.custom_specific_source)}
             ${prospect_summary_item("Other Source", lead.custom_other_source)}
             ${prospect_summary_item("Notes", lead.custom_notes__a)}
-            ${prospect_summary_item("L0 Status", lead.custom_l0_status)}
-            ${prospect_summary_item("Status", lead.custom_export_lead_status || lead.status)}
         `;
 
         // ── L1 fields ────────────────────────────────────────────
@@ -732,7 +726,6 @@ async function render_prospect_top_summary(frm) {
             ${prospect_summary_item("Product Name", lead.custom_product)}
             ${prospect_summary_item("Volume Range", lead.custom_volume_range)}
             ${prospect_summary_item("Specific Volume Range", lead.custom_specific_range)}
-            ${prospect_summary_item("L1 Status", lead.custom_l1_status)}
             ${prospect_summary_item("Product Category", lead.custom_product_category)}
             ${prospect_summary_item("Volume Range Assumption", lead.custom_volume_range_assumption)}
             ${prospect_summary_item("Contact Person", lead.custom_contact_person)}
@@ -746,13 +739,11 @@ async function render_prospect_top_summary(frm) {
             ${prospect_summary_item("Bill To Party Country", lead.custom_bill_to_party_country)}
             ${prospect_summary_item("Bill To Party Address", lead.custom_bill_to_party_address)}
             ${prospect_summary_item("Remarks", lead.custom_remarks)}
-            ${prospect_summary_item("Status", lead.custom_export_lead_status || lead.status)}
         `;
 
         // ── L2 fields ────────────────────────────────────────────
         const l2Fields = `
             ${prospect_summary_item("Product (from L1)", lead.custom_product_from_l1)}
-            ${prospect_summary_item("L2 Status", lead.custom_l2_status)}
             ${prospect_summary_item("Desired Payment Terms", lead.custom_desired_payment_terms)}
             ${prospect_summary_item("Current Suppliers", lead.custom_current_suppliers)}
             ${prospect_summary_item("Desired Inco-Term", lead.custom_desired_incoterm)}
@@ -762,7 +753,6 @@ async function render_prospect_top_summary(frm) {
             ${prospect_summary_item("Designation", lead.custom_designation)}
             ${prospect_summary_item("Contact Number", lead.custom_contact_number)}
             ${prospect_summary_item("Preferred Communication", lead.custom_preferred_communication)}
-            ${prospect_summary_item("Status", lead.custom_export_lead_status || lead.status)}
         `;
 
         $("#crm-lead-detail").html(`

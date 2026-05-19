@@ -659,7 +659,9 @@ function get_lead_level_status(frm) {
 }
 
 function get_lead_display_status(frm) {
-    return get_lead_level_status(frm);
+    return [frm.doc.custom_buyer_type, get_lead_level_status(frm)]
+        .filter(Boolean)
+        .join(" - ");
 }
 
 function refresh_lead_status_display(frm) {
@@ -827,14 +829,17 @@ function render_lead_top_summary(frm) {
                     }
             </div>
 
-            <div style="margin-top:18px;">
-                <div style="font-size:13px;color:#6b7280;margin-bottom:10px;font-weight:600;">
-                    Other Products
+            ${other_products.length ? `
+                <div style="margin-top:18px;">
+                    <div style="font-size:13px;color:#6b7280;margin-bottom:10px;font-weight:600;">
+                        Other Products
+                    </div>
+
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        ${other_products_html}
+                    </div>
                 </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    ${other_products_html || `<span style="color:#9ca3af;">${__("No Other Products")}</span>`}
-                </div>
-            </div>
+            ` : ""}
         </div>
     `;
 

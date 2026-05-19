@@ -5,7 +5,6 @@ frappe.ui.form.on('Lead', {
     onload: function (frm) {
         clear_lead_top_summary(frm);
         set_port_filter(frm);
-        // Show popup only for new document
         if (frm.is_new()) {
             let d = new frappe.ui.Dialog({
                 title: "Select Sales Type",
@@ -27,7 +26,6 @@ frappe.ui.form.on('Lead', {
 
                     const after_sales_type = () => {
                         if (values.sales_type === "Domestic / Merchant") {
-                            // frm.set_df_property("custom_domestic_merchant_button", "hidden", 0);
                         }
                         frm.trigger("custom_sales_type");
 
@@ -823,7 +821,10 @@ function render_lead_top_summary(frm) {
                     || "-"
             )}
                 ${lead_summary_item("Country", frm.doc.custom_country_of_hq)}
-                ${lead_summary_item("Volume Range", frm.doc.custom_volume_range)}
+                ${frm.doc.custom_volume_range
+                        ? lead_summary_item("Volume Range", frm.doc.custom_volume_range)
+                        : ""
+                    }
             </div>
 
             <div style="margin-top:18px;">

@@ -76,6 +76,7 @@ frappe.ui.form.on('Prospect', {
     },
     refresh: function(frm) {
         render_prospect_top_summary(frm);
+        sales_type_pop(frm);
         if (!frm.is_new()) {
             if (frm.doc.leads && frm.doc.leads.length > 0) {
                 frm.add_custom_button(__('View Leads ({0})', [frm.doc.leads.length]), function() {
@@ -120,9 +121,7 @@ frappe.ui.form.on('Prospect', {
     }
 });
 
-// ─────────────────────────────────────────────
-// HELPER: single summary card
-// ─────────────────────────────────────────────
+
 function prospect_summary_item(label, value) {
     if (value === null || value === undefined || value === "" || value === 0 || value === false) return "";
     return `
@@ -142,16 +141,11 @@ function prospect_summary_item(label, value) {
     `;
 }
 
+let _summary_active_lead = null;       
+let _summary_active_tab  = "l0";      
+let _summary_render_fn   = null;      
+let _summary_debounce    = null;      
 
-// ─────────────────────────────────────────────
-// LIVE SYNC — track active lead for re-render
-// ─────────────────────────────────────────────
-let _summary_active_lead = null;       // currently displayed lead object
-let _summary_active_tab  = "l0";      // currently active L0/L1/L2 tab
-let _summary_render_fn   = null;      // renderLeadDetail function reference
-let _summary_debounce    = null;      // debounce timer
-
-// Called by Lead field triggers below to patch + re-render
 function _sync_summary_field(fieldname, value) {
     if (!_summary_active_lead || !_summary_render_fn) return;
     _summary_active_lead[fieldname] = value;
@@ -161,9 +155,6 @@ function _sync_summary_field(fieldname, value) {
     }, 150);
 }
 
-// ─────────────────────────────────────────────
-// LEAD FIELD CHANGE LISTENERS (live sync)
-// ─────────────────────────────────────────────
 const _lead_sync_fields = [
     // Domestic fields
     "lead_name","first_name","middle_name","last_name","job_title","gender",
@@ -198,7 +189,6 @@ const _lead_sync_fields = [
     "custom_preferred_communication"
 ];
 
-// Register a single handler object for Lead with all fields
 (function() {
     const handlers = {};
     _lead_sync_fields.forEach(function(f) {
@@ -209,9 +199,7 @@ const _lead_sync_fields = [
     frappe.ui.form.on("Lead", handlers);
 })();
 
-// ─────────────────────────────────────────────
-// MAIN RENDER
-// ─────────────────────────────────────────────
+
 async function render_prospect_top_summary(frm) {
 
     if (!frm?.page?.body || frm.is_new()) return;
@@ -266,9 +254,7 @@ async function render_prospect_top_summary(frm) {
         _summary_active_lead = lead;
         _summary_render_fn   = renderLeadDetail;
 
-        // ─────────────────────────────────────────────────────────
-        // BRANCH A: custom_buyer_type is filled  →  Domestic flat summary
-        // ─────────────────────────────────────────────────────────
+
         if (lead.custom_buyer_type) {
 
             const domesticFields = `
@@ -462,17 +448,14 @@ async function render_prospect_top_summary(frm) {
             </div>
         `);
 
-        // Sub-tab click handler
         $("#crm-lead-detail").off("click", ".lead-section-tab").on("click", ".lead-section-tab", function() {
             const section = $(this).data("section");
-            _summary_active_tab = section; // persist for re-render
             $("#crm-lead-detail .lead-section-tab").css({ background: "var(--subtle-fg)", color: "var(--text)" });
             $(this).css({ background: "var(--primary)", color: "var(--white)    " });
             $(".lead-section-panel").hide();
             $("#panel-" + section).css("display", "grid");
         });
 
-        // Restore the active tab after (re-)render
         if (activeTab !== "l0") {
             $("#crm-lead-detail .lead-section-tab[data-section='" + activeTab + "']")
                 .css({ background: "var(--primary)", color: "var(--white)" });
@@ -483,10 +466,118 @@ async function render_prospect_top_summary(frm) {
         }
     }
 
-    // Render first lead by default
     _summary_active_tab = "l0";
     if (leads.length) {
         renderLeadDetail(leads[0], "l0");
     }
-
 }
+
+
+function sales_type_pop(frm) {
+        if (!frm.is_new() || frm.sales_type_dialog_shown) {
+            return;
+        }
+
+        frm.sales_type_dialog_shown = true;
+
+        let dialog = new frappe.ui.Dialog({
+            title: __("Select Sales Type"),
+            fields: [
+                {
+                    fieldname: "sales_type",
+                    label: __("Sales Type"),
+                    fieldtype: "Select",
+                    options: [
+                        "",
+                        "Domestic / Merchant",
+                        "Direct Export Sales"
+                    ],
+                    reqd: 1,
+                    onchange: function () {
+
+                        let sales_type = dialog.get_value("sales_type");
+
+                        // Show Buyer Type for Domestic
+                        if (sales_type === "Domestic / Merchant") {
+
+                            dialog.set_df_property("buyer_type", "hidden", 0);
+                            dialog.set_df_property("type_of_buyer", "hidden", 1);
+
+                        } else if (sales_type === "Direct Export Sales") {
+
+                            dialog.set_df_property("buyer_type", "hidden", 1);
+                            dialog.set_df_property("type_of_buyer", "hidden", 0);
+
+                        } else {
+
+                            dialog.set_df_property("buyer_type", "hidden", 1);
+                            dialog.set_df_property("type_of_buyer", "hidden", 1);
+                        }
+                    }
+                },
+
+                // Domestic / Merchant
+                {
+                    fieldname: "buyer_type",
+                    label: __("Buyer Type"),
+                    fieldtype: "Select",
+                    options: [
+                        "",
+                        "Domestic",
+                        "Merchant"
+                    ],
+                    hidden: 1
+                },
+
+                // Direct Export Sales
+                {
+                    fieldname: "type_of_buyer",
+                    label: __("Type of Buyer"),
+                    fieldtype: "Select",
+                    options: [
+                        "",
+                        "End User",
+                        "Trader",
+                        "Stockist / Distributor",
+                        "Agent"
+                    ],
+                    hidden: 1
+                }
+            ],
+
+            primary_action_label: __("Confirm"),
+
+            primary_action(values) {
+
+
+                // Domestic / Merchant
+                if (values.sales_type === "Domestic / Merchant") {
+
+                    if (!values.buyer_type) {
+                        frappe.msgprint(__("Please select Buyer Type"));
+                        return;
+                    }
+
+                    frm.set_value("custom_buyer_type", values.buyer_type);
+                    frm.set_value("custom_type_of_buyer", "");
+
+                }
+
+                // Direct Export Sales
+                if (values.sales_type === "Direct Export Sales") {
+
+                    if (!values.type_of_buyer) {
+                        frappe.msgprint(__("Please select Type of Buyer"));
+                        return;
+                    }
+
+                    frm.set_value("custom_type_of_buyer", values.type_of_buyer);
+                    frm.set_value("custom_buyer_type", "");
+                }
+
+                dialog.hide();
+            }
+        });
+
+        dialog.show();
+    }

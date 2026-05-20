@@ -73,7 +73,7 @@ frappe.ui.form.on('Lead', {
                 indicator: "red"
             });
 
-        } 
+        }
     },
     custom_save_l1: async function (frm) {
         if (frm.doc.custom_l0_status !== "Saved") {
@@ -84,7 +84,7 @@ frappe.ui.form.on('Lead', {
             });
             return;
         }
-           frm.set_value("custom_l1_status", "Saved");
+        frm.set_value("custom_l1_status", "Saved");
         frm.set_value("custom_export_lead_status", "L1");
         await frm.save();
         let variants = get_variant_products(frm);
@@ -318,9 +318,28 @@ frappe.ui.form.on('Lead', {
                 indicator: "red"
             });
 
-        } 
+        }
     },
     custom_contact_person: async function (frm) {
+        if (!frm.doc.custom_contact_person) return;
+
+        try {
+            let contact = await frappe.db.get_doc('Contact', frm.doc.custom_contact_person);
+            let phone_number = "";
+
+            if (contact.phone_nos && contact.phone_nos.length) {
+                let phone_with_custom = contact.phone_nos.find(p => p.custom_contact_number);
+                if (phone_with_custom) {
+                    phone_number = phone_with_custom.custom_contact_number;
+                }
+            }
+
+            if (phone_number) {
+                frm.set_value('custom_contact_person_phone_number', phone_number);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
         frm.set_value('custom_contact_person_for_soft_inquiry', frm.doc.custom_contact_person)
 
         if (!frm.doc.custom_contact_person) {
@@ -334,7 +353,6 @@ frappe.ui.form.on('Lead', {
                 frm.doc.custom_contact_person
             );
 
-            // PHONE
             if (contact.phone) {
 
                 frm.set_value(
@@ -343,7 +361,6 @@ frappe.ui.form.on('Lead', {
                 );
             }
 
-            // MOBILE
             else if (contact.mobile_no) {
 
                 frm.set_value(
@@ -352,7 +369,6 @@ frappe.ui.form.on('Lead', {
                 );
             }
 
-            // EMAIL
             if (contact.email_id) {
 
                 frm.set_value(
@@ -361,7 +377,6 @@ frappe.ui.form.on('Lead', {
                 );
             }
 
-            // DESIGNATION
             if (contact.designation) {
 
                 frm.set_value(
@@ -369,12 +384,9 @@ frappe.ui.form.on('Lead', {
                     contact.designation
                 );
             }
-
-            // VISITING CARD
             if (
                 contact.custom_visiting_card_attachment
             ) {
-
                 frm.set_value(
                     "custom_attachment_",
                     contact.custom_visiting_card_attachment
@@ -756,12 +768,6 @@ function render_lead_top_summary(frm) {
         `;
     }).join("");
 
-    // const action_html = variant_products.length ? `
-    //     <button type="button" class="btn btn-sm btn-primary lead-make-variants">
-    //         ${__("Make Variants")}
-    //     </button>
-    // ` : "";
-
     const html = `
         <div id="lead-top-summary" style="
             background:#ffffff;
@@ -810,23 +816,23 @@ function render_lead_top_summary(frm) {
                 ${lead_summary_item("Company", frm.doc.first_name || frm.doc.custom_namee_of_the_company || frm.doc.company_name)}
                 ${lead_summary_item("Product", frm.doc.custom_product || frm.doc.custom_product_name_m)}
                 ${lead_summary_item(
-                frm.doc.custom_buyer_type
-                    ? "Buyer Type"
-                    : (
-                        frm.doc.custom_type_of_buyer
-                            ? "Type of Buyer"
-                            : "Buyer Type"
-                    ),
+        frm.doc.custom_buyer_type
+            ? "Buyer Type"
+            : (
+                frm.doc.custom_type_of_buyer
+                    ? "Type of Buyer"
+                    : "Buyer Type"
+            ),
 
-                frm.doc.custom_buyer_type
-                    || frm.doc.custom_type_of_buyer
-                    || "-"
-            )}
+        frm.doc.custom_buyer_type
+        || frm.doc.custom_type_of_buyer
+        || "-"
+    )}
                 ${lead_summary_item("Country", frm.doc.custom_country_of_hq)}
                 ${frm.doc.custom_volume_range
-                        ? lead_summary_item("Volume Range", frm.doc.custom_volume_range)
-                        : ""
-                    }
+            ? lead_summary_item("Volume Range", frm.doc.custom_volume_range)
+            : ""
+        }
             </div>
 
             ${other_products.length ? `
@@ -848,9 +854,6 @@ function render_lead_top_summary(frm) {
     const $target = $body.find(".layout-main-section").first();
     ($target.length ? $target : $body).prepend(html);
 
-    // $body.find("#lead-top-summary .lead-make-variants").on("click", () => {
-    //     make_variant_leads(frm);
-    // });
 }
 
 function lead_summary_item(label, value) {

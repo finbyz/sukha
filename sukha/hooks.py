@@ -50,6 +50,7 @@ doctype_js = {
     "Opportunity": "public/js/opportunity.js",
     "Lead": "public/js/lead.js",
     "Prospect": "public/js/prospect.js",
+    "Contact": "public/js/contact.js"
 }
 doctype_list_js = {
     "Lead": "public/js/lead_list.js"

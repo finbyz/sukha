@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cost Sheet Engine · ERPNext v16</title>
+<!-- Your complete HTML code goes here -->
+<!-- I'll add the integration script at the end -->
+</head>
+<body>
+<!-- Paste your COMPLETE HTML body content here -->
+<!-- All your sections, tables, forms, etc. -->
+
+<script>
+// Add Frappe integration
+if (window.frappe) {
+	// User is logged in to ERPNext
+	console.log('Frappe context available');
+	
+	// You can call Frappe methods here
+	function saveCostSheet() {
+		// Collect form data
+		const data = {
+			cost_sheet_type: document.getElementById('inp_master_cs_type')?.value,
+			incoterm: document.getElementById('inp_incoterm')?.value,
+			// ... add all other fields
+		};
+		
+		// Save to ERPNext
+		frappe.call({
+			method: 'sukha.sukha.doctype.cost_sheet.cost_sheet.create_from_dashboard',
+			args: { data: data },
+			callback: function(r) {
+				if (r.message) {
+					frappe.msgprint('Cost Sheet saved successfully');
+					window.location.href = `/app/cost-sheet/${r.message}`;
+				}
+			}
+		});
+	}
+}
+
+// Your complete calculation engine code goes here
+// (All the JavaScript from your HTML file)
+</script>
+</body>
+</html>

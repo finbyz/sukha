@@ -1,0 +1,524 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-25 13:26:37.587290",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "cost_sheet_name",
+  "cost_sheet_date",
+  "status",
+  "col_break_header",
+  "company",
+  "customer",
+  "supplier",
+  "section_break_product",
+  "product",
+  "product_grade",
+  "col_break_product",
+  "cost_sheet_type",
+  "incoterm",
+  "origin_scope",
+  "type_of_sale",
+  "exw_sub_type",
+  "section_break_party_terms",
+  "customer_payment_terms",
+  "country_of_destination",
+  "col_break_party_terms",
+  "supplier_payment_terms",
+  "section_break_currency",
+  "currency",
+  "exchange_rate",
+  "col_break_currency",
+  "exchange_premium",
+  "effective_exchange_rate",
+  "section_break_logistics",
+  "port_of_loading",
+  "port_of_discharge",
+  "col_break_logistics",
+  "delivery_location",
+  "shipping_line",
+  "stuffing_location",
+  "section_break_stuffing",
+  "stuffing_at",
+  "col_break_stuffing",
+  "section_break_container",
+  "container_type",
+  "packing_type",
+  "packing_unit_size",
+  "col_break_container",
+  "units_per_fcl",
+  "total_fcl",
+  "total_quantity",
+  "total_weight_mt",
+  "section_break_scheme",
+  "apply_rodtep",
+  "apply_advance_license",
+  "section_break_product_cost",
+  "product_cost_details",
+  "section_break_cnf",
+  "cnf_charges",
+  "section_break_sea_freight",
+  "sea_freight_details",
+  "section_break_totals",
+  "total_product_cost",
+  "total_cnf_cost",
+  "total_freight_cost",
+  "col_break_totals",
+  "net_cost",
+  "final_offered_price",
+  "profit_amount",
+  "profit_margin_percentage",
+  "section_break_margin",
+  "margin_analysis",
+  "section_break_remarks",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Cost Sheet ID",
+   "options": "CST-.YY.-.#####",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "cost_sheet_name",
+   "fieldtype": "Data",
+   "label": "Cost Sheet Name",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "cost_sheet_date",
+   "fieldtype": "Date",
+   "label": "Cost Sheet Date",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nSubmitted\nApproved\nRejected\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break_header",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "remember_last_selected_value": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "fieldname": "section_break_product",
+   "fieldtype": "Section Break",
+   "label": "Product Details"
+  },
+  {
+   "fieldname": "product",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Product",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "product_grade",
+   "fieldtype": "Data",
+   "label": "Product Grade"
+  },
+  {
+   "fieldname": "col_break_product",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cost_sheet_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Cost Sheet Type",
+   "options": "\nIndia CIF\nIndia FOB\nIndia EXW\nDomestic\nMerchant Export\nTC CIF\nTC FOB",
+   "reqd": 1
+  },
+  {
+   "fieldname": "incoterm",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Incoterm",
+   "options": "Incoterm"
+  },
+  {
+   "fieldname": "origin_scope",
+   "fieldtype": "Select",
+   "label": "Origin Scope",
+   "options": "\nIndia\nTC (Third Country)"
+  },
+  {
+   "fieldname": "type_of_sale",
+   "fieldtype": "Select",
+   "label": "Type of Sale",
+   "options": "\nDirect Export\nMerchant Export\nDomestic\nThird Country"
+  },
+  {
+   "depends_on": "eval:in_list(['India EXW','EXW'], doc.incoterm)",
+   "description": "Applicable only for EXW incoterm \u2014 drives local tax treatment",
+   "fieldname": "exw_sub_type",
+   "fieldtype": "Select",
+   "label": "EXW Sub-Type",
+   "options": "\nDomestic Sale\nMerchant Export\nRepacking Service"
+  },
+  {
+   "fieldname": "section_break_party_terms",
+   "fieldtype": "Section Break",
+   "label": "Party & Terms"
+  },
+  {
+   "description": "Drives 1% credit cost per 30 days in margin calculation",
+   "fieldname": "customer_payment_terms",
+   "fieldtype": "Link",
+   "label": "Customer Payment Terms",
+   "options": "Payment Terms Template"
+  },
+  {
+   "fieldname": "country_of_destination",
+   "fieldtype": "Link",
+   "label": "Country of Destination",
+   "options": "Country"
+  },
+  {
+   "fieldname": "col_break_party_terms",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "supplier_payment_terms",
+   "fieldtype": "Link",
+   "label": "Supplier Payment Terms",
+   "options": "Payment Terms Template"
+  },
+  {
+   "fieldname": "section_break_currency",
+   "fieldtype": "Section Break",
+   "label": "Currency & Exchange"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "exchange_rate",
+   "fieldtype": "Currency",
+   "label": "Exchange Rate",
+   "precision": "4"
+  },
+  {
+   "fieldname": "col_break_currency",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "exchange_premium",
+   "fieldtype": "Currency",
+   "label": "Exchange Premium",
+   "precision": "4"
+  },
+  {
+   "description": "Exchange Rate + Exchange Premium",
+   "fieldname": "effective_exchange_rate",
+   "fieldtype": "Currency",
+   "label": "Effective Exchange Rate",
+   "precision": "4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_logistics",
+   "fieldtype": "Section Break",
+   "label": "Logistics & Ports"
+  },
+  {
+   "fieldname": "port_of_loading",
+   "fieldtype": "Link",
+   "label": "Port of Loading",
+   "options": "Port of Loading"
+  },
+  {
+   "fieldname": "port_of_discharge",
+   "fieldtype": "Link",
+   "label": "Port of Discharge",
+   "options": "Port of Discharge"
+  },
+  {
+   "fieldname": "col_break_logistics",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delivery_location",
+   "fieldtype": "Data",
+   "label": "Delivery Location"
+  },
+  {
+   "fieldname": "stuffing_location",
+   "fieldtype": "Link",
+   "label": "Stuffing Location",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "section_break_stuffing",
+   "fieldtype": "Section Break",
+   "label": "Stuffing Details"
+  },
+  {
+   "description": "Drives auto-sync of stuffing location and transportation cost",
+   "fieldname": "stuffing_at",
+   "fieldtype": "Select",
+   "label": "Packing & Stuffing At",
+   "options": "\nSupplier's Place\nOwn Warehouse \u2014 Panoli\nOwn Warehouse \u2014 Mundra\nCFS / ICD"
+  },
+  {
+   "fieldname": "col_break_stuffing",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_container",
+   "fieldtype": "Section Break",
+   "label": "Container & Packing"
+  },
+  {
+   "fieldname": "container_type",
+   "fieldtype": "Select",
+   "label": "Container Type",
+   "options": "\n20 FT\n40 FT\n40 HC\nISO Tank Container"
+  },
+  {
+   "fieldname": "packing_type",
+   "fieldtype": "Link",
+   "label": "Packing Type",
+   "options": "Packing Type"
+  },
+  {
+   "fieldname": "packing_unit_size",
+   "fieldtype": "Float",
+   "label": "Packing Unit Size (Kg)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "col_break_container",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "units_per_fcl",
+   "fieldtype": "Float",
+   "label": "Units Per FCL",
+   "precision": "3"
+  },
+  {
+   "fieldname": "total_fcl",
+   "fieldtype": "Float",
+   "label": "Total FCL",
+   "precision": "2"
+  },
+  {
+   "fieldname": "total_quantity",
+   "fieldtype": "Float",
+   "label": "Total Quantity (MT)",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_weight_mt",
+   "fieldtype": "Float",
+   "label": "Total Weight MT",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_scheme",
+   "fieldtype": "Section Break",
+   "label": "Scheme & Benefits"
+  },
+  {
+   "default": "0",
+   "fieldname": "apply_rodtep",
+   "fieldtype": "Check",
+   "label": "Apply RoDTEP"
+  },
+  {
+   "default": "0",
+   "description": "AA-DFIA Duty Waiver \u2014 mutually exclusive with RoDTEP",
+   "fieldname": "apply_advance_license",
+   "fieldtype": "Check",
+   "label": "Apply Advance License"
+  },
+  {
+   "fieldname": "section_break_product_cost",
+   "fieldtype": "Section Break",
+   "label": "Product Cost Details"
+  },
+  {
+   "fieldname": "product_cost_details",
+   "fieldtype": "Table",
+   "label": "Product Cost Details",
+   "options": "Cost Sheet Product Cost"
+  },
+  {
+   "fieldname": "section_break_cnf",
+   "fieldtype": "Section Break",
+   "label": "CNF Charges"
+  },
+  {
+   "fieldname": "cnf_charges",
+   "fieldtype": "Table",
+   "label": "CNF Charges",
+   "options": "Cost Sheet CNF Charges"
+  },
+  {
+   "fieldname": "section_break_sea_freight",
+   "fieldtype": "Section Break",
+   "label": "Sea Freight Details"
+  },
+  {
+   "fieldname": "sea_freight_details",
+   "fieldtype": "Table",
+   "label": "Sea Freight Details",
+   "options": "Cost Sheet Sea Freight"
+  },
+  {
+   "fieldname": "section_break_totals",
+   "fieldtype": "Section Break",
+   "label": "Cost Summary"
+  },
+  {
+   "fieldname": "total_product_cost",
+   "fieldtype": "Currency",
+   "label": "Total Product Cost",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_cnf_cost",
+   "fieldtype": "Currency",
+   "label": "Total CNF Cost",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_freight_cost",
+   "fieldtype": "Currency",
+   "label": "Total Freight Cost",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "net_cost",
+   "fieldtype": "Currency",
+   "label": "Net Cost",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "final_offered_price",
+   "fieldtype": "Currency",
+   "label": "Final Offered Price",
+   "options": "currency"
+  },
+  {
+   "fieldname": "profit_amount",
+   "fieldtype": "Currency",
+   "label": "Profit Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "profit_margin_percentage",
+   "fieldtype": "Percent",
+   "label": "Profit Margin %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_margin",
+   "fieldtype": "Section Break",
+   "label": "Margin Analysis"
+  },
+  {
+   "fieldname": "margin_analysis",
+   "fieldtype": "Table",
+   "label": "Margin Analysis",
+   "options": "Cost Sheet Margin Analysis"
+  },
+  {
+   "fieldname": "section_break_remarks",
+   "fieldtype": "Section Break",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "shipping_line",
+   "fieldtype": "Link",
+   "label": "Shipping Line",
+   "options": "Preferred Shipping Line"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-06-01 14:46:47.377938",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Cost Sheet",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "cost_sheet_name,customer,product,cost_sheet_type,status",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "cost_sheet_name",
+ "track_changes": 1
+}

@@ -1,0 +1,166 @@
+{
+ "actions": [],
+ "creation": "2026-05-25 13:26:37.587290",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "analysis_type",
+  "description",
+  "section_break_credit",
+  "credit_days",
+  "internal_cost_percentage",
+  "col_break_charges",
+  "document_charges_usd",
+  "commission_value",
+  "section_break_benefits",
+  "duty_drawback_percentage",
+  "rodtep_percentage",
+  "col_break_benefits",
+  "advance_license_benefit",
+  "section_break_costs",
+  "base_cost",
+  "net_cost_total_rs",
+  "net_cost_per_mt_rs",
+  "col_break_profit",
+  "profit_amount",
+  "profit_margin_percentage",
+  "offered_price"
+ ],
+ "fields": [
+  {
+   "default": "Margin Analysis",
+   "fieldname": "analysis_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Analysis Type"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "section_break_credit",
+   "fieldtype": "Section Break",
+   "label": "Credit & Internal Costs"
+  },
+  {
+   "fieldname": "credit_days",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Credit Days",
+   "options": "\nLC at Sight\n30 Days Credit\n60 Days Credit\n90 Days Credit"
+  },
+  {
+   "fieldname": "internal_cost_percentage",
+   "fieldtype": "Percent",
+   "label": "Internal Cost %",
+   "precision": "2"
+  },
+  {
+   "fieldname": "col_break_charges",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "document_charges_usd",
+   "fieldtype": "Currency",
+   "label": "Document Charges (USD)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "commission_value",
+   "fieldtype": "Currency",
+   "label": "Commission Value",
+   "precision": "2"
+  },
+  {
+   "fieldname": "section_break_benefits",
+   "fieldtype": "Section Break",
+   "label": "Export Benefits"
+  },
+  {
+   "fieldname": "duty_drawback_percentage",
+   "fieldtype": "Percent",
+   "label": "Duty Drawback %",
+   "precision": "2"
+  },
+  {
+   "fieldname": "rodtep_percentage",
+   "fieldtype": "Percent",
+   "label": "RoDTEP %",
+   "precision": "2"
+  },
+  {
+   "fieldname": "col_break_benefits",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "advance_license_benefit",
+   "fieldtype": "Currency",
+   "label": "Advance License Benefit",
+   "precision": "2"
+  },
+  {
+   "fieldname": "section_break_costs",
+   "fieldtype": "Section Break",
+   "label": "Cost Summary"
+  },
+  {
+   "fieldname": "base_cost",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Base Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_cost_total_rs",
+   "fieldtype": "Currency",
+   "label": "Net Cost Total (Rs)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "net_cost_per_mt_rs",
+   "fieldtype": "Currency",
+   "label": "Net Cost Per MT (Rs)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break_profit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "profit_amount",
+   "fieldtype": "Currency",
+   "label": "Profit Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "profit_margin_percentage",
+   "fieldtype": "Percent",
+   "label": "Profit Margin %",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "offered_price",
+   "fieldtype": "Currency",
+   "label": "Offered Price",
+   "precision": "2"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-01 16:07:14.739316",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Cost Sheet Margin Analysis",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

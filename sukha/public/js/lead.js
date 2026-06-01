@@ -48,61 +48,149 @@ frappe.ui.form.on('Lead', {
             d.show();
         }
     },
-    custom_save_l0: async function (frm) {
-        try {
-            await frm.set_value(
-                "custom_l0_status",
-                "Saved"
-            );
-            frm.set_value("custom_export_lead_status", "L0")
+    // custom_save_l0: async function (frm) {
+    //     try {
+    //         await frm.set_value(
+    //             "custom_l0_status",
+    //             "Saved"
+    //         );
+    //         frm.set_value("custom_export_lead_status", "L0")
 
-            frm.ignore_permission_validation = true;
-            await frm.save();
-            frappe.show_alert({
-                message: __("L0 Saved Successfully"),
-                indicator: "green"
-            });
+    //         frm.ignore_permission_validation = true;
+    //         await frm.save();
+    //         frappe.show_alert({
+    //             message: __("L0 Saved Successfully"),
+    //             indicator: "green"
+    //         });
 
-        } catch (e) {
+    //     } catch (e) {
 
-            console.error(e);
+    //         console.error(e);
 
-            frappe.msgprint({
-                title: __("Error"),
-                message: __("Failed to Save L0"),
-                indicator: "red"
-            });
+    //         frappe.msgprint({
+    //             title: __("Error"),
+    //             message: __("Failed to Save L0"),
+    //             indicator: "red"
+    //         });
 
-        }
-    },
-    custom_save_l1: async function (frm) {
-        if (frm.doc.custom_l0_status !== "Saved") {
-            frappe.msgprint({
-                title: "Validation",
-                message: "Please save L0 details first.",
-                indicator: "red"
-            });
-            return;
-        }
-        frm.set_value("custom_l1_status", "Saved");
-        frm.set_value("custom_export_lead_status", "L1");
+    //     }
+    // },
+custom_save_l0: async function (frm) {
+
+    // Prevent reverse save
+    if (
+        frm.doc.custom_l1_status === "Saved" ||
+        frm.doc.custom_l2_status === "Saved"
+    ) {
+        return;
+    }
+
+    try {
+
+        await frm.set_value(
+            "custom_l0_status",
+            "Saved"
+        );
+
+        frm.set_value(
+            "custom_export_lead_status",
+            "L0"
+        );
+
+        frm.ignore_permission_validation = true;
+
         await frm.save();
-        let variants = get_variant_products(frm);
-        if (variants && variants.length > 0) {
-
-            frappe.show_alert({
-                message: __("Creating Variant Leads..."),
-                indicator: "blue"
-            });
-
-            await make_variant_leads(frm);
-        }
 
         frappe.show_alert({
-            message: __("L1 Saved Successfully"),
+            message: __("L0 Saved Successfully"),
             indicator: "green"
         });
+
+    } catch (e) {
+
+        console.error(e);
+    }
+},
+    custom_save_l1: async function (frm) {
+        if (frm.doc.custom_l2_status === "Saved") {
+            return;
+        }
+        if (frm.doc.custom_l0_status !== "Saved") {
+
+            frappe.msgprint({
+                title: __("Validation"),
+                message: __("Please save L0 details first."),
+                indicator: "red"
+            });
+
+            return;
+        }
+
+        let variants = get_variant_products(frm);
+
+        // Already created check
+        if (frm.__variant_leads_created && variants?.length > 0) {
+
+            let created_leads = frm.__created_variant_leads || [];
+
+            let lead_html = created_leads.length
+                ? created_leads.map(lead => `
+                    <div style="margin-bottom:8px;">
+                        <a href="/app/lead/${lead}" target="_blank">
+                            ${lead}
+                        </a>
+                    </div>
+                `).join("")
+                : `<div>No leads found</div>`;
+
+            frappe.confirm(
+                `
+                <div style="line-height:1.7;">
+
+                    <p>
+                        <b>Variant Leads already created.</b>
+                    </p>
+
+                    <p>Already created leads:</p>
+
+                    <div style="
+                        background:var(--control-bg);
+                        padding:12px;
+                        border-radius:8px;
+                        max-height:220px;
+                        overflow:auto;
+                        margin-bottom:12px;
+                    ">
+                        ${lead_html}
+                    </div>
+
+                    <p>
+                        Do you want to create more variant leads?
+                    </p>
+
+                </div>
+                `,
+                async () => {
+
+                    await proceed_l1_save(frm, variants);
+
+                },
+                () => {
+
+                    frappe.show_alert({
+                        message: __("Cancelled"),
+                        indicator: "orange"
+                    });
+
+                }
+            );
+
+            return;
+        }
+
+        await proceed_l1_save(frm, variants);
     },
+
     custom_create_contact(frm) {
         const dialog = new frappe.ui.Dialog({
             title: __('Create Contact'),
@@ -293,6 +381,12 @@ frappe.ui.form.on('Lead', {
         });
     },
     custom_save: async function (frm) {
+        if (
+            frm.doc.custom_l0_status !== "Saved" ||
+            frm.doc.custom_l1_status !== "Saved"
+        ) {
+            return;
+        }
         try {
             await frm.set_value(
                 "custom_l2_status",
@@ -477,6 +571,29 @@ frappe.ui.form.on('Lead', {
 
 
     refresh: function (frm) {
+        // L0 hidden after L0/L1/L2
+        frm.set_df_property(
+            "custom_save_l0",
+            "hidden",
+            frm.doc.custom_l0_status === "Saved"
+                || frm.doc.custom_l1_status === "Saved"
+                || frm.doc.custom_l2_status === "Saved"
+        );
+
+        // L1 hidden after L1/L2
+        frm.set_df_property(
+            "custom_save_l1",
+            "hidden",
+            frm.doc.custom_l1_status === "Saved"
+                || frm.doc.custom_l2_status === "Saved"
+        );
+
+        // L2 hidden after L2
+        frm.set_df_property(
+            "custom_save",
+            "hidden",
+            frm.doc.custom_l2_status === "Saved"
+        );
         if (frm.doc.custom_sales_type === "Direct Export Sales") {
             if (
                 frm.doc.custom_l0_status === "Saved" &&
@@ -512,16 +629,28 @@ frappe.ui.form.on('Lead', {
             frm.remove_custom_button(__('Customer'), __('Create'));
             frm.remove_custom_button(__('Quotation'), __('Create'));
             frm.remove_custom_button(__('Prospect'), __('Create'));
+            frm.remove_custom_button(__('L3-Prospect'), __('Create'));
+            frm.remove_custom_button(__('Qualified Lead'), __('Create'));
             frm.remove_custom_button(__('Soft Inquiry'), __('Create'));
             frm.remove_custom_button(__('Make Variants'), __('Action'));
 
-            frm.add_custom_button(__('Opportunity'), () => {
-                frm.events.make_opportunity_direct(frm);
-            }, __('Create'));
+       
 
             frm.add_custom_button(__('Soft Inquiry'), () => {
                 frm.events.make_opportunity_direct(frm);
             }, __('Create'));
+
+            if (!frm.is_new() && frm.doc.custom_type_of_buyer && frm.doc.custom_l1_status == "Saved") {
+                frm.add_custom_button(__('L3-Prospect'), () => {
+                    frm.events.create_prospect_from_lead(frm, 'l3');
+                }, __('Create'));
+            }
+
+            if (!frm.is_new() && frm.doc.custom_buyer_type && frm.doc.docstatus == 0) {
+                frm.add_custom_button(__('Qualified Lead'), () => {
+                    frm.events.create_prospect_from_lead(frm, 'qualified_lead');
+                }, __('Create'));
+            }
 
             if (get_variant_products(frm).length) {
                 frm.add_custom_button(__('Make Variants'), () => {
@@ -529,6 +658,32 @@ frappe.ui.form.on('Lead', {
                 }, __('Action'));
             }
         }, 100);
+    },
+
+    create_prospect_from_lead: function (frm, prospect_type) {
+        frappe.call({
+            method: 'sukha.override.lead_override.create_prospect_from_lead',
+            args: {
+                lead_name: frm.doc.name,
+                prospect_name: frm.doc.company_name || frm.doc.lead_name || frm.doc.name,
+                prospect_type: prospect_type
+            },
+            freeze: true,
+            freeze_message: __('Creating Prospect...'),
+            callback: function (r) {
+
+                if (!r.exc && r.message) {
+
+                    frappe.show_alert({
+                        message: __('Prospect Created Successfully'),
+                        indicator: 'green'
+                    });
+
+                    frappe.set_route('Form', 'Prospect', r.message);
+                }
+            }
+        });
+
     },
 
     async make_opportunity(frm) {
@@ -650,10 +805,29 @@ function lead_summary_value(value) {
     return frappe.utils.escape_html(value);
 }
 
+// function get_lead_level_status(frm) {
+//     if (frm.doc.custom_export_lead_status) {
+//         return frm.doc.custom_export_lead_status;
+//     }
+
+//     if (frm.doc.custom_l2_status === "Saved") {
+//         return "L2";
+//     }
+
+//     if (frm.doc.custom_l1_status === "Saved") {
+//         return "L1";
+//     }
+
+//     if (frm.doc.custom_l0_status === "Saved") {
+//         return "L0";
+//     }
+
+//     return "";
+// }
+
 function get_lead_level_status(frm) {
-    if (frm.doc.custom_export_lead_status) {
-        return frm.doc.custom_export_lead_status;
-    }
+
+    // Highest level always wins
 
     if (frm.doc.custom_l2_status === "Saved") {
         return "L2";
@@ -901,12 +1075,8 @@ async function make_variant_leads(frm) {
             new_doc.custom_l0_status = "";
             new_doc.custom_l1_status = "";
             new_doc.custom_l2_status = "";
-
-
-            // RESET CHILD TABLE
             new_doc.custom_other_products = [];
 
-            // SET PRODUCT
             new_doc.custom_product = product;
             new_doc.custom_product_name = product;
             new_doc.custom_product_from_l1 = product;
@@ -933,6 +1103,8 @@ async function make_variant_leads(frm) {
             frm.reload_doc();
         }
 
+        return created_leads;
+
     } catch (e) {
 
         console.error(e);
@@ -957,3 +1129,51 @@ function set_port_filter(frm) {
         };
     });
 }
+
+
+async function proceed_l1_save(frm, variants) {
+
+    frm.set_value("custom_l1_status", "Saved");
+    frm.set_value("custom_export_lead_status", "L1");
+
+    await frm.save();
+
+    if (variants && variants.length > 0) {
+
+        frappe.show_alert({
+            message: __("Creating Variant Leads..."),
+            indicator: "blue"
+        });
+
+        let created_leads = await make_variant_leads(frm);
+        frm.__variant_leads_created = true;
+        frm.__created_variant_leads = created_leads || [];
+
+        if (created_leads?.length) {
+
+            frappe.msgprint({
+                title: __("Variant Leads Created"),
+                indicator: "green",
+                message: `
+                    <div style="line-height:1.8;">
+                        ${created_leads.map(lead => `
+                            <div>
+                                <a href="/app/lead/${lead}" target="_blank">
+                                    ${lead}
+                                </a>
+                            </div>
+                        `).join("")}
+                    </div>
+                `
+            });
+        }
+    }
+
+    frappe.show_alert({
+        message: __("L1 Saved Successfully"),
+        indicator: "green"
+    });
+}
+
+
+

@@ -7,19 +7,26 @@
  "engine": "InnoDB",
  "field_order": [
   "bill_to_party_name",
-  "address",
-  "country",
+  "email",
   "contact_person_name",
-  "department",
-  "phone_number",
-  "email"
+  "contact_no",
+  "column_break_osok",
+  "address",
+  "street",
+  "city",
+  "country",
+  "column_break_wrrr",
+  "vat_no",
+  "tax_id",
+  "ruc_no",
+  "pincode"
  ],
  "fields": [
   {
    "fieldname": "bill_to_party_name",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Bill to Party Name",
+   "label": "Name",
    "options": "Customer",
    "reqd": 1
   },
@@ -32,6 +39,7 @@
    "reqd": 1
   },
   {
+   "fetch_from": "address.country",
    "fieldname": "country",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -47,34 +55,77 @@
    "reqd": 1
   },
   {
-   "fieldname": "department",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Department",
-   "options": "Department",
-   "reqd": 1
-  },
-  {
-   "fieldname": "phone_number",
-   "fieldtype": "Phone",
-   "in_list_view": 1,
-   "label": "Phone Number",
-   "reqd": 1
-  },
-  {
+   "fetch_from": "bill_to_party_name.email_id",
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Email",
+   "label": "Email ID",
    "options": "Email",
    "reqd": 1
+  },
+  {
+   "fetch_from": "address.city",
+   "fieldname": "city",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "City",
+   "options": "City"
+  },
+  {
+   "fetch_from": "address.custom_street",
+   "fieldname": "street",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Street"
+  },
+  {
+   "fieldname": "column_break_osok",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact_no",
+   "fieldtype": "Phone",
+   "in_list_view": 1,
+   "label": "Contact No"
+  },
+  {
+   "fieldname": "column_break_wrrr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "address.custom_vat_no",
+   "fieldname": "vat_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Vat No"
+  },
+  {
+   "fetch_from": "address.custom_tax_id",
+   "fieldname": "tax_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tax ID"
+  },
+  {
+   "fetch_from": "address.custom_ruc_no",
+   "fieldname": "ruc_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "RUC No"
+  },
+  {
+   "fetch_from": "address.pincode",
+   "fieldname": "pincode",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "PIncode / Zipcode"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-28 12:24:02.057606",
+ "modified": "2026-05-30 10:15:16.463019",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Bill to Party Details",

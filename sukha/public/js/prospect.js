@@ -292,12 +292,10 @@ async function render_prospect_top_summary(frm) {
                 ${prospect_summary_item("Medium", lead.utm_medium)}
                 ${prospect_summary_item("Campaign", lead.utm_campaign)}
                 ${prospect_summary_item("Content", lead.utm_content)}
-                ${prospect_summary_item("Qualification Status", lead.qualification_status)}
                 ${prospect_summary_item("Qualified By", lead.qualified_by)}
                 ${prospect_summary_item("Qualified On", lead.qualified_on)}
                 ${prospect_summary_item("Fax", lead.fax)}
                 ${prospect_summary_item("Company", lead.company)}
-                ${prospect_summary_item("Print Language", lead.language)}
                 ${prospect_summary_item("Title", lead.title)}
                 ${prospect_summary_item("Disabled", lead.disabled ? "Yes" : null)}
                 ${prospect_summary_item("Unsubscribed", lead.unsubscribed ? "Yes" : null)}
@@ -380,7 +378,7 @@ async function render_prospect_top_summary(frm) {
 
         // ── L2 fields ────────────────────────────────────────────
         const l2Fields = `
-            ${prospect_summary_item("Product (from L1)", lead.custom_product_from_l1)}
+            ${prospect_summary_item("Product Name", lead.custom_product_from_l1)}
             ${prospect_summary_item("Desired Payment Terms", lead.custom_desired_payment_terms)}
             ${prospect_summary_item("Current Suppliers", lead.custom_current_suppliers)}
             ${prospect_summary_item("Desired Inco-Term", lead.custom_desired_incoterm)}

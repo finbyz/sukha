@@ -8,11 +8,18 @@
  "field_order": [
   "consignee_name",
   "address",
+  "city",
+  "street",
   "country",
-  "contact_name",
-  "contact_number",
+  "column_break_mnnj",
   "email",
-  "demand_mtpa"
+  "contact_person_name",
+  "contact_number",
+  "column_break_jpye",
+  "tax_id",
+  "ruc_no",
+  "vat_no",
+  "pincode"
  ],
  "fields": [
   {
@@ -24,6 +31,7 @@
    "reqd": 1
   },
   {
+   "fetch_from": "address.country",
    "fieldname": "country",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -32,6 +40,7 @@
    "reqd": 1
   },
   {
+   "fetch_from": "consignee_name.email_id",
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -43,15 +52,8 @@
    "fieldname": "consignee_name",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Consignee Name",
+   "label": "Name",
    "options": "Customer",
-   "reqd": 1
-  },
-  {
-   "fieldname": "contact_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Contact Name",
    "reqd": 1
   },
   {
@@ -62,17 +64,69 @@
    "reqd": 1
   },
   {
-   "fieldname": "demand_mtpa",
+   "fetch_from": "address.city",
+   "fieldname": "city",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "City",
+   "options": "City"
+  },
+  {
+   "fetch_from": "address.custom_street",
+   "fieldname": "street",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Demand (MTPA)"
+   "label": "Street"
+  },
+  {
+   "fieldname": "column_break_mnnj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contact_person_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contact Person Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_jpye",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "address.custom_tax_id",
+   "fieldname": "tax_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tax ID"
+  },
+  {
+   "fetch_from": "address.custom_ruc_no",
+   "fieldname": "ruc_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "RUC No"
+  },
+  {
+   "fetch_from": "address.custom_vat_no",
+   "fieldname": "vat_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "VAT No"
+  },
+  {
+   "fetch_from": "address.pincode",
+   "fieldname": "pincode",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Pincode / Zip Code"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-28 12:27:22.889553",
+ "modified": "2026-05-30 10:31:17.673813",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Ship To Party Details",

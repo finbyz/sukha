@@ -11,7 +11,7 @@ fixtures = [
     {"dt": "Custom Field", "filters": [["module", "in", ["Sukha"]]]},
     {"dt": "Property Setter", "filters": [["module", "in", ["Sukha"]]]},
 ]
-# required_apps = []
+required_apps = ["Chemical"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -50,10 +50,12 @@ doctype_js = {
     "Opportunity": "public/js/opportunity.js",
     "Lead": "public/js/lead.js",
     "Prospect": "public/js/prospect.js",
-    "Contact": "public/js/contact.js"
+    "Contact": "public/js/contact.js",
+    "Customer": "public/js/customer.js",
+    "Item": "public/js/item.js",
 }
 doctype_list_js = {
-    "Lead": "public/js/lead_list.js"
+    "Lead": "public/js/lead_list.js",
 }
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -154,7 +156,10 @@ override_doctype_class = {
 
 # Override whitelisted methods
 override_whitelisted_methods = {
-    "erpnext.crm.doctype.lead.lead.make_opportunity": "sukha.override.lead_override.make_opportunity"
+    "erpnext.crm.doctype.lead.lead.make_opportunity": "sukha.override.lead_override.make_opportunity",
+    "erpnext.crm.doctype.prospect.prospect.make_customer": "sukha.override.prospect_override.make_customer",
+    "erpnext.crm.doctype.prospect.prospect.make_opportunity": "sukha.override.prospect_override.make_opportunity",
+    "erpnext.selling.doctype.customer.customer.make_opportunity": "sukha.override.customer_override.make_opportunity"
 }
 
 

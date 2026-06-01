@@ -1,0 +1,3250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cost Sheet Engine · ERPNext v16</title>
+
+  <!-- Frappe Framework Scripts -->
+  <script>
+    // Frappe boot data will be injected by the server
+    window.frappe = window.frappe || {};
+  </script>
+  <script type="text/javascript" src="/assets/frappe/js/lib/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="/assets/frappe/js/frappe-web.min.js"></script>
+
+  <!-- Google Fonts for Premium Aesthetics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ─── NATIVE ERPNEXT v16 DESIGN SYSTEM TOKENS ─── */
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Primary Brand Accents */
+      --color-primary: var(--text-color, #1F2937);
+      --color-brand: var(--primary, #1B82EE);
+      --color-brand-hover: var(--primary-hover, #146EC5);
+      --color-brand-light: var(--bg-light-gray, #F0F8FF);
+
+      /* Neutral Surfaces */
+      --color-bg-app: var(--window-bg, #FAFAFA);
+      --color-bg-card: var(--bg-color, #FFFFFF);
+      --color-bg-subtle: var(--bg-light-gray, #FAFAFA);
+      --color-bg-header: var(--bg-color, #FFFFFF);
+
+      /* Manual Input Colors (Green Cells) */
+      --color-manual-bg: var(--alert-bg-success, #ECFDF5);
+      --color-manual-text: var(--alert-text-success, #047857);
+      --color-manual-border: var(--alert-border-success, #A7F3D0);
+      --color-manual-focus: var(--alert-text-success, #10B981);
+
+      /* Borders & Dividers */
+      --color-border: var(--border-color, #ECEFF1);
+      --color-border-subtle: var(--border-color-light, #ECEFF1);
+      --color-border-dark: var(--control-border, #D1D5DB);
+
+      /* Typography */
+
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-bg-app);
+      color: var(--color-text-main);
+      font-size: 13px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* REMOVED SHELL CSS */
+
+    /* MAIN CONTENT CONTAINER */
+    .main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* REMOVED PAGE HEADER CSS */
+
+    /* CONTENT FORM SCROLLABLE VIEW */
+    .content-scroll {
+      padding: 20px 24px 48px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .form-column {
+      width: 100%;
+      max-width: 1400px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* KPI HORIZONTAL BANNER */
+    .kpi-banner {
+      background-color: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .kb-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .rp-badge-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background-color: #171717;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .rp-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text-main);
+      margin-bottom: 2px;
+    }
+
+    .rp-id {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .kb-stats {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .kb-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .rp-summary-label {
+      color: var(--color-text-muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .rp-summary-val {
+      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 14px;
+    }
+
+    /* ─── FORM SECTIONS & CARDS ─── */
+    .section-card {
+      background-color: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .section-header {
+      background-color: var(--color-bg-subtle);
+      border-bottom: 1px solid var(--color-border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-header h3 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+    }
+
+    .chevron {
+      transition: transform 0.2s;
+      color: var(--color-text-subtle);
+    }
+
+    .section-card.collapsed .chevron {
+      transform: rotate(-90deg);
+    }
+
+    .section-card.collapsed .section-body {
+      display: none;
+    }
+
+    .section-body {
+      padding: 20px;
+    }
+
+    .section-body.no-pad {
+      padding: 0;
+    }
+
+    /* FORM GRIDS & INPUTS */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .req {
+      color: #EF4444;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--color-border-dark);
+      border-radius: 6px;
+      font-size: 12px;
+      background-color: var(--color-bg-card);
+      color: var(--color-text-main);
+      font-family: var(--font-sans);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--color-brand);
+      box-shadow: 0 0 0 3px rgba(36, 144, 239, 0.15);
+    }
+
+    .form-control:disabled,
+    .form-control[readonly] {
+      background-color: var(--color-bg-app);
+      color: var(--color-text-muted);
+    }
+
+    /* ─── MANUAL GREEN INPUTS (MANDATORY CLIENT SPECIFICATION) ─── */
+    .manual-input {
+      background-color: var(--color-manual-bg) !important;
+      color: var(--color-manual-text) !important;
+      border-color: var(--color-manual-border) !important;
+      font-weight: 600;
+    }
+
+    .manual-input:focus {
+      border-color: var(--color-manual-focus) !important;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+    }
+
+    .help-text {
+      font-size: 10px;
+      color: var(--color-text-subtle);
+      margin-top: 2px;
+    }
+
+    /* ─── CHILD TABLES & GRIDS ─── */
+    .table-responsive {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    .child-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .child-table th {
+      background-color: var(--color-bg-subtle);
+      padding: 8px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      border-bottom: 1px solid var(--color-border);
+      white-space: nowrap;
+    }
+
+    .child-table td {
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--color-border-subtle);
+      vertical-align: middle;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .font-mono {
+      font-family: var(--font-mono);
+    }
+
+    /* Grid specific inputs */
+    .cell-input {
+      width: 100%;
+      padding: 4px 8px;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      text-align: right;
+    }
+
+    .cell-input:focus {
+      background-color: #fff;
+      border-color: var(--color-brand);
+      outline: none;
+    }
+
+    .cell-manual {
+      background-color: var(--color-manual-bg);
+      color: var(--color-manual-text);
+      border: 1px solid var(--color-manual-border);
+      font-weight: 600;
+    }
+
+    .cell-manual:focus {
+      border-color: var(--color-manual-focus);
+    }
+
+    /* Sleek native ERPNext summary row highlights */
+    .bg-target-label {
+      background-color: var(--color-bg-subtle) !important;
+      font-weight: 700;
+      color: var(--color-text-main) !important;
+    }
+
+    .bg-target-val {
+      background-color: var(--color-bg-subtle) !important;
+      font-weight: 700;
+      color: var(--color-text-main) !important;
+    }
+
+    /* Row formatting states */
+    .tr-subtotal td {
+      background-color: var(--color-bg-subtle);
+      font-weight: 600;
+    }
+
+    .tr-highlight td {
+      background-color: var(--color-brand-light);
+      font-weight: 700;
+      color: var(--color-brand);
+    }
+
+    .tr-benefit td {
+      background-color: var(--color-success-bg);
+      color: var(--color-success-text);
+    }
+
+    /* SPLIT VIEW HELPER TABLES */
+    .split-layout {
+      display: flex;
+      align-items: stretch;
+    }
+
+    .split-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .split-side {
+      width: 280px;
+      border-left: 1px solid var(--color-border);
+      background-color: var(--color-bg-subtle);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .side-table-header {
+      padding: 8px 12px;
+      background-color: #E1EFFE;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #1E429F;
+      border-bottom: 1px solid #C3DDFD;
+    }
+
+    /* RADIO TOGGLES */
+    .radio-options {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .custom-radio {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    /* ─── PERSISTENT KPI FOOTER BAR ─── */
+    .kpi-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--footer-height);
+      background-color: #111827;
+      border-top: 1px solid #1F2937;
+      display: flex;
+      align-items: stretch;
+      z-index: 200;
+      color: #fff;
+    }
+
+    .kpi-brand {
+      width: var(--sidebar-width);
+      background-color: #0B0F19;
+      border-right: 1px solid #1F2937;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      flex-shrink: 0;
+    }
+
+    .kpi-icon {
+      width: 24px;
+      height: 24px;
+      background-color: var(--color-brand);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 11px;
+    }
+
+    .kpi-items-wrap {
+      flex: 1;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-around;
+      overflow-x: auto;
+    }
+
+    .kpi-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 0 16px;
+      border-right: 1px solid #1F2937;
+      min-width: 110px;
+      flex: 1;
+    }
+
+    .kpi-box-lbl {
+      font-size: 9px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #6B7280;
+      margin-bottom: 2px;
+    }
+
+    .kpi-box-val {
+      font-size: 15px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .kpi-box-uom {
+      font-size: 9px;
+      color: #6B7280;
+      margin-top: 1px;
+    }
+
+    .d-none {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ─── HIDDEN DOCTYPE FIELDS ─── -->
+  <input type="hidden" id="inp_cost_sheet_date" value="">
+  <input type="hidden" id="inp_status" value="Draft">
+  <input type="hidden" id="inp_naming_series" value="CS-.YYYY.-">
+  <input type="hidden" id="inp_company" value="">
+  <input type="hidden" id="inp_currency" value="INR">
+  <!-- Aliases for saveCostSheet compatibility -->
+  <input type="hidden" id="inp_exr_base" value="">
+  <input type="hidden" id="inp_exr_premium" value="">
+
+  <div class="content-scroll">
+    <!-- CENTRAL FORM COLUMN -->
+    <div class="form-column">
+
+      <!-- HORIZONTAL KPI BANNER -->
+      <div class="kpi-banner">
+        <div class="kb-left">
+          <div class="rp-badge-icon" id="lbl-rp-badge">CIF</div>
+          <div>
+            <!-- <div class="rp-title" style="display:flex;align-items:center;gap:8px">
+              <span>Cost Sheet</span>
+              <input type="text" id="inp_cost_sheet_name" placeholder="Enter cost sheet name…"
+                style="font-size:13px;font-weight:600;border:1px solid var(--color-border-dark);border-radius:5px;padding:3px 8px;min-width:200px;color:var(--color-text-main);background:var(--color-bg-card)">
+            </div> -->
+            <div class="rp-id" id="lbl-cost-sheet-id">New Cost Sheet</div>
+          </div>
+        </div>
+        <div class="kb-stats">
+          <div class="kb-stat">
+            <span class="rp-summary-label">Scope</span>
+            <span class="rp-summary-val" style="color:var(--color-brand)" id="lbl-rp-scope">India-CIF</span>
+          </div>
+          <div class="kb-stat">
+            <span class="rp-summary-label">Weight</span>
+            <span class="rp-summary-val" id="lbl-rp-weight">0.00 MT</span>
+          </div>
+          <div class="kb-stat">
+            <span class="rp-summary-label" style="color:#B9770E">Target Base</span>
+            <span class="rp-summary-val" style="color:#B9770E" id="lbl-rp-net">$0.00</span>
+          </div>
+          <div class="kb-stat">
+            <span class="rp-summary-label" style="color:#047857">Offered Price</span>
+            <span class="rp-summary-val" style="color:#047857;font-size:14px" id="lbl-rp-off">$0.00</span>
+          </div>
+          <div class="kb-stat" style="background:#F3F4F6; padding:6px 12px; border-radius:6px">
+            <span class="rp-summary-label" style="color:var(--color-primary)">Profit Margin</span>
+            <span class="rp-summary-val" style="color:#10B981;font-size:15px;font-weight:800"
+              id="lbl-rp-margin">0.0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SECTION 1: MASTER COST SHEET TYPE SELECTION (MAPPED TO EXCEL DROPDOWNS) ─── -->
+      <div class="section-card">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h3>⚙️ Master Cost Sheet Variant Selection</h3>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="section-body">
+
+          <!-- Sequential Field Selections as per User UX Flow -->
+          <div class="grid-3" style="margin-bottom:16px">
+            <div class="form-group">
+              <label style="color:var(--color-brand); font-size:12px">1. Select Base Incoterm <span
+                  class="req">*</span></label>
+              <select class="form-control manual-input font-mono" style="font-size:13px; font-weight:700"
+                id="inp_user_incoterm" onchange="deriveMasterVariantFromFields()">
+                <option value="CIF" selected>CIF (Cost, Insurance &amp; Freight)</option>
+                <option value="FOB">FOB (Free On Board)</option>
+                <option value="EXW">EXW (Ex-Works)</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="wrapper-origin-scope">
+              <label style="color:var(--color-brand); font-size:12px">2. Sourcing Origin Scope <span
+                  class="req">*</span></label>
+              <select class="form-control manual-input font-mono" style="font-size:13px; font-weight:700"
+                id="inp_user_origin" onchange="deriveMasterVariantFromFields()">
+                <option value="India" selected>India (Local Sourcing)</option>
+                <option value="TC">TC (Third Country Sourcing)</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="wrapper-exw-subscope" style="display:none">
+              <label style="color:var(--color-primary); font-size:12px">3. EXW Sale Sub-Type</label>
+              <select class="form-control font-mono" style="font-size:13px" id="inp_exw_subtype"
+                onchange="deriveMasterVariantFromFields()">
+                <option value="Domestic" selected>Domestic Sale</option>
+                <option value="Merchant">Merchant Export</option>
+                <option value="Repacking Service">Repacking Service</option>
+              </select>
+            </div>
+
+            <!-- Hidden Master Controls ensuring zero regression on unified downstream calculation architecture -->
+            <input type="hidden" id="inp_master_cs_type" value="India-CIF">
+            <input type="hidden" id="inp_incoterm" value="CIF">
+            <input type="hidden" id="inp_type_of_sale" value="Direct Export">
+          </div>
+
+          <!-- Custom Checkbox Selection Controls for Mutually Exclusive Trade Benefits -->
+          <div id="row-schemes"
+            style="padding:12px; background:#F8FAFC; border-radius:6px; border-left:3px solid var(--color-primary); margin-bottom:12px">
+            <label
+              style="display:block; font-size:11px; font-weight:700; color:var(--color-primary); margin-bottom:8px">
+              🎁 Automated Trade Schemes Selection (Mutually Exclusive Checkboxes)
+            </label>
+            <div style="display:flex; flex-direction:column; gap:8px">
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer">
+                <input type="checkbox" id="chk_scheme_rodtep" checked onchange="onSchemeCheckboxToggle('rodtep')"
+                  style="width:16px;height:16px;accent-color:var(--color-brand)">
+                <span style="font-weight:600; color:var(--color-text)">Apply RoDTEP Scheme Rebate (Standard
+                  Claim)</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer">
+                <input type="checkbox" id="chk_scheme_advance" onchange="onSchemeCheckboxToggle('advance')"
+                  style="width:16px;height:16px;accent-color:#B45309">
+                <span style="font-weight:600; color:#B45309">Apply Advance Licensing Scheme (AA-DFIA Duty Waiver)</span>
+              </label>
+            </div>
+            <span class="help-text"
+              style="display:block; margin-top:6px; font-size:10px; color:var(--color-text-subtle)">
+            </span>
+          </div>
+
+          <div
+            style="margin-top:12px; padding:8px 12px; background:#F8FAFC; border-radius:6px; border:1px dashed #CBD5E1; font-size:11px; color:#475569">
+            Active Excel Tab Binding: <strong id="lbl-mapped-sheet" style="color:var(--color-brand)">India-CIF</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SECTION 2: OFFER DETAILS HEADER (FULLY CLICKABLE & EDITABLE FOR LIVE DEMOS) ─── -->
+      <div class="section-card">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h3>📋 Offer Details</h3>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="section-body">
+
+          <!-- Type of sale visual cue row -->
+          <div class="grid-3" style="margin-bottom:12px; background:#F8FAFC; padding:8px 12px; border-radius:6px">
+            <div>
+              <span class="help-text" style="display:block">Type of Sale:</span>
+              <strong style="color:var(--color-primary)" id="lbl-type-sale-view">Direct Export</strong>
+            </div>
+            <div>
+              <span class="help-text" style="display:block">Cost Sheet Type:</span>
+              <strong class="manual-input" style="padding:2px 6px; border-radius:4px"
+                id="lbl-cs-type-view">TC-FOB</strong>
+            </div>
+            <div>
+              <span class="help-text" style="display:block">Cost Sheet Number:</span>
+              <strong class="font-mono" style="color:var(--color-text-muted)">Auto Generated</strong>
+            </div>
+          </div>
+
+          <!-- Fully Clickable/Editable Demo Fields -->
+          <!-- hidden: numeric credit days for calculateEngine() -->
+          <input type="hidden" id="inp_cust_credit_days" value="30">
+          <div class="grid-4" style="margin-bottom:16px">
+            <div class="form-group">
+              <label>Product Name</label>
+              <select class="form-control" id="inp_product" onchange="fetchProductGrade(this.value)">
+                <option value="">Select Item...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Product Grade
+                <span id="lbl-grade-status" style="font-size:9px;color:var(--color-text-subtle);margin-left:4px"></span>
+              </label>
+              <input type="text" class="form-control" id="inp_grade" placeholder="Auto-fetched from item…" readonly
+                style="background:#F8FAFC;color:var(--color-text-muted)">
+            </div>
+            <div class="form-group">
+              <label>Customer Name</label>
+              <select class="form-control" id="inp_customer">
+                <option value="">Select Customer...</option>
+              </select>
+            </div>
+            <div class="form-group merchant-hide">
+              <label>Customer Payment Terms</label>
+              <select class="form-control manual-input" id="inp_cust_terms" onchange="onCustTermsChange(this.value)">
+                <option value="">Select terms...</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-4" style="margin-bottom:16px">
+            <div class="form-group">
+              <label>Supplier Name</label>
+              <select class="form-control" id="inp_supplier" onchange="updateStuffingLoc()">
+                <option value="Direct Sourcing Partner" selected>Direct Sourcing Partner</option>
+                <option value="Local Vendor A">Local Vendor A</option>
+                <option value="Overseas Principal">Overseas Principal</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Supplier Payment Terms</label>
+              <select class="form-control" id="inp_supp_terms">
+                <option value="">Select terms...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label id="lbl-destination-label">Final Country of Destination</label>
+              <select class="form-control" id="inp_destination">
+                <option value="South Africa" selected>South Africa</option>
+                <option value="United Arab Emirates">United Arab Emirates</option>
+                <option value="United States">United States</option>
+                <option value="Germany">Germany</option>
+                <option value="Singapore">Singapore</option>
+              </select>
+            </div>
+            <div class="form-group domestic-hide exw-hide">
+              <label>Port of Discharge</label>
+              <select class="form-control" id="inp_pod">
+                <option value="Durban" selected>Durban Gateway</option>
+                <option value="Jebel Ali">Jebel Ali Terminal</option>
+                <option value="Rotterdam">Rotterdam Hub</option>
+                <option value="Houston">Houston Gateway</option>
+              </select>
+            </div>
+            <div class="form-group domestic-only d-none">
+              <label>Delivery Location</label>
+              <select class="form-control manual-input" id="inp_dom_delivery_location">
+                <option value="Panoli" selected>Panoli</option>
+                <option value="Mundra">Mundra</option>
+                <option value="Customer Location">Customer Location</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label id="lbl-pol-label">Port of Loading</label>
+              <select class="form-control" id="inp_pol">
+                <option value="Hazira" selected>Hazira Port</option>
+                <option value="Nhava Sheva">Nhava Sheva (JNPT)</option>
+                <option value="Mundra">Mundra Port</option>
+                <option value="Kandla">Kandla Terminal</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Packing and Stuffing at <span class="req">*</span></label>
+              <select class="form-control manual-input" id="inp_stuffing_at" onchange="updateStuffingLoc()">
+                <option value="">Select...</option>
+                <option value="Supplier's Place">Supplier's Place</option>
+                <option value="Own Warehouse — Panoli" selected>Own Warehouse — Panoli</option>
+                <option value="Own Warehouse — Mundra">Own Warehouse — Mundra</option>
+                <option value="CFS / ICD">CFS / ICD</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Packing and Stuffing Location</label>
+              <input type="text" class="form-control" id="inp_stuffing_loc" value="Panoli" readonly
+                style="background:#F8FAFC">
+            </div>
+            <div class="form-group">
+              <label id="lbl-container-label">Container type</label>
+              <select class="form-control" id="inp_container" onchange="updateContainerDefaults()">
+                <option value="">Select...</option>
+                <option value="20 FT" selected>20 FT Container</option>
+                <option value="40 FT">40 FT Container</option>
+                <option value="40 HC">40 HC Container</option>
+                <option value="ISO Tank Container">ISO Tank Container</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-4" style="margin-bottom:16px">
+            <div class="form-group">
+              <label>Packing type</label>
+              <select class="form-control" style="font-size:11px">
+                <option value="">Select...</option>
+                <option value="Bags">Bags</option>
+                <option value="Drums">Drums</option>
+                <option value="Cartons">Cartons</option>
+                <option value="Bulk">Bulk</option>
+                <option value="Pallets" selected>Pallets</option>
+                <option value="Jumbo Bags">Jumbo Bags</option>
+                <option value="IBC Composite Pallet">IBC Composite Pallet</option>
+                <option value="HMHDPE Drums">HMHDPE Drums</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Packing Unit Size (Kg) <span class="req">*</span></label>
+              <input type="number" class="form-control manual-input font-mono" id="inp_unit_size" value=""
+                oninput="calculateEngine()">
+            </div>
+
+            <div class="form-group">
+              <label>No of Packing units in 1 FCL</label>
+              <input type="number" class="form-control font-mono" id="inp_units_per_fcl" value=""
+                oninput="calculateEngine()">
+            </div>
+            <div class="form-group">
+              <label>Quantity / FCL / ISO</label>
+              <input type="text" class="form-control font-mono" id="lbl-qty-fcl-box" value="" readonly
+                style="background:#F8FAFC">
+            </div>
+          </div>
+          <div class="grid-4" style="margin-bottom:16px">
+            <div class="form-group">
+              <label>Total No of FCL </label>
+              <input type="number" class="form-control manual-input font-mono" id="inp_total_fcl" value=""
+                oninput="calculateEngine()">
+            </div>
+            <div class="form-group">
+              <label>Total Qty</label>
+              <input type="text" class="form-control font-mono" id="lbl-total-mt-box" value="" readonly
+                style="background:#F8FAFC">
+            </div>
+
+            <div class="form-group exw-hide">
+              <label>Cost Sheet Currency <span class="req">*</span></label>
+              <select class="form-control manual-input font-mono" id="inp_cs_currency">
+                <option value="">Select Currency...</option>
+              </select>
+            </div>
+            <div class="form-group exw-hide">
+              <label>Exchange Premium (Rs.)
+                <span style="font-size:9px;color:var(--color-text-subtle);font-weight:400">added on top of base
+                  rate</span>
+              </label>
+              <input type="number" step="0.01" class="form-control font-mono" id="inp_exchange_premium" value=""
+                oninput="syncPremiumAndRecalc()" placeholder="e.g. 0.30">
+            </div>
+          </div>
+
+          <div class="grid-4 exw-hide">
+            <div class="form-group">
+              <label>Exchange Rate (Rs./ Foreign Ccy) <span class="req">*</span></label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="number" step="0.01" class="form-control manual-input font-mono" id="inp_base_rate" value=""
+                  oninput="calculateEngine()" style="flex:1">
+                <button type="button" onclick="fetchExchangeRate()"
+                  style="white-space:nowrap;padding:6px 10px;border:1px solid var(--color-border-dark);border-radius:6px;background:#1F272E;color:#fff;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0"
+                  id="btn_fetch_rate" title="Fetch live rate from Currency Exchange">
+                  ↻ Fetch
+                </button>
+              </div>
+              <div class="help-text" id="lbl-rate-fetch-status">Enter manually or click Fetch for live rate</div>
+            </div>
+            <div class="form-group">
+              <label>Effective Exchange Rate (Rate + Premium)</label>
+              <input type="text" class="form-control font-mono" id="lbl-cs-exr" value="" readonly
+                style="background:#F8FAFC;font-weight:700;color:var(--color-brand)">
+            </div>
+            <div class="form-group domestic-hide exw-hide"></div>
+            <div class="form-group domestic-hide exw-hide"></div>
+          </div>
+
+          <!-- Hidden fields for exchange logic -->
+          <input type="hidden" id="inp_premium" value="0.30">
+        </div>
+      </div>
+
+      <!-- ─── SECTION 3: PRODUCT DETAILS (2) [INDIA-CIF OPTION 2 COLUMN N] ─── -->
+      <div id="wrapper-standard-tables" class="section-card d-none">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h3 id="lbl-product-table-title">📦 Product Details </h3>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="section-body no-pad">
+          <div class="table-responsive">
+            <table class="child-table">
+              <thead>
+                <tr>
+                  <th style="width:32%">RM Cost / Cost Element</th>
+                  <th class="text-right" style="width:14%">Rs. Total</th>
+                  <th class="text-right" style="width:14%">Rs./MT</th>
+                  <th class="text-right col-usd" style="width:14%">$ Total</th>
+                  <th class="text-right col-usd" style="width:14%">$/MT</th>
+                  <th style="width:14%" id="lbl-helper-th">Rs/FCL &amp; Helper Inputs</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- RM Cost Section -->
+                <tr class="bg-subtle" style="border-bottom:1px solid var(--color-border)">
+                  <td colspan="6"><strong style="color:var(--color-brand)">RM Cost</strong></td>
+                </tr>
+                <tr class="domestic-only d-none">
+                  <td>Basic Price</td>
+                  <td class="text-right font-mono" id="lbl-dom-basic-tot">(136,200)</td>
+                  <td style="padding:4px 12px">
+                    <input type="number" step="50" class="cell-input cell-manual font-mono text-right"
+                      style="font-size:12px;padding:4px" id="inp_dom_basic_rs_mt" value="-2000"
+                      oninput="calculateEngine()">
+                  </td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td></td>
+                </tr>
+                <tr class="domestic-only d-none">
+                  <td>Freight Inward</td>
+                  <td class="text-right font-mono" id="lbl-dom-freight-in-tot">36,000</td>
+                  <td class="text-right font-mono" id="lbl-dom-freight-in-mt">529</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td style="padding:4px 8px">
+                    <div class="domestic-only d-none"
+                      style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Total Freight Inward</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_dom_freight_inward" value="12000"
+                        oninput="calculateEngine()">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>RM Delivered Cost</td>
+                  <td class="text-right font-mono" id="lbl-rm-rs-tot">(102,150)</td>
+                  <td style="padding:4px 12px">
+                    <div class="domestic-hide">
+                      <input type="number" step="50" class="cell-input cell-manual font-mono text-right"
+                        style="font-size:12px;padding:4px" id="inp_rm_rs_mt" value="-1500" oninput="calculateEngine()">
+                    </div>
+                    <div class="domestic-only d-none font-mono text-right" id="lbl-dom-rm-mt"
+                      style="font-size:12px;padding:4px">-1,471</div>
+                  </td>
+                  <td class="text-right font-mono col-usd" id="lbl-rm-usd-tot">(1,169)</td>
+                  <td class="text-right font-mono col-usd" id="lbl-rm-usd-mt">(17.2)</td>
+                  <td><span class="help-text domestic-hide" style="font-size:10px">Rebate / Base Adj</span></td>
+                </tr>
+                <!-- PM Cost Section -->
+                <tr class="bg-subtle"
+                  style="border-top:1px solid var(--color-border); border-bottom:1px solid var(--color-border)">
+                  <td colspan="6"><strong style="color:var(--color-brand)">PM Cost</strong></td>
+                </tr>
+                <tr>
+                  <td>Primary Packing Delivered Cost</td>
+                  <td class="text-right font-mono" id="lbl-pm-rs-tot">450,000</td>
+                  <td class="text-right font-mono" id="lbl-pm-rs-mt">6,608</td>
+                  <td class="text-right font-mono col-usd" id="lbl-pm-usd-tot">5,151</td>
+                  <td class="text-right font-mono col-usd" id="lbl-pm-usd-mt">75.6</td>
+                  <td style="padding:4px 8px; display:flex; flex-direction:column; gap:4px">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Packing Cost Per Unit</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_pm_unit_cost" value="8200"
+                        oninput="calculateEngine()">
+                    </div>
+                    <div
+                      style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:4px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">No. of Units</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_pm_units_fcl" value="20"
+                        oninput="calculateEngine()">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Ply Sheet/Airbags/Pallets</td>
+                  <td class="text-right font-mono" id="lbl-ply-rs-tot">5,250</td>
+                  <td class="text-right font-mono" id="lbl-ply-rs-mt">231</td>
+                  <td class="text-right font-mono col-usd" id="lbl-ply-usd-tot">180</td>
+                  <td class="text-right font-mono col-usd" id="lbl-ply-usd-mt">2.6</td>
+                  <td style="padding:4px 8px">
+                    <div style="display:flex; flex-direction:column; gap:4px">
+                      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                        <span style="font-size:10px;color:var(--color-text-muted)">Airbag/Ply/Pallets Price</span>
+                        <input type="number" class="cell-input cell-manual font-mono text-right"
+                          style="width:70px;font-size:11px;padding:2px" id="inp_dom_ply_price" value="350"
+                          oninput="calculateEngine()">
+                      </div>
+                      <div
+                        style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:4px">
+                        <span style="font-size:10px;color:var(--color-text-muted)">Total no of Bags/Ply/Pallets</span>
+                        <input type="number" class="cell-input cell-manual font-mono text-right"
+                          style="width:70px;font-size:11px;padding:2px" id="inp_dom_ply_units" value="5"
+                          oninput="calculateEngine()">
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Repacking Cost</td>
+                  <td class="text-right font-mono" id="lbl-repack-rs-tot">34,050</td>
+                  <td class="text-right font-mono repack-only d-none" id="lbl-repack-rs-mt">0</td>
+                  <td style="padding:4px 12px" class="repack-hide">
+                    <input type="number" step="50" class="cell-input cell-manual font-mono text-right"
+                      style="font-size:12px;padding:4px" id="inp_repack_rs_mt" value="500" oninput="calculateEngine()">
+                  </td>
+                  <td class="text-right font-mono col-usd" id="lbl-repack-usd-tot">390</td>
+                  <td class="text-right font-mono col-usd" id="lbl-repack-usd-mt">5.7</td>
+                  <td style="padding:4px 8px">
+                    <span class="help-text domestic-hide exw-hide repack-hide" style="font-size:10px">Excel row:
+                      Repacking Cost</span>
+                    <div class="repack-only d-none"
+                      style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Repacking Labour Cost</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_repack_labour_fcl" value="7500"
+                        oninput="calculateEngine()">
+                    </div>
+                  </td>
+                </tr>
+                <tr class="repack-only d-none">
+                  <td>Stickers/Labels</td>
+                  <td class="text-right font-mono" id="lbl-repack-stickers-tot">0</td>
+                  <td class="text-right font-mono" id="lbl-repack-stickers-mt">0</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td style="padding:4px 8px">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Stickers/Labels</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_repack_stickers_fcl" value="1000"
+                        oninput="calculateEngine()">
+                    </div>
+                  </td>
+                </tr>
+                <tr class="exw-only d-none">
+                  <td>Addl. Vanning Requirement (chocking/lashing)</td>
+                  <td class="text-right font-mono" id="lbl-vanning-rs-tot">21,000</td>
+                  <td class="text-right font-mono" id="lbl-vanning-rs-mt">308</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td style="padding:4px 8px">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Addl. Vanning Requirement
+                        (chocking/lashing)</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_vanning_rs_fcl" value="7000"
+                        oninput="calculateEngine()">
+                    </div>
+                  </td>
+                </tr>
+                <tr class="domestic-only d-none">
+                  <td>Freight Charges</td>
+                  <td class="text-right font-mono" id="lbl-dom-freight-out-tot">45,000</td>
+                  <td class="text-right font-mono" id="lbl-dom-freight-out-mt">661</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td style="padding:4px 8px">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Total Freight to Destination</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_dom_freight_dest" value="15000"
+                        oninput="calculateEngine()">
+                    </div>
+                  </td>
+                </tr>
+                <tr class="domestic-only d-none">
+                  <td>Handling (Loading+Unloading) Cost</td>
+                  <td class="text-right font-mono" id="lbl-dom-handling-tot">9,000</td>
+                  <td class="text-right font-mono" id="lbl-dom-handling-mt">132</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td style="padding:4px 8px">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Total Loading + Unloading Cost</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_dom_handling_cost" value="3000"
+                        oninput="calculateEngine()">
+                    </div>
+                  </td>
+                </tr>
+                <tr class="domestic-only d-none">
+                  <td>Warehouse Rent/Storage Charges</td>
+                  <td class="text-right font-mono" id="lbl-dom-warehouse-tot">17,025</td>
+                  <td style="padding:4px 12px">
+                    <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
+                      style="font-size:12px;padding:4px" id="inp_dom_warehouse_rs_mt" value="250"
+                      oninput="syncWarehouseMt()">
+                  </td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td style="padding:4px 8px">
+                    <div class="domestic-only d-none"
+                      style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Total Warehouse Rent
+                        Considered</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_dom_warehouse_tot_input" value="17025"
+                        oninput="syncWarehouseTot()">
+                    </div>
+                    <div class="domestic-hide">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Total Warehouse Rent
+                        Considered</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="repack-only d-none">
+                  <td>QC Charges (Sampling, Surveyor etc)</td>
+                  <td class="text-right font-mono" id="lbl-repack-qc-tot">0</td>
+                  <td class="text-right font-mono" id="lbl-repack-qc-mt">0</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td class="text-right font-mono col-usd">—</td>
+                  <td style="padding:4px 8px">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">QC Charges (Sampling, Surveyor
+                        etc)</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_repack_qc_fcl" value="2000"
+                        oninput="calculateEngine()">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td id="lbl-labels-row-name">Any Other : Labels Charges</td>
+                  <td class="text-right font-mono" id="lbl-labels-rs-tot">3,405</td>
+                  <td style="padding:4px 12px">
+                    <div class="domestic-hide">
+                      <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
+                        style="font-size:12px;padding:4px" id="inp_labels_rs_mt" value="50" oninput="calculateEngine()">
+                    </div>
+                    <div class="domestic-only d-none font-mono text-right" id="lbl-dom-labels-mt"
+                      style="font-size:12px;padding:4px">88</div>
+                  </td>
+                  <td class="text-right font-mono col-usd" id="lbl-labels-usd-tot">39</td>
+                  <td class="text-right font-mono col-usd" id="lbl-labels-usd-mt">0.6</td>
+                  <td style="padding:4px 8px">
+                    <div class="domestic-hide repack-hide">
+                      <span class="help-text" style="font-size:10px" id="lbl-labels-helper">Excel row: Labels /
+                        Other</span>
+                    </div>
+                    <div class="domestic-only repack-only d-none"
+                      style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Any other cost - Specify with
+                        Remarks</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_dom_labels_fcl" value="2000"
+                        oninput="calculateEngine()">
+                    </div>
+                  </td>
+                </tr>
+                <tr class="tr-subtotal" style="border-top:2px solid var(--color-border-dark)">
+                  <td><strong id="lbl-product-total-name">EXW Cost</strong></td>
+                  <td class="text-right font-mono" id="lbl-ind-prod-tot-rs" style="font-weight:700">353,100</td>
+                  <td class="text-right font-mono" id="lbl-ind-prod-mt-rs" style="font-weight:700">5,185</td>
+                  <td class="text-right font-mono col-usd" id="lbl-ind-prod-tot-usd" style="font-weight:700">4,041
+                  </td>
+                  <td class="text-right font-mono col-usd" id="lbl-ind-prod-mt-usd" style="font-weight:700">59.3</td>
+                  <td><span class="badge badge-subtle">Base Assembly</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SECTION 4: TC PRODUCT BUY BLOCK ─── -->
+      <div id="wrapper-tc-cost-table" class="section-card">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h3 id="lbl-tc-table-title">🚢 FOB Cost (1)</h3>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="section-body no-pad">
+          <div class="table-responsive">
+            <table class="child-table" style="border-bottom:2px solid var(--color-border)">
+              <thead>
+                <tr>
+                  <th style="width:32%">Cost Element</th>
+                  <th class="text-right" style="width:17%">Rs. Total</th>
+                  <th class="text-right" style="width:17%">Rs./MT</th>
+                  <th class="text-right" style="width:17%">$ Total</th>
+                  <th class="text-right" style="width:17%">$/MT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="bg-target-label" id="lbl-tc-row-name">Total FOB Cost</td>
+                  <td class="text-right font-mono bg-target-val" id="lbl-tc-buy-tot">1,100,731</td>
+                  <td class="text-right font-mono" id="lbl-tc-buy-mt">16,163</td>
+                  <td class="text-right font-mono bg-target-val" id="lbl-tc-buy-utot">12,599</td>
+                  <td style="padding:4px 12px">
+                    <input type="number" step="0.5" class="cell-input cell-manual font-mono"
+                      style="font-size:13px;padding:4px" id="inp_tc_usd_mt" value="185.0" oninput="calculateEngine()">
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SECTION 3.5: INDIA C&F CHARGES (3) (VISIBLE FOR INDIA EXPORT VARIANTS) ─── -->
+      <div id="wrapper-ind-cnf-table" class="section-card d-none">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h3>🚢 C&amp;F Charges</h3>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="section-body no-pad">
+          <!-- Shipping Line Selector Banner -->
+          <div
+            style="padding:12px 16px; background:#F8FAFC; border-bottom:1px solid var(--color-border); display:flex; align-items:center; gap:12px">
+            <span style="font-size:12px; font-weight:600; color:var(--color-primary)">Shipping Line</span>
+            <select class="form-control manual-input font-mono" style="width:200px; font-size:12px; padding:2px 8px"
+              id="inp_shipping_line">
+              <option value="Maersk" selected>Maersk</option>
+              <option value="MSC">MSC</option>
+              <option value="CMA CGM">CMA CGM</option>
+              <option value="Hapag-Lloyd">Hapag-Lloyd</option>
+            </select>
+
+          </div>
+
+          <div class="split-layout">
+            <div class="split-main">
+              <table class="child-table">
+                <thead>
+                  <tr>
+                    <th style="width:38%">C&amp;F Cost Item</th>
+                    <th class="text-right" style="width:15%">Rs. Total</th>
+                    <th class="text-right" style="width:15%">Rs./MT</th>
+                    <th class="text-right" style="width:15%">$ Total</th>
+                    <th class="text-right" style="width:15%">$/MT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Total C&amp;F Cost without BL Charges</td>
+                    <td class="text-right font-mono" id="lbl-cnf-base-rs">113,325</td>
+                    <td class="text-right font-mono" id="lbl-cnf-base-mt">1,664</td>
+                    <td class="text-right font-mono" id="lbl-cnf-base-usd">432</td>
+                    <td class="text-right font-mono" id="lbl-cnf-base-umt">19.0</td>
+                  </tr>
+                  <tr>
+                    <td>Total B/L charges</td>
+                    <td style="padding:4px 12px">
+                      <input type="number" step="100" class="cell-input cell-manual font-mono text-right"
+                        style="font-size:12px;padding:4px" id="inp_bl_charges" value="5100" oninput="calculateEngine()">
+                    </td>
+                    <td class="text-right font-mono" id="lbl-bl-mt">75</td>
+                    <td class="text-right font-mono" id="lbl-bl-usd">58</td>
+                    <td class="text-right font-mono" id="lbl-bl-umt">0.9</td>
+                  </tr>
+                  <tr>
+                    <td>Sea Way BL Charges</td>
+                    <td class="text-right font-mono">—</td>
+                    <td class="text-right font-mono">—</td>
+                    <td class="text-right font-mono">—</td>
+                    <td class="text-right font-mono">—</td>
+                  </tr>
+                  <tr class="bg-subtle" style="border-top:1px solid var(--color-border-dark)">
+                    <td><strong>Total C&amp;F Charges</strong></td>
+                    <td class="text-right font-mono" id="lbl-cnf-tot-rs" style="font-weight:600">118,425</td>
+                    <td class="text-right font-mono" id="lbl-cnf-tot-mt" style="font-weight:600">1,739</td>
+                    <td class="text-right font-mono" id="lbl-cnf-tot-usd" style="font-weight:600">491</td>
+                    <td class="text-right font-mono" id="lbl-cnf-tot-umt" style="font-weight:600">19.9</td>
+                  </tr>
+                  <tr>
+                    <td><strong style="color:#92400E">Total FOB Cost</strong></td>
+                    <td class="text-right font-mono" id="lbl-ind-fob-tot-rs" style="font-weight:700; color:#92400E">
+                      508,980</td>
+                    <td class="text-right font-mono" id="lbl-ind-fob-mt-rs" style="font-weight:700; color:#92400E">
+                      7,628
+                    </td>
+                    <td class="text-right font-mono" id="lbl-ind-fob-tot-usd" style="font-weight:700; color:#92400E">
+                      5,081</td>
+                    <td class="text-right font-mono" id="lbl-ind-fob-mt-usd" style="font-weight:700; color:#92400E">
+                      87.3
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="split-side" style="width:360px">
+              <div class="side-table-header">Rs/FCL &amp; Remarks Build-Up</div>
+              <div style="padding:10px; display:flex; flex-direction:column; gap:6px; font-size:11px">
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  <span style="color:var(--color-text-muted)">Agency</span>
+                  <input type="number" class="form-control font-mono text-right"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_agency"
+                    value="1200" oninput="calculateEngine()">
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  <span style="color:var(--color-text-muted)">LOLO</span>
+                  <input type="number" class="form-control font-mono text-right"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_lolo" value="2000"
+                    oninput="calculateEngine()">
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  <span style="color:var(--color-text-muted)">Seal Charges</span>
+                  <input type="number" class="form-control font-mono text-right"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_seal" value="800"
+                    oninput="calculateEngine()">
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  <span style="color:var(--color-text-muted)">THC at Port</span>
+                  <input type="number" class="form-control font-mono text-right"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_thc" value="12025"
+                    oninput="calculateEngine()">
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  <span style="color:var(--color-text-muted)">Port Charge</span>
+                  <input type="number" class="form-control font-mono text-right"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_port" value="750"
+                    oninput="calculateEngine()">
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                  <span style="color:var(--color-text-muted)">Haz documentation</span>
+                  <input type="number" class="form-control font-mono text-right"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_haz" value="0"
+                    oninput="calculateEngine()">
+                </div>
+                <div style="border-top:1px solid var(--color-border); padding-top:4px">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px">
+                    <span style="color:var(--color-primary); font-weight:500">Transportation</span>
+                    <input type="number" class="form-control manual-input font-mono text-right"
+                      style="width:75px;padding:2px 4px;font-size:11px" id="inp_cnf_trans" value="11000"
+                      oninput="calculateEngine()">
+                  </div>
+                  <span style="font-size:9px;color:var(--color-text-subtle);display:block">Remark: Based on Location
+                    to
+                    POL selection</span>
+                </div>
+                <div
+                  style="display:flex; align-items:center; justify-content:space-between; background:#E5E7EB; padding:2px 6px; border-radius:3px">
+                  <strong>Total Standard Charges</strong>
+                  <strong class="font-mono" id="lbl-cnf-std-tot">27,775</strong>
+                </div>
+                <div style="border-top:1px solid var(--color-border); padding-top:4px">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px">
+                    <span style="color:var(--color-primary); font-weight:500">Any Other Charges</span>
+                    <input type="number" class="form-control manual-input font-mono text-right"
+                      style="width:75px;padding:2px 4px;font-size:11px" id="inp_cnf_other" value="10000"
+                      oninput="calculateEngine()">
+                  </div>
+                  <span style="font-size:9px;color:var(--color-text-subtle);display:block">Remark: On Wheel: Any
+                    additional cost (on wheels/CFS/ICD/EDI) etc.</span>
+                </div>
+                <div
+                  style="display:flex; align-items:center; justify-content:space-between; background:#E5E7EB; padding:2px 6px; border-radius:3px">
+                  <strong>Total Cost/FCI</strong>
+                  <strong class="font-mono" id="lbl-cnf-fcl-tot">37,775</strong>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:2px 6px">
+                  <span style="color:var(--color-text-muted)">Total BL Charges for 1 FCL</span>
+                  <strong class="font-mono" id="lbl-cnf-bl-fcl">1,700</strong>
+                </div>
+                <div
+                  style="display:flex; align-items:center; justify-content:space-between; background:#D1D5DB; padding:4px 6px; border-radius:3px">
+                  <strong style="color:var(--color-primary)">Total C&amp;F for 1 FCL</strong>
+                  <strong class="font-mono" id="lbl-cnf-fcl-grand">39,475</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SECTION 4.5: CONDITIONAL TC-FOB SEA FREIGHT TABLE (2) (VISIBLE ON LOAD FOR TC-FOB) ─── -->
+      <div id="wrapper-tc-freight-table" class="section-card">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h3>🌊 Sea Freight</h3>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="section-body no-pad">
+          <div class="split-layout">
+            <div class="split-main">
+              <table class="child-table">
+                <thead>
+                  <tr>
+                    <th style="width:32%">Freight Line Item</th>
+                    <th class="text-right" style="width:17%">Rs. Total</th>
+                    <th class="text-right" style="width:17%">Rs./MT</th>
+                    <th class="text-right" style="width:17%">$ Total</th>
+                    <th class="text-right" style="width:17%">$/MT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Cost Sheet Sea Freight ($)</td>
+                    <td class="text-right font-mono" id="lbl-tc-sf-rs-tot">170,372</td>
+                    <td class="text-right font-mono" id="lbl-tc-sf-rs-mt">2,502</td>
+                    <td class="text-right font-mono" id="lbl-tc-sf-usd-tot">1,950</td>
+                    <td class="text-right font-mono" id="lbl-tc-sf-usd-mt">28.6</td>
+                  </tr>
+                  <tr>
+                    <td>Vanning Charges (Rs./Container)</td>
+                    <td class="text-right font-mono" id="lbl-tc-van-rs-tot">13,106</td>
+                    <td class="text-right font-mono" id="lbl-tc-van-rs-mt">192</td>
+                    <td style="padding:4px 12px">
+                      <input type="number" step="5" class="cell-input cell-manual font-mono"
+                        style="font-size:12px;padding:4px" id="inp_tc_van_usd" value="150" oninput="calculateEngine()">
+                    </td>
+                    <td class="text-right font-mono" id="lbl-tc-van-usd-mt">2.2</td>
+                  </tr>
+                  <tr class="tr-subtotal" style="border-top:1px solid var(--color-border-dark)">
+                    <td><strong>Total Sea Freight</strong></td>
+                    <td class="text-right font-mono" id="lbl-tc-tsf-rs-tot" style="font-weight:700">183,477</td>
+                    <td class="text-right font-mono" id="lbl-tc-tsf-rs-mt" style="font-weight:700">2,694</td>
+                    <td class="text-right font-mono" id="lbl-tc-tsf-usd-tot" style="font-weight:700">2,100</td>
+                    <td class="text-right font-mono" id="lbl-tc-tsf-usd-mt" style="font-weight:700">31</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="split-side">
+              <div class="side-table-header">$/FCL &amp; Remarks</div>
+              <div style="padding:12px; display:flex; flex-direction:column; gap:10px">
+                <div>
+                  <label style="font-size:11px;color:var(--color-text-muted);display:block;margin-bottom:2px">Sea
+                    Freight (Non Haz)</label>
+                  <div style="display:flex;align-items:center;gap:4px">
+                    <input type="number" class="form-control manual-input font-mono" id="inp_tc_sf_fcl" value="650"
+                      oninput="calculateEngine()">
+                    <span style="font-size:11px;font-weight:600;color:var(--color-primary)">$/FCL</span>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:11px;color:var(--color-text-muted);display:block;margin-bottom:2px">+Haz
+                    Surcharge</label>
+                  <input type="number" class="form-control font-mono" id="inp_tc_sf_haz" value="0"
+                    oninput="calculateEngine()" style="background:#F8FAFC">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:var(--color-text-muted);display:block;margin-bottom:2px">Shipping
+                    Premium (+)</label>
+                  <input type="number" step="0.1" class="form-control manual-input font-mono" id="inp_ship_premium"
+                    value="2.5" oninput="calculateEngine()">
+                </div>
+                <div>
+                  <label style="font-size:11px;color:var(--color-text-muted);display:block;margin-bottom:2px">Shipping
+                    Exchange rate (Rs./$)</label>
+                  <input type="text" class="form-control font-mono" id="lbl_tc_ship_exr" value="89.87" readonly
+                    style="background:#F8FAFC; color:var(--color-brand); font-weight:600">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SECTION 5: CHILD TABLE 4 - MARGINS & PRICE MATRIX (FEATURING EDITABLE INTERNAL COST %) ─── -->
+      <div class="section-card">
+        <div class="section-header" onclick="toggleSection(this)">
+          <h3 id="lbl-margin-table-title">📊 Margin</h3>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="section-body no-pad">
+          <div class="table-responsive">
+            <table class="child-table">
+              <thead>
+                <tr>
+                  <th style="width:28%">Margin Component</th>
+                  <th class="text-right" style="width:13%">Rs. Total</th>
+                  <th class="text-right" style="width:11%">Rs./MT</th>
+                  <th class="text-right col-usd" style="width:11%">$ Total</th>
+                  <th class="text-right col-usd" style="width:11%">$/MT</th>
+                  <th style="width:26%; padding-left:16px; background-color:#F8FAFC; color:#475569">Helper Spreadsheet
+                    Logics</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                <!-- Internal Cost Row with fully editable manual green percentage override -->
+                <tr>
+                  <td>Total Internal Cost</td>
+                  <td class="text-right font-mono" id="lbl-marg-int-tot">30,344</td>
+                  <td class="text-right font-mono" id="lbl-marg-int-mt">446</td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-int-utot">347</td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-int-umt">5.1</td>
+                  <td
+                    style="padding-left:16px; background-color:#F8FAFC; font-size:11px; color:var(--color-text-muted)">
+                    Total Internal Cost
+                    <span style="margin-left:6px; display:inline-flex; align-items:center; gap:2px">
+                      <input type="number" step="0.5" class="cell-input cell-manual font-mono"
+                        style="width:55px; padding:2px 4px; font-size:11px; text-align:center" id="inp_int_cost_pct"
+                        value="2.0" oninput="calculateEngine()">
+                      <strong class="domestic-hide" style="color:var(--color-brand)">% from Master</strong>
+                      <strong class="domestic-only d-none" style="color:var(--color-brand)">%</strong>
+                    </span>
+                  </td>
+                </tr>
+
+                <!-- Credit Cost Row -->
+                <tr>
+                  <td id="lbl-credit-cost-name">Credit Cost : 30 days</td>
+                  <td class="text-right font-mono" id="lbl-marg-cr-tot">15,172</td>
+                  <td class="text-right font-mono" id="lbl-marg-cr-mt">223</td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-cr-utot">174</td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-cr-umt">2.6</td>
+                  <td
+                    style="padding-left:16px; background-color:#F8FAFC; font-size:11px; color:var(--color-text-muted)">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+                      <span>Credit Cost (Customer Payment Terms)</span>
+                      <div class="exw-only d-none" style="display:flex; align-items:center; gap:4px">
+                        <input type="number" step="0.1" class="cell-input font-mono"
+                          style="width:45px; padding:2px 4px; font-size:11px; text-align:center; background:#F3F4F6; color:var(--color-brand); border:1px solid transparent"
+                          id="inp_dom_credit_pct" value="1.0" readonly>
+                        <strong style="color:var(--color-brand)">%</strong>
+                      </div>
+                    </div>
+                    <span style="font-size:9px; display:block; margin-top:2px">1.0% Formula to be kept for 1% against
+                      30
+                      days credit</span>
+                  </td>
+                </tr>
+
+                <!-- Special export documentation row -->
+                <tr id="row-marg-docs" class="exw-hide">
+                  <td>Special Export Documentation Cost</td>
+                  <td class="text-right font-mono" id="lbl-marg-doc-tot">21,843</td>
+                  <td class="text-right font-mono" id="lbl-marg-doc-mt">321</td>
+                  <td class="non-exw-only" style="padding:4px 12px">
+                    <input type="number" step="5" class="cell-input cell-manual font-mono"
+                      style="font-size:12px;padding:4px" id="inp_doc_usd_tot" value="250" oninput="calculateEngine()">
+                  </td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-doc-umt">3.7</td>
+                  <td style="padding-left:16px; background-color:#F8FAFC; font-size:11px">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                      <span style="color:var(--color-text-muted)">Special Export Document Required</span>
+                      <select class="form-control manual-input"
+                        style="padding:1px 4px;font-size:10px;border-radius:3px;width:120px" id="inp_doc_select">
+                        <option selected>Dropdown on list</option>
+                        <option>BV Certification</option>
+                        <option>SGS Verification</option>
+                        <option>PVOC Clearances</option>
+                        <option>CRIA Processing</option>
+                        <option>SONCAP</option>
+                        <option>Any Other</option>
+                        <option>Not Required</option>
+                      </select>
+                    </div>
+                    <div class="merchant-only d-none" style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                      <span style="color:var(--color-text-muted)">Cost for Sp. Exp. Doc. ($)</span>
+                      <input type="number" step="5" class="cell-input cell-manual font-mono"
+                        style="width:70px;font-size:11px;padding:2px 4px" id="inp_mer_doc_usd_tot" value="320"
+                        oninput="calculateEngine()">
+                    </div>
+                    <span style="font-size:9px;color:var(--color-text-subtle);display:block">Special Export Documents
+                      Required (BV, SGS, PVOC, SONCAP, CRIA)</span>
+                    <span style="font-size:10px;color:var(--color-primary);font-weight:600"
+                      id="lbl-doc-helper-rate">BV/CRIA/PVOC/HC/Legalization ($/Container) [83]</span>
+                  </td>
+                </tr>
+
+                <!-- Commission Row with Green cell on $/MT -->
+                <tr>
+                  <td id="lbl-comm-row-name">Comission</td>
+                  <td class="text-right font-mono" id="lbl-marg-comm-tot">59,499</td>
+                  <td class="text-right font-mono non-exw-only" id="lbl-marg-comm-mt">874</td>
+                  <td class="exw-only d-none" style="padding:4px 12px">
+                    <input type="number" step="0.5" class="cell-input cell-manual font-mono"
+                      style="font-size:12px;padding:4px" id="cell_comm_val_exw" value="500" oninput="calculateEngine()">
+                  </td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-comm-utot">681</td>
+                  <td class="non-exw-only" style="padding:4px 12px">
+                    <input type="number" step="0.5" class="cell-input cell-manual font-mono"
+                      style="font-size:12px;padding:4px" id="cell_comm_val" value="10.0" oninput="calculateEngine()">
+                  </td>
+                  <td style="padding-left:16px; background-color:#F8FAFC"></td>
+                </tr>
+
+                <!-- Deductions: Export Benefits -->
+                <tr class="tr-benefit col-benefits d-none" id="row-marg-dbk">
+                  <td>(–) Duty Drawback Rebate (DBK)</td>
+                  <td class="text-right font-mono" id="lbl-marg-dbk-tot">—</td>
+                  <td class="text-right font-mono" id="lbl-marg-dbk-mt">—</td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-dbk-utot">—</td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-dbk-umt">—</td>
+                  <td style="padding-left:16px;"><input type="number" step="0.1" class="cell-input cell-manual"
+                      style="width:50px;display:inline-block" id="cell_dbk_pct" value="1.1" oninput="calculateEngine()">
+                    % Claim</td>
+                </tr>
+                <tr class="tr-benefit col-benefits d-none" id="row-marg-rodtep">
+                  <td>(–) RoDTEP Trade Rebate</td>
+                  <td class="text-right font-mono" id="lbl-marg-rod-tot">—</td>
+                  <td class="text-right font-mono" id="lbl-marg-rod-mt">—</td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-rod-utot">—</td>
+                  <td class="text-right font-mono col-usd" id="lbl-marg-rod-umt">—</td>
+                  <td style="padding-left:16px;"><input type="number" step="0.1" class="cell-input cell-manual"
+                      style="width:50px;display:inline-block" id="cell_rodtep_pct" value="0.7"
+                      oninput="calculateEngine()"> % Claim</td>
+                </tr>
+
+                <!-- Net Accrued Cost -->
+                <tr style="background:#F8FAFC; border-top:1px solid var(--color-border-dark)">
+                  <td><strong id="lbl-net-name">Net CIF Cost</strong></td>
+                  <td class="text-right font-mono" id="lbl-net-tot" style="font-weight:700">1,411,066</td>
+                  <td class="text-right font-mono" id="lbl-net-mt" style="font-weight:700">20,721</td>
+                  <td class="text-right font-mono col-usd" id="lbl-net-utot" style="font-weight:700">16,150</td>
+                  <td class="text-right font-mono col-usd" id="lbl-net-umt" style="font-weight:700">237</td>
+                  <td style="padding-left:16px; background-color:#F8FAFC"></td>
+                </tr>
+
+                <!-- Resolved Profit Margin -->
+                <tr>
+                  <td>Profit Margin</td>
+                  <td class="text-right font-mono" id="lbl-pft-tot">106,158</td>
+                  <td class="text-right font-mono" id="lbl-pft-mt">1,559</td>
+                  <td class="text-right font-mono col-usd" id="lbl-pft-utot">1,215</td>
+                  <td class="text-right font-mono col-usd" id="lbl-pft-umt">17.84</td>
+                  <td style="padding-left:16px; background-color:#F8FAFC; font-size:11px">
+                    Total Profit Margin (%) <span style="margin-left:12px;font-weight:700;  "
+                      id="lbl-resolved-pct">7.0%</span>
+                  </td>
+                </tr>
+
+                <!-- FINAL TARGET INPUT: OFFERED PRICE -->
+                <tr style="border-top:2px solid #000">
+                  <td class="bg-target-label" id="lbl-offered-title">CIF Offered Price</td>
+                  <td class="text-right font-mono bg-target-val" id="lbl-off-tot">1,517,224</td>
+                  <td class="text-right font-mono bg-target-val non-exw-only" id="lbl-off-mt">22,279</td>
+                  <td class="exw-only d-none" style="padding:4px 12px">
+                    <input type="number" step="0.5" class="cell-input cell-manual font-mono"
+                      style="font-size:13px;padding:4px" id="inp_offered_price_exw" value="8500.0"
+                      oninput="calculateEngine()">
+                  </td>
+                  <td class="text-right font-mono bg-target-val col-usd" id="lbl-off-utot">17,366</td>
+                  <td class="non-exw-only" style="padding:4px 12px">
+                    <input type="number" step="0.5" class="cell-input cell-manual font-mono"
+                      style="font-size:13px;padding:4px" id="inp_offered_price" value="255.0"
+                      oninput="calculateEngine()">
+                  </td>
+                  <td id="lbl-offered-helper"
+                    style="padding-left:16px; background-color:#F8FAFC; font-size:9px; color:#047857">
+                    Green cell = Manual $/MT offer entry
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+  </div>
+  </div>
+
+  <!-- ─── JAVASCRIPT REAL-TIME CALCULATION ENGINE ─── -->
+  <script>
+    "use strict";
+
+    const $ = id => document.getElementById(id);
+    const v = id => parseFloat($(id)?.value) || 0;
+    const fmt = (num, decimals = 0) => {
+      if (isNaN(num) || !isFinite(num)) return '—';
+      return num.toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    };
+    const setTxt = (id, val, decimals = 0) => {
+      const el = $(id);
+      if (el) el.textContent = (isNaN(val) || !isFinite(val)) ? '—' : fmt(val, decimals);
+    };
+
+    const setVal = (id, val) => {
+      const el = $(id);
+      if (el) el.value = val;
+    };
+
+    const WORKBOOK_DEFAULTS = {
+      "India-CIF": { offered: 147, comm: 10, doc: 320, intPct: 2, rm: -1500, pmUnit: 7500, pmUnits: 20, repack: 500, labels: 50, sfFcl: 650, vanUsd: 150 },
+      "India-FOB": { offered: 155, comm: 10, doc: 250, intPct: 2, rm: 1300, pmUnit: 7500, pmUnits: 20, repack: 500, labels: 50 },
+      "India-Domestic-EXW": { offered: 8500, comm: 500, doc: 0, intPct: 1.5, creditPct: 1, basic: -2000, freightInward: 12000, pmUnit: 8200, pmUnits: 20, plyPrice: 350, plyUnits: 5, repack: 500, vanning: 7000, freightDest: 15000, handling: 3000, warehouse: 250, labels: 50, labelsFcl: 2000 },
+      "India-Merchant-EXW": { offered: 8000, comm: 500, doc: 320, intPct: 1.5, creditPct: 1, rm: -1500, pmUnit: 8200, pmUnits: 20, plyPrice: 350, plyUnits: 5, repack: 500, vanning: 7000, labels: 50 },
+      "India-Repacking Service-EXW": { offered: 2000, comm: 100, doc: 0, intPct: 0.5, creditPct: 1, basic: 0, freightInward: 0, pmUnit: 0, pmUnits: 20, plyPrice: 350, plyUnits: 5, repack: 7500, vanning: 800, freightDest: 0, handling: 2500, warehouse: 2000, labelsFcl: 1000, qc: 2000, stickersFcl: 1000 },
+      "TC-FOB": { offered: 255, comm: 10, doc: 250, intPct: 2, tcBuy: 185, sfFcl: 650, vanUsd: 150 },
+      "TC-CIF": { offered: 230, comm: 5, doc: 500, intPct: 2, tcBuy: 185 }
+    };
+
+    function isIndiaExportVariant(variant) {
+      return variant === 'India-FOB' || variant === 'India-CIF';
+    }
+
+    function isExwVariant(variant) {
+      return variant === 'India-Domestic-EXW' || variant === 'India-Merchant-EXW' || variant === 'India-Repacking Service-EXW';
+    }
+
+    function isAdvanceLicenseActive() {
+      return $('chk_scheme_advance')?.checked || false;
+    }
+
+    function getMappedSheetName() {
+      const variant = $('inp_master_cs_type')?.value || 'India-CIF';
+      const incoterm = $('inp_incoterm')?.value || 'CIF';
+      if (isIndiaExportVariant(variant) && isAdvanceLicenseActive() && (incoterm === 'FOB' || incoterm === 'CIF')) {
+        return `${variant}-AA-DFIA`;
+      }
+      return variant;
+    }
+
+    function applyVariantDefaults(variant) {
+      const d = WORKBOOK_DEFAULTS[variant] || WORKBOOK_DEFAULTS["India-CIF"];
+      setVal('inp_offered_price', d.offered);
+      setVal('inp_offered_price_exw', d.offered);
+      setVal('cell_comm_val', d.comm);
+      setVal('cell_comm_val_exw', d.comm);
+      setVal('inp_doc_usd_tot', d.doc);
+      setVal('inp_mer_doc_usd_tot', d.doc);
+      setVal('inp_int_cost_pct', d.intPct);
+      if (d.creditPct !== undefined) setVal('inp_dom_credit_pct', d.creditPct);
+      if (d.basic !== undefined) setVal('inp_dom_basic_rs_mt', d.basic);
+      if (d.freightInward !== undefined) setVal('inp_dom_freight_inward', d.freightInward);
+      if (d.rm !== undefined) setVal('inp_rm_rs_mt', d.rm);
+      if (d.pmUnit !== undefined) setVal('inp_pm_unit_cost', d.pmUnit);
+      if (d.pmUnits !== undefined) setVal('inp_pm_units_fcl', d.pmUnits);
+      if (d.plyPrice !== undefined) setVal('inp_dom_ply_price', d.plyPrice);
+      if (d.plyUnits !== undefined) setVal('inp_dom_ply_units', d.plyUnits);
+      if (d.plyPrice !== undefined && d.plyUnits !== undefined) setVal('inp_ply_rs_fcl', d.plyPrice * d.plyUnits);
+      if (d.repack !== undefined) {
+        setVal('inp_repack_rs_mt', d.repack);
+        if ($('inp_repack_labour_fcl')) setVal('inp_repack_labour_fcl', d.repack); // the fcl version uses the same prop but different value in defaults
+      }
+      if (d.vanning !== undefined) setVal('inp_vanning_rs_fcl', d.vanning);
+      if (d.freightDest !== undefined) setVal('inp_dom_freight_dest', d.freightDest);
+      if (d.handling !== undefined) setVal('inp_dom_handling_cost', d.handling);
+      if (d.warehouse !== undefined) {
+        setVal('inp_dom_warehouse_rs_mt', d.warehouse);
+        if ($('inp_dom_warehouse_tot_input')) setVal('inp_dom_warehouse_tot_input', d.warehouse * parseFloat($('inp_total_fcl')?.value || 3));
+        if (typeof syncWarehouseMt === 'function') syncWarehouseMt();
+      }
+      if (d.qc !== undefined && $('inp_repack_qc_fcl')) setVal('inp_repack_qc_fcl', d.qc);
+      if (d.stickersFcl !== undefined && $('inp_repack_stickers_fcl')) setVal('inp_repack_stickers_fcl', d.stickersFcl);
+      if (d.labels !== undefined) setVal('inp_labels_rs_mt', d.labels);
+      if (d.labelsFcl !== undefined) setVal('inp_dom_labels_fcl', d.labelsFcl);
+      if (d.tcBuy !== undefined) setVal('inp_tc_usd_mt', d.tcBuy);
+      if (d.sfFcl !== undefined) setVal('inp_tc_sf_fcl', d.sfFcl);
+      if (d.vanUsd !== undefined) setVal('inp_tc_van_usd', d.vanUsd);
+      if ($('inp_tc_ship_exr') && (variant === 'TC-FOB' || variant === 'India-CIF')) {
+        setVal('inp_tc_ship_exr', ((v('inp_base_rate') - v('inp_premium')) + 2.5).toFixed(2));
+      }
+      if ($('cell_dbk_pct')) $('cell_dbk_pct').value = isAdvanceLicenseActive() ? 0 : 1.1;
+      if ($('cell_rodtep_pct')) $('cell_rodtep_pct').value = isAdvanceLicenseActive() ? 0 : 0.7;
+    }
+
+    function toggleSection(header) { header.parentElement.classList.toggle('collapsed'); }
+
+    /* Synchronize dynamic stuffing location text output based on chosen warehouse */
+    function updateStuffingLoc() {
+      const stuffingAt = $('inp_stuffing_at')?.value || "";
+      const locField = $('inp_stuffing_loc');
+      if (!locField) return;
+      if (stuffingAt.includes('Panoli')) locField.value = 'Panoli';
+      else if (stuffingAt.includes('Mundra')) locField.value = 'Mundra';
+      else if (stuffingAt.includes("Supplier")) {
+        const supplier = $('inp_supplier')?.value || "";
+        if (supplier) {
+          fetchSupplierStuffingLocation(supplier);
+        } else {
+          locField.value = "Supplier's Premises";
+        }
+      }
+      else if (stuffingAt.includes('CFS')) locField.value = 'CFS / ICD';
+      else locField.value = 'Factory Premises';
+    }
+
+    function fetchSupplierStuffingLocation(supplierName) {
+      const locField = $('inp_stuffing_loc');
+      if (!locField) return;
+
+      if (!supplierName) {
+        locField.value = "Supplier's Premises";
+        return;
+      }
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        frappe.call({
+          method: 'frappe.client.get_value',
+          args: {
+            doctype: 'Supplier',
+            filters: { name: supplierName },
+            fieldname: 'custom_stuffing_location'
+          },
+          callback: (r) => {
+            const loc = (r.message || {}).custom_stuffing_location || "Supplier's Premises";
+            locField.value = loc;
+          },
+          error: () => {
+            locField.value = "Supplier's Premises";
+          }
+        });
+      } else {
+        // No Frappe in this context — ask parent via postMessage
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'fetch_supplier_stuffing_location', supplier: supplierName }, '*');
+        }
+      }
+    }
+
+    /* Sync alias hidden inputs used by saveCostSheet() with the real visible inputs */
+    function syncAliasFields() {
+      // exchange_rate aliases
+      const exrBase = $('inp_exr_base');
+      const exrPremium = $('inp_exr_premium');
+      if (exrBase) exrBase.value = $('inp_base_rate')?.value || 0;
+      if (exrPremium) exrPremium.value = $('inp_premium')?.value || 0;
+      // company & date
+      const companyEl = $('inp_company');
+      if (companyEl && !companyEl.value) {
+        if (typeof frappe !== 'undefined' && frappe.defaults) {
+          companyEl.value = frappe.defaults.get_user_default('Company') || '';
+        }
+      }
+      const dateEl = $('inp_cost_sheet_date');
+      if (dateEl && !dateEl.value) {
+        const today = new Date();
+        dateEl.value = today.toISOString().split('T')[0];
+      }
+    }
+
+    /* Adjust stuffing defaults when container mode switches to demonstrate dynamic logic */
+    function updateContainerDefaults() {
+      const cType = $('inp_container')?.value || "";
+      if (cType === '40 FT' || cType === '40 HC') {
+        if ($('inp_units_per_fcl')) $('inp_units_per_fcl').value = 40;
+      } else if (cType === 'ISO Tank Container') {
+        if ($('inp_units_per_fcl')) $('inp_units_per_fcl').value = 1;
+        if ($('inp_unit_size')) $('inp_unit_size').value = 24000;
+      } else {
+        /* Standard 20 FT defaults */
+        if ($('inp_units_per_fcl')) $('inp_units_per_fcl').value = 20;
+        if ($('inp_unit_size')) $('inp_unit_size').value = 1135;
+      }
+      calculateEngine();
+    }
+
+    /* Derive underlying Master Variant ID automatically from sequential user input fields */
+    function deriveMasterVariantFromFields() {
+      const inc = $('inp_user_incoterm')?.value || 'CIF';
+      const originEl = $('inp_user_origin');
+      const originWrapper = $('wrapper-origin-scope');
+      const tcOption = originEl?.querySelector('option[value="TC"]');
+      if (tcOption) tcOption.disabled = inc === 'EXW';
+      if (inc === 'EXW' && originEl?.value === 'TC') originEl.value = 'India';
+      if (originWrapper) originWrapper.style.display = inc === 'EXW' ? 'none' : 'block';
+      const orig = originEl?.value || 'India';
+      const exwWrapper = $('wrapper-exw-subscope');
+
+      if (exwWrapper) {
+        exwWrapper.style.display = inc === 'EXW' ? 'block' : 'none';
+      }
+
+      let masterVal = 'India-CIF';
+      let saleType = 'Direct Export';
+
+      if (orig === 'TC') {
+        masterVal = inc === 'CIF' ? 'TC-CIF' : 'TC-FOB';
+        saleType = 'Third Country';
+      } else {
+        if (inc === 'CIF') { masterVal = 'India-CIF'; saleType = 'Direct Export'; }
+        else if (inc === 'FOB') { masterVal = 'India-FOB'; saleType = 'Direct Export'; }
+        else if (inc === 'EXW') {
+          const sub = $('inp_exw_subtype')?.value || 'Domestic';
+          if (sub === 'Merchant') {
+            masterVal = 'India-Merchant-EXW';
+            saleType = 'Merchant Export';
+          }
+          else if (sub === 'Repacking Service') {
+            masterVal = 'India-Repacking Service-EXW';
+            saleType = 'Direct Export';  // Repacking Service goes to exw_sub_type, not type_of_sale
+          }
+          else {
+            masterVal = 'India-Domestic-EXW';
+            saleType = 'Domestic';
+          }
+        }
+      }
+
+      if ($('inp_master_cs_type')) $('inp_master_cs_type').value = masterVal;
+      if ($('inp_incoterm')) $('inp_incoterm').value = inc;
+      if ($('inp_type_of_sale')) $('inp_type_of_sale').value = saleType;
+
+      onMasterVariantChange();
+    }
+
+    /* Mutually Exclusive Checkbox Toggle Logic */
+    function onSchemeCheckboxToggle(type) {
+      const chkRodtep = $('chk_scheme_rodtep');
+      const chkAdvance = $('chk_scheme_advance');
+
+      if (type === 'rodtep' && chkRodtep?.checked) {
+        if (chkAdvance) chkAdvance.checked = false;
+      } else if (type === 'advance' && chkAdvance?.checked) {
+        if (chkRodtep) chkRodtep.checked = false;
+      }
+      applyScopeLogic();
+    }
+
+    /* Explicitly synchronizes primary interface controls when user toggles the primary Master Cost Sheet Type dropdown */
+    function onMasterVariantChange() {
+      const variant = $('inp_master_cs_type').value;
+      const incotermDropdown = $('inp_incoterm');
+      const saleDropdown = $('inp_type_of_sale');
+
+      if (variant === 'TC-FOB') {
+        incotermDropdown.value = 'FOB';
+        saleDropdown.value = 'Third Country';
+      } else if (variant === 'TC-CIF') {
+        incotermDropdown.value = 'CIF';
+        saleDropdown.value = 'Third Country';
+      } else if (variant === 'India-FOB') {
+        incotermDropdown.value = 'FOB';
+        saleDropdown.value = 'Direct Export';
+      } else if (variant === 'India-CIF') {
+        incotermDropdown.value = 'CIF';
+        saleDropdown.value = 'Direct Export';
+      } else if (variant === 'India-Domestic-EXW') {
+        incotermDropdown.value = 'EXW';
+        saleDropdown.value = 'Domestic';
+      } else if (variant === 'India-Merchant-EXW') {
+        incotermDropdown.value = 'EXW';
+        saleDropdown.value = 'Merchant Export';
+      } else if (variant === 'India-Repacking Service-EXW') {
+        incotermDropdown.value = 'EXW';
+        saleDropdown.value = 'Direct Export';  // Repacking Service goes to exw_sub_type, not type_of_sale
+      }
+
+      applyVariantDefaults(variant);
+
+      applyScopeLogic();
+    }
+
+    function applyScopeLogic() {
+      const variant = $('inp_master_cs_type').value;
+      const incoterm = $('inp_incoterm').value;
+      const saleType = $('inp_type_of_sale').value;
+
+      const isTC = variant.startsWith('TC-');
+      const isTCFob = variant === 'TC-FOB';
+      const isDom = variant === 'India-Domestic-EXW';
+      const isMer = variant === 'India-Merchant-EXW';
+      const isRepack = variant === 'India-Repacking Service-EXW';
+      const isExw = isDom || isMer || isRepack;
+      const isExport = isIndiaExportVariant(variant);
+
+      const isAdvLicense = $('chk_scheme_advance')?.checked || false;
+      const isRodtepActive = $('chk_scheme_rodtep')?.checked || false;
+
+      const rowSchemesEl = $('row-schemes');
+      if (rowSchemesEl) {
+        rowSchemesEl.classList.toggle('d-none', isTC || isDom || isMer);
+      }
+      $('lbl-rp-badge').textContent = incoterm;
+      $('lbl-rp-scope').textContent = variant;
+
+      const mappedSheet = getMappedSheetName();
+      $('lbl-mapped-sheet').textContent = mappedSheet;
+
+      document.querySelectorAll('.domestic-only').forEach(el => el.classList.toggle('d-none', !isDom && !isRepack));
+      document.querySelectorAll('.domestic-hide').forEach(el => el.classList.toggle('d-none', isDom || isRepack));
+      document.querySelectorAll('.merchant-only').forEach(el => el.classList.toggle('d-none', !isMer));
+      document.querySelectorAll('.merchant-hide').forEach(el => el.classList.toggle('d-none', isMer));
+      document.querySelectorAll('.repack-only').forEach(el => el.classList.toggle('d-none', !isRepack));
+      document.querySelectorAll('.repack-hide').forEach(el => el.classList.toggle('d-none', isRepack));
+      document.querySelectorAll('.exw-only').forEach(el => el.classList.toggle('d-none', !isExw));
+      document.querySelectorAll('.exw-hide').forEach(el => el.classList.toggle('d-none', isExw));
+      document.querySelectorAll('.non-exw-only').forEach(el => el.classList.toggle('d-none', isExw));
+      document.querySelectorAll('.col-usd').forEach(el => el.classList.toggle('d-none', isExw));
+
+      /* Dynamically layout standard assembly tables versus direct Third-Country procurement grids */
+      if ($('wrapper-standard-tables')) $('wrapper-standard-tables').classList.toggle('d-none', isTC);
+      if ($('wrapper-tc-cost-table')) $('wrapper-tc-cost-table').classList.toggle('d-none', !isTC);
+
+      const isIndCif = variant === 'India-CIF';
+      const isIndExport = variant.startsWith('India-') && !variant.includes('EXW');
+
+      const cnfTableEl = $('wrapper-ind-cnf-table');
+      if (cnfTableEl) cnfTableEl.classList.toggle('d-none', !isIndExport);
+
+      const freightTableEl = $('wrapper-tc-freight-table');
+      if (freightTableEl) {
+        freightTableEl.classList.toggle('d-none', !(isTCFob || isIndCif));
+        const sfTitleEl = freightTableEl.querySelector('h3');
+        if (sfTitleEl) {
+          sfTitleEl.innerHTML = isIndCif ? '🌊 Sea Freight' : '🌊 Sea Freight';
+        }
+      }
+
+      if ($('lbl-tc-table-title')) $('lbl-tc-table-title').innerHTML = `🚢 ${incoterm} Cost (1)`;
+      if ($('lbl-tc-row-name')) $('lbl-tc-row-name').textContent = `Total ${incoterm} Cost`;
+
+      if ($('lbl-margin-table-title')) {
+        if (isExw) {
+          $('lbl-margin-table-title').innerHTML = '📊 Margin';
+        } else if (isIndCif) {
+          $('lbl-margin-table-title').innerHTML = '📊 Margin';
+        } else if (isIndExport) {
+          $('lbl-margin-table-title').innerHTML = '📊 Margin';
+        } else if (isTCFob) {
+          $('lbl-margin-table-title').innerHTML = '📊 Margin';
+        } else {
+          $('lbl-margin-table-title').innerHTML = '📊 Margin';
+        }
+      }
+
+      if ($('lbl-net-name')) $('lbl-net-name').textContent = isTC ? 'Net CIF Cost' : `Net ${incoterm} Cost`;
+      if ($('lbl-offered-title')) $('lbl-offered-title').textContent = isTC ? 'CIF Offered Price' : (isMer ? 'FOB Offered Price' : `${incoterm} Offered Price`);
+      if ($('lbl-product-total-name')) $('lbl-product-total-name').textContent = 'EXW Cost';
+      if ($('lbl-product-table-title')) {
+        $('lbl-product-table-title').innerHTML = isExw ? '📦 Product Details' : '📦 Product Details';
+      }
+      if ($('lbl-destination-label')) $('lbl-destination-label').textContent = (isDom || isRepack) ? 'Final Customer Delivery at' : 'Final Country of Destination';
+      if ($('lbl-container-label')) $('lbl-container-label').textContent = (isDom || isRepack) ? 'Delivery In' : 'Container type';
+      if ($('lbl-pol-label')) $('lbl-pol-label').textContent = (isDom || isRepack) ? 'Loading Location' : 'Port of Loading';
+      if ($('lbl-helper-th')) $('lbl-helper-th').textContent = (isDom || isRepack) ? 'Rs/Tanker or Trucks' : 'Rs/FCL & Helper Inputs';
+      if ($('lbl-labels-row-name')) $('lbl-labels-row-name').textContent = (isDom || isRepack) ? 'Any Other : Inventory Holding Cost' : 'Any Other : Labels Charges';
+      if ($('lbl-labels-helper')) $('lbl-labels-helper').textContent = (isDom || isRepack) ? 'Any other cost - Specify with Remarks' : (isMer ? '' : 'Excel row: Labels / Other');
+      if ($('lbl-comm-row-name')) $('lbl-comm-row-name').textContent = isExw ? 'Comission (Rs./MT)' : 'Comission';
+      if ($('lbl-offered-helper')) $('lbl-offered-helper').textContent = isExw ? 'Green cell = Manual Rs./MT offer entry' : 'Green cell = Manual $/MT offer entry';
+      if ($('inp_rm_rs_mt')) $('inp_rm_rs_mt').readOnly = (isDom || isRepack);
+
+      if ($('lbl-type-sale-view')) $('lbl-type-sale-view').textContent = saleType;
+      if ($('lbl-cs-type-view')) $('lbl-cs-type-view').textContent = mappedSheet;
+
+      if ($('lbl-doc-helper-rate')) {
+        $('lbl-doc-helper-rate').textContent = isMer
+          ? 'Special Export Documents Required'
+          : isTCFob
+            ? 'BV/CRIA/PVOC/HC/Legalization ($/Container) [83]'
+            : 'BV/CRIA/PVOC/HC/Legalization ($/Container) [167]';
+      }
+
+      document.querySelectorAll('.col-benefits').forEach(el => el.classList.toggle('d-none', !isExport || isTC || !isRodtepActive || isAdvLicense));
+
+      if ($('cell_dbk_pct')) {
+        $('cell_dbk_pct').disabled = isAdvLicense;
+        $('cell_dbk_pct').value = isAdvLicense ? 0 : $('cell_dbk_pct').value;
+        if (!isAdvLicense && Number($('cell_dbk_pct').value) === 0) $('cell_dbk_pct').value = 1.1;
+      }
+      if ($('cell_rodtep_pct')) {
+        $('cell_rodtep_pct').disabled = isAdvLicense;
+        $('cell_rodtep_pct').value = isAdvLicense ? 0 : $('cell_rodtep_pct').value;
+        if (!isAdvLicense && Number($('cell_rodtep_pct').value) === 0) $('cell_rodtep_pct').value = 0.7;
+      }
+
+      const stuffingAt = $('inp_stuffing_at');
+      if (stuffingAt) {
+        Array.from(stuffingAt.options).forEach(opt => {
+          opt.disabled = isAdvLicense && opt.value !== "Supplier's Place";
+        });
+        if (isAdvLicense) stuffingAt.value = "Supplier's Place";
+      }
+
+      if ($('kpi_off_uom')) $('kpi_off_uom').textContent = isExw ? 'Rs./MT Entry' : '$/MT Entry';
+      if ($('kpi_net_uom')) $('kpi_net_uom').textContent = isExw ? 'Rs./MT' : '$/MT';
+      if ($('kpi_exw_uom')) $('kpi_exw_uom').textContent = isExw ? 'Rs./MT' : '$/MT';
+
+      updateStuffingLoc();
+      calculateEngine();
+    }
+
+    function syncWarehouseMt() {
+      const rsMt = v('inp_dom_warehouse_rs_mt');
+      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
+      if ($('inp_dom_warehouse_tot_input')) $('inp_dom_warehouse_tot_input').value = Math.round(rsMt * totalMt);
+      calculateEngine();
+    }
+
+    function syncWarehouseTot() {
+      const tot = v('inp_dom_warehouse_tot_input');
+      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
+      if ($('inp_dom_warehouse_rs_mt')) $('inp_dom_warehouse_rs_mt').value = totalMt > 0 ? (tot / totalMt).toFixed(2) : 0;
+      calculateEngine();
+    }
+
+    function calculateEngine() {
+      const variant = $('inp_master_cs_type').value;
+      const isTC = variant.startsWith('TC-');
+      const isTCFob = variant === 'TC-FOB';
+      const isIndCif = variant === 'India-CIF';
+      const isIndExport = isIndiaExportVariant(variant);
+      const isExw = isExwVariant(variant);
+      const isDomestic = variant === 'India-Domestic-EXW';
+      const isMerchant = variant === 'India-Merchant-EXW';
+      const isRepack = variant === 'India-Repacking Service-EXW';
+
+      const unitKg = v('inp_unit_size');
+      const unitsFcl = parseFloat($('inp_units_per_fcl')?.value) || 20;
+      const totalFcl = v('inp_total_fcl');
+      const qtyFcl = (unitsFcl * unitKg) / 1000;
+      const totalMt = qtyFcl * totalFcl;
+
+      if ($('lbl-qty-fcl-box')) $('lbl-qty-fcl-box').value = qtyFcl.toFixed(2);
+      if ($('lbl-total-mt-box')) $('lbl-total-mt-box').value = totalMt.toFixed(2);
+      setTxt('kpi_weight', totalMt, 2);
+      if ($('lbl-rp-weight')) $('lbl-rp-weight').textContent = `${totalMt.toFixed(2)} MT`;
+      if (totalMt <= 0) return;
+
+      const baseRate = v('inp_base_rate');
+      const premium = v('inp_premium');
+      const csExr = baseRate - premium;
+      if ($('lbl-cs-exr')) $('lbl-cs-exr').value = csExr.toFixed(2);
+
+      let primaryBuyTotalRs = 0;
+      let seaFreightTotalRs = 0;
+      let baseCostForPercentRs = 0;
+      let baseCostForPercentMtRs = 0;
+
+      if (isTC) {
+        const buyUsdMt = v('inp_tc_usd_mt');
+        const buyTotalUsd = buyUsdMt * totalMt;
+        const buyRsMt = buyUsdMt * csExr;
+        primaryBuyTotalRs = buyTotalUsd * csExr;
+        baseCostForPercentRs = primaryBuyTotalRs;
+        baseCostForPercentMtRs = buyRsMt;
+
+        setTxt('lbl-tc-buy-tot', primaryBuyTotalRs);
+        setTxt('lbl-tc-buy-mt', buyRsMt);
+        setTxt('lbl-tc-buy-utot', buyTotalUsd);
+      } else {
+        let rmRsMt = v('inp_rm_rs_mt');
+        let rmDisplayRsMt = rmRsMt;
+        let rmTotalRs = rmRsMt * totalMt;
+        if (isDomestic || isRepack) {
+          const basicRsMt = v('inp_dom_basic_rs_mt');
+          const basicTotalRs = basicRsMt * totalMt;
+          const freightInwardTotalRs = v('inp_dom_freight_inward') * totalFcl;
+          const freightInwardRsMt = freightInwardTotalRs / totalMt;
+          rmRsMt = basicRsMt + freightInwardRsMt;
+          rmDisplayRsMt = basicRsMt + (qtyFcl > 0 ? (v('inp_dom_freight_inward') / qtyFcl) : 0);
+          rmTotalRs = basicTotalRs + freightInwardTotalRs;
+
+          setTxt('lbl-dom-basic-tot', basicTotalRs);
+          setTxt('lbl-dom-freight-in-tot', freightInwardTotalRs);
+          setTxt('lbl-dom-freight-in-mt', qtyFcl > 0 ? (v('inp_dom_freight_inward') / qtyFcl) : 0);
+          setVal('inp_rm_rs_mt', rmDisplayRsMt.toFixed(2));
+        }
+        if ($('lbl-dom-rm-mt')) $('lbl-dom-rm-mt').textContent = isDomestic ? Math.round(rmDisplayRsMt).toLocaleString('en-US') : '';
+        const rmTotalUsd = rmTotalRs / csExr;
+
+        const pmUnitCost = v('inp_pm_unit_cost');
+        const pmUnitsFcl = v('inp_pm_units_fcl');
+        const pmTotalRs = pmUnitCost * pmUnitsFcl * totalFcl;
+        const pmRsMt = pmTotalRs / totalMt;
+        const pmTotalUsd = pmTotalRs / csExr;
+
+        const plyRsFcl = v('inp_dom_ply_price') * v('inp_dom_ply_units');
+        const plyTotalRs = plyRsFcl * totalFcl;
+        const plyRsMt = plyTotalRs / totalMt;
+        const plyTotalUsd = plyTotalRs / csExr;
+
+        let repackTotalRs = 0;
+        let repackRsMt = 0;
+
+        if (isRepack) {
+          repackTotalRs = v('inp_repack_labour_fcl') * totalFcl;
+          repackRsMt = repackTotalRs / totalMt;
+        } else {
+          repackRsMt = v('inp_repack_rs_mt');
+          repackTotalRs = repackRsMt * totalMt;
+        }
+        const repackTotalUsd = repackTotalRs / csExr;
+
+        let vanningTotalRs = 0;
+        let vanningRsMt = 0;
+        if (isExw) {
+          const vanningFcl = v('inp_vanning_rs_fcl');
+          vanningTotalRs = vanningFcl * totalFcl;
+          vanningRsMt = vanningTotalRs / totalMt;
+          if ($('lbl-vanning-rs-tot')) $('lbl-vanning-rs-tot').textContent = Math.round(vanningTotalRs).toLocaleString('en-US');
+          if ($('lbl-vanning-rs-mt')) $('lbl-vanning-rs-mt').textContent = Math.round(vanningRsMt).toLocaleString('en-US');
+        }
+
+        let domesticFreightTotalRs = 0;
+        let domesticFreightRsMt = 0;
+        let domesticHandlingTotalRs = 0;
+        let domesticHandlingRsMt = 0;
+        let domesticWarehouseTotalRs = 0;
+        let domesticWarehouseRsMt = 0;
+
+        if (isDomestic || isRepack) {
+          domesticFreightTotalRs = v('inp_dom_freight_dest') * totalFcl;
+          domesticFreightRsMt = qtyFcl > 0 ? v('inp_dom_freight_dest') / qtyFcl : 0;
+          domesticHandlingTotalRs = v('inp_dom_handling_cost') * totalFcl;
+          domesticHandlingRsMt = qtyFcl > 0 ? v('inp_dom_handling_cost') / qtyFcl : 0;
+          domesticWarehouseRsMt = v('inp_dom_warehouse_rs_mt');
+          domesticWarehouseTotalRs = domesticWarehouseRsMt * totalMt;
+        }
+
+        let qcTotalRs = 0;
+        let stickersTotalRs = 0;
+        if (isRepack) {
+          qcTotalRs = v('inp_repack_qc_fcl') * totalFcl;
+          stickersTotalRs = v('inp_repack_stickers_fcl') * totalFcl;
+          if ($('lbl-repack-qc-tot')) setTxt('lbl-repack-qc-tot', qcTotalRs);
+          if ($('lbl-repack-qc-mt')) setTxt('lbl-repack-qc-mt', qcTotalRs / totalMt);
+          if ($('lbl-repack-stickers-tot')) setTxt('lbl-repack-stickers-tot', stickersTotalRs);
+          if ($('lbl-repack-stickers-mt')) setTxt('lbl-repack-stickers-mt', stickersTotalRs / totalMt);
+        }
+
+        let labelsRsMt = 0;
+        let labelsTotalRs = 0;
+        if (isDomestic || isRepack) {
+          labelsTotalRs = v('inp_dom_labels_fcl') * totalFcl;
+          labelsRsMt = labelsTotalRs / totalMt;
+          if ($('lbl-dom-labels-mt')) setTxt('lbl-dom-labels-mt', Math.round(labelsRsMt));
+        } else {
+          labelsRsMt = v('inp_labels_rs_mt');
+          labelsTotalRs = labelsRsMt * totalMt;
+        }
+        const labelsTotalUsd = labelsTotalRs / csExr;
+
+        setTxt('lbl-rm-rs-tot', rmTotalRs);
+        setTxt('lbl-rm-usd-tot', rmTotalUsd);
+        setTxt('lbl-rm-usd-mt', rmTotalUsd / totalMt, 1);
+        setTxt('lbl-pm-rs-tot', pmTotalRs);
+        setTxt('lbl-pm-rs-mt', pmRsMt);
+        setTxt('lbl-pm-usd-tot', pmTotalUsd);
+        setTxt('lbl-pm-usd-mt', pmTotalUsd / totalMt, 1);
+        setTxt('lbl-ply-rs-tot', plyTotalRs);
+        setTxt('lbl-ply-rs-mt', plyRsMt);
+        setTxt('lbl-ply-usd-tot', plyTotalUsd);
+        setTxt('lbl-ply-usd-mt', plyTotalUsd / totalMt, 1);
+        setTxt('lbl-repack-rs-tot', repackTotalRs);
+        if (!isRepack) {
+          if ($('lbl-repack-rs-mt')) setTxt('lbl-repack-rs-mt', repackRsMt);
+        } else {
+          if ($('lbl-repack-rs-mt')) setTxt('lbl-repack-rs-mt', repackRsMt); // reusing it for display
+        }
+        setTxt('lbl-repack-usd-tot', repackTotalUsd);
+        setTxt('lbl-repack-usd-mt', repackTotalUsd / totalMt, 1);
+        setTxt('lbl-dom-freight-out-tot', domesticFreightTotalRs);
+        setTxt('lbl-dom-freight-out-mt', domesticFreightRsMt);
+        setTxt('lbl-dom-handling-tot', domesticHandlingTotalRs);
+        setTxt('lbl-dom-handling-mt', domesticHandlingRsMt);
+        setTxt('lbl-dom-warehouse-tot', domesticWarehouseTotalRs);
+        setTxt('lbl-labels-rs-tot', labelsTotalRs);
+        setTxt('lbl-labels-usd-tot', labelsTotalUsd);
+        setTxt('lbl-labels-usd-mt', labelsTotalUsd / totalMt, 1);
+
+        const exwCostRs = rmTotalRs + pmTotalRs + plyTotalRs + repackTotalRs + vanningTotalRs + domesticFreightTotalRs + domesticHandlingTotalRs + domesticWarehouseTotalRs + labelsTotalRs + qcTotalRs + stickersTotalRs;
+        const exwCostMtRs = isDomestic
+          ? rmDisplayRsMt + pmRsMt + plyRsMt + repackRsMt + vanningRsMt + domesticFreightRsMt + domesticHandlingRsMt + domesticWarehouseRsMt + labelsRsMt
+          : isMerchant
+            ? rmDisplayRsMt + pmRsMt + plyRsMt + repackRsMt + vanningRsMt + labelsRsMt
+            : exwCostRs / totalMt;
+        setTxt('lbl-ind-prod-tot-rs', exwCostRs);
+        setTxt('lbl-ind-prod-mt-rs', exwCostMtRs);
+        setTxt('lbl-ind-prod-tot-usd', exwCostRs / csExr);
+        setTxt('lbl-ind-prod-mt-usd', (exwCostRs / totalMt) / csExr, 1);
+        primaryBuyTotalRs = exwCostRs;
+        baseCostForPercentRs = exwCostRs;
+        baseCostForPercentMtRs = exwCostMtRs;
+
+        const agency = v('inp_cnf_agency');
+        const lolo = v('inp_cnf_lolo');
+        const seal = v('inp_cnf_seal');
+        const thc = v('inp_cnf_thc');
+        const port = v('inp_cnf_port');
+        const haz = v('inp_cnf_haz');
+        const trans = v('inp_cnf_trans');
+        const stdCharges = agency + lolo + seal + thc + port + haz + trans;
+        const otherCharges = v('inp_cnf_other');
+        const totalCostFcl = stdCharges + otherCharges;
+        const blCharges = v('inp_bl_charges');
+        const totalCnfChargesRs = (totalCostFcl * totalFcl) + blCharges;
+
+        setTxt('lbl-cnf-std-tot', stdCharges);
+        setTxt('lbl-cnf-fcl-tot', totalCostFcl);
+        setTxt('lbl-cnf-base-rs', totalCostFcl * totalFcl);
+        setTxt('lbl-cnf-base-mt', (totalCostFcl * totalFcl) / totalMt);
+        setTxt('lbl-cnf-base-usd', totalCostFcl / csExr);
+        setTxt('lbl-cnf-base-umt', ((totalCostFcl * totalFcl) / totalMt) / csExr, 1);
+        setTxt('lbl-bl-mt', blCharges / totalMt);
+        setTxt('lbl-bl-usd', blCharges / csExr);
+        setTxt('lbl-bl-umt', (blCharges / totalMt) / csExr, 1);
+        setTxt('lbl-cnf-bl-fcl', blCharges / totalFcl);
+        setTxt('lbl-cnf-fcl-grand', totalCostFcl + (blCharges / totalFcl));
+        setTxt('lbl-cnf-tot-rs', totalCnfChargesRs);
+        setTxt('lbl-cnf-tot-mt', totalCnfChargesRs / totalMt);
+        setTxt('lbl-cnf-tot-usd', totalCnfChargesRs / csExr);
+        setTxt('lbl-cnf-tot-umt', (totalCnfChargesRs / totalMt) / csExr, 1);
+
+        const fobCostRs = exwCostRs + totalCnfChargesRs;
+        setTxt('lbl-ind-fob-tot-rs', fobCostRs);
+        setTxt('lbl-ind-fob-mt-rs', fobCostRs / totalMt);
+        setTxt('lbl-ind-fob-tot-usd', fobCostRs / csExr);
+        setTxt('lbl-ind-fob-mt-usd', (fobCostRs / totalMt) / csExr, 1);
+
+        if (isIndExport) {
+          primaryBuyTotalRs = fobCostRs;
+          baseCostForPercentRs = fobCostRs;
+        }
+      }
+
+      if (isTCFob || isIndCif) {
+        const shipPremium = v('inp_ship_premium');
+        const shipExr = csExr + shipPremium;
+        if ($('lbl_tc_ship_exr')) $('lbl_tc_ship_exr').value = shipExr.toFixed(2);
+
+        const sfFclUsd = v('inp_tc_sf_fcl') + v('inp_tc_sf_haz');
+        const sfTotalUsd = sfFclUsd * totalFcl;
+        const sfTotalRs = sfTotalUsd * shipExr;
+        const vanTotalUsd = v('inp_tc_van_usd');
+        const vanTotalRs = vanTotalUsd * shipExr;
+        seaFreightTotalRs = sfTotalRs + vanTotalRs;
+
+        setTxt('lbl-tc-sf-rs-tot', sfTotalRs);
+        setTxt('lbl-tc-sf-rs-mt', sfTotalRs / totalMt);
+        setTxt('lbl-tc-sf-usd-tot', sfTotalUsd);
+        setTxt('lbl-tc-sf-usd-mt', sfTotalUsd / totalMt, 1);
+        setTxt('lbl-tc-van-rs-tot', vanTotalRs);
+        setTxt('lbl-tc-van-rs-mt', vanTotalRs / totalMt);
+        setTxt('lbl-tc-van-usd-mt', vanTotalUsd / totalMt, 1);
+        setTxt('lbl-tc-tsf-rs-tot', seaFreightTotalRs);
+        setTxt('lbl-tc-tsf-rs-mt', seaFreightTotalRs / totalMt);
+        setTxt('lbl-tc-tsf-usd-tot', sfTotalUsd + vanTotalUsd);
+        setTxt('lbl-tc-tsf-usd-mt', (sfTotalUsd + vanTotalUsd) / totalMt, 0);
+      }
+
+      const offInputVal = isExw ? v('inp_offered_price_exw') : v('inp_offered_price');
+      const offeredMtRs = isExw ? offInputVal : offInputVal * csExr;
+      const offeredMtUsd = isExw ? offInputVal / csExr : offInputVal;
+      const offeredTotalRs = offeredMtRs * totalMt;
+      const offeredTotalUsd = offeredMtUsd * totalMt;
+
+      setTxt('lbl-off-tot', offeredTotalRs);
+      setTxt('lbl-off-mt', offeredMtRs);
+      setTxt('lbl-off-utot', offeredTotalUsd);
+      setTxt('kpi_off', isExw ? offeredMtRs : offeredMtUsd, 1);
+      if ($('lbl-rp-off')) $('lbl-rp-off').textContent = isExw ? `Rs. ${offeredMtRs.toFixed(2)}` : `$${offeredMtUsd.toFixed(2)}`;
+
+      const intPctVal = parseFloat($('inp_int_cost_pct')?.value) || 2.0;
+      const intTotalRs = (isExw ? baseCostForPercentRs : offeredTotalRs) * (intPctVal / 100);
+      const intMtRs = isExw ? baseCostForPercentMtRs * (intPctVal / 100) : intTotalRs / totalMt;
+      setTxt('lbl-marg-int-tot', intTotalRs);
+      setTxt('lbl-marg-int-mt', intMtRs);
+      setTxt('lbl-marg-int-utot', intTotalRs / csExr);
+      setTxt('lbl-marg-int-umt', (intTotalRs / totalMt) / csExr, 1);
+
+      // Read credit days from the dedicated hidden field (populated by onCustTermsChange)
+      const creditDays = parseFloat($('inp_cust_credit_days')?.value) || 0;
+      if ($('lbl-credit-cost-name')) {
+        const termsEl = $('inp_cust_terms');
+        const termsText = termsEl && termsEl.selectedIndex >= 0
+          ? termsEl.options[termsEl.selectedIndex]?.text || 'LC at Sight'
+          : 'LC at Sight';
+        $('lbl-credit-cost-name').textContent = `Credit Cost : ${termsText}`;
+      }
+      const creditPct = creditDays > 0 ? (creditDays / 30) * 0.01 : 0;
+      if ($('inp_dom_credit_pct')) {
+        $('inp_dom_credit_pct').value = (creditPct * 100).toFixed(1);
+      }
+      const creditTotalRs = (isExw ? baseCostForPercentRs : offeredTotalRs) * creditPct;
+      const creditMtRs = isExw ? baseCostForPercentMtRs * creditPct : creditTotalRs / totalMt;
+      setTxt('lbl-marg-cr-tot', creditTotalRs);
+      setTxt('lbl-marg-cr-mt', creditMtRs);
+      setTxt('lbl-marg-cr-utot', creditTotalRs / csExr);
+      setTxt('lbl-marg-cr-umt', (creditTotalRs / totalMt) / csExr, 1);
+
+      const docTotalUsd = isMerchant ? v('inp_mer_doc_usd_tot') : v('inp_doc_usd_tot');
+      const docTotalRs = isDomestic ? 0 : docTotalUsd * csExr;
+      const docMtRs = docTotalRs / totalMt;
+      setTxt('lbl-marg-doc-tot', docTotalRs);
+      setTxt('lbl-marg-doc-mt', docMtRs);
+      setTxt('lbl-marg-doc-umt', isDomestic ? 0 : docTotalUsd / totalMt, 1);
+
+      const commInput = isExw ? v('cell_comm_val_exw') : v('cell_comm_val');
+      const commTotalRs = isExw ? commInput * totalMt : commInput * totalMt * csExr;
+      const commTotalUsd = commTotalRs / csExr;
+      const commMtRs = isExw ? commInput : commTotalRs / totalMt;
+      setTxt('lbl-marg-comm-tot', commTotalRs);
+      setTxt('lbl-marg-comm-mt', commMtRs);
+      setTxt('lbl-marg-comm-utot', commTotalUsd);
+
+      let dbkTotalRs = 0;
+      let rodtepTotalRs = 0;
+      const isAdvLicense = isAdvanceLicenseActive();
+      const isRodtepActive = $('chk_scheme_rodtep')?.checked || false;
+      if (isIndExport && isRodtepActive && !isAdvLicense) {
+        dbkTotalRs = offeredTotalRs * (v('cell_dbk_pct') / 100);
+        rodtepTotalRs = offeredTotalRs * (v('cell_rodtep_pct') / 100);
+        setTxt('lbl-marg-dbk-tot', dbkTotalRs);
+        setTxt('lbl-marg-dbk-mt', dbkTotalRs / totalMt);
+        setTxt('lbl-marg-dbk-utot', dbkTotalRs / csExr);
+        setTxt('lbl-marg-dbk-umt', (dbkTotalRs / totalMt) / csExr, 1);
+        setTxt('lbl-marg-rod-tot', rodtepTotalRs);
+        setTxt('lbl-marg-rod-mt', rodtepTotalRs / totalMt);
+        setTxt('lbl-marg-rod-utot', rodtepTotalRs / csExr);
+        setTxt('lbl-marg-rod-umt', (rodtepTotalRs / totalMt) / csExr, 1);
+      } else {
+        ['lbl-marg-dbk-tot', 'lbl-marg-dbk-mt', 'lbl-marg-dbk-utot', 'lbl-marg-dbk-umt', 'lbl-marg-rod-tot', 'lbl-marg-rod-mt', 'lbl-marg-rod-utot', 'lbl-marg-rod-umt'].forEach(id => setTxt(id, NaN));
+      }
+
+      const netTotalRs = primaryBuyTotalRs + seaFreightTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs - dbkTotalRs - rodtepTotalRs;
+      const netMtRs = netTotalRs / totalMt;
+      const netDisplayMtRs = isExw ? baseCostForPercentMtRs + intMtRs + creditMtRs + docMtRs + commMtRs : netMtRs;
+      const netTotalUsd = netTotalRs / csExr;
+      const netMtUsd = netMtRs / csExr;
+
+      setTxt('lbl-net-tot', netTotalRs);
+      setTxt('lbl-net-mt', netDisplayMtRs);
+      setTxt('lbl-net-utot', netTotalUsd);
+      setTxt('lbl-net-umt', netMtUsd);
+      setTxt('kpi_net', isExw ? netDisplayMtRs : netMtUsd, 2);
+      if ($('lbl-rp-net')) $('lbl-rp-net').textContent = isExw ? `Rs. ${netDisplayMtRs.toFixed(2)}` : `$${netMtUsd.toFixed(2)}`;
+
+      const primaryMtRs = isExw ? baseCostForPercentMtRs : primaryBuyTotalRs / totalMt;
+      const primaryMtUsd = primaryMtRs / csExr;
+      setTxt('kpi_exw', isExw ? primaryMtRs : primaryMtUsd, isExw ? 0 : 1);
+      if ($('lbl-rp-buy')) $('lbl-rp-buy').textContent = isExw ? `Rs. ${primaryMtRs.toFixed(2)}` : `$${primaryMtUsd.toFixed(2)}`;
+
+      const pftTotalRs = offeredTotalRs - netTotalRs;
+      const pftMtRs = isExw ? offeredMtRs - netDisplayMtRs : pftTotalRs / totalMt;
+      const pftTotalUsd = pftTotalRs / csExr;
+      const pftMtUsd = pftMtRs / csExr;
+      const pftPctVal = isExw
+        ? (offeredMtRs !== 0 ? (pftMtRs / offeredMtRs) * 100 : 0)
+        : (offeredTotalRs !== 0 ? (pftTotalRs / offeredTotalRs) * 100 : 0);
+
+      setTxt('lbl-pft-tot', pftTotalRs);
+      setTxt('lbl-pft-mt', pftMtRs);
+      setTxt('lbl-pft-utot', pftTotalUsd);
+      setTxt('lbl-pft-umt', pftMtUsd, 2);
+
+      const pftStr = `${pftPctVal.toFixed(1)}%`;
+      if ($('lbl-resolved-pct')) $('lbl-resolved-pct').textContent = pftStr;
+      if ($('kpi_margin')) $('kpi_margin').textContent = pftStr;
+      if ($('lbl-rp-margin')) $('lbl-rp-margin').textContent = pftStr;
+    }
+
+    function saveCostSheet() {
+      console.log('saveCostSheet called');
+      console.log('Frappe available:', typeof frappe !== 'undefined');
+      console.log('frappe.call available:', typeof frappe !== 'undefined' && typeof frappe.call === 'function');
+
+      // Sync alias hidden inputs before reading
+      syncAliasFields();
+
+      // Resolve final offered price: use the visible active input
+      const variant = $('inp_master_cs_type')?.value || 'India-CIF';
+      const isExwVariantNow = isExwVariant(variant);
+      const finalOfferedPrice = parseFloat(
+        (isExwVariantNow ? $('inp_offered_price_exw')?.value : $('inp_offered_price')?.value) || 0
+      );
+
+      // Collect all form data from the Cost Sheet Engine
+      const data = {
+        // Required fields — from doctype
+        naming_series: $('inp_naming_series')?.value || 'CS-.YYYY.-',
+        cost_sheet_name: $('inp_cost_sheet_name')?.value ||
+          `Cost Sheet - ${$('inp_product')?.value || 'Product'} - ${new Date().toLocaleDateString()}`,
+        cost_sheet_date: $('inp_cost_sheet_date')?.value || new Date().toISOString().split('T')[0],
+        status: $('inp_status')?.value || 'Draft',
+        company: $('inp_company')?.value ||
+          (typeof frappe !== 'undefined' && frappe.defaults && frappe.defaults.get_user_default('Company')) ||
+          '',
+        currency: $('inp_cs_currency')?.value || $('inp_currency')?.value || 'INR',
+
+        // Section 1: Master Variant Selection
+        cost_sheet_type: convertCostSheetType($('inp_master_cs_type')?.value || 'India-CIF'),
+        incoterm: $('inp_incoterm')?.value || 'CIF',
+        origin_scope: $('inp_user_origin')?.value || 'India',
+        type_of_sale: $('inp_type_of_sale')?.value || 'Direct Export',
+        exw_sub_type: $('inp_exw_subtype')?.value || '',
+        apply_rodtep: $('chk_scheme_rodtep')?.checked ? 1 : 0,
+        apply_advance_license: $('chk_scheme_advance')?.checked ? 1 : 0,
+
+        // Section 2: Offer Details
+        product: $('inp_product')?.value || '',
+        product_grade: $('inp_grade')?.value || '',
+        customer: $('inp_customer')?.value || '',
+        customer_payment_terms: convertPaymentTerms($('inp_cust_terms')?.value || '30'),
+        country_of_destination: $('inp_destination')?.value || '',
+        delivery_location: $('inp_dom_delivery_location')?.value || '',
+        supplier: $('inp_supplier')?.value || '',
+        supplier_payment_terms: $('inp_supp_terms')?.value || '',
+        stuffing_at: $('inp_stuffing_at')?.value || '',
+        stuffing_location: $('inp_stuffing_loc')?.value || '',
+        container_type: $('inp_container')?.value || '20 FT',
+        packing_type: $('inp_packing_type')?.value || '',
+        packing_unit_size: parseFloat($('inp_unit_size')?.value || 0),
+        units_per_fcl: parseFloat($('inp_units_per_fcl')?.value || 0),
+        total_fcl: parseFloat($('inp_total_fcl')?.value || 0),
+        total_quantity: parseFloat($('lbl-total-mt-box')?.value || 0),
+        total_weight_mt: parseFloat($('lbl-total-mt-box')?.value || 0),
+        port_of_loading: $('inp_pol')?.value || '',
+        port_of_discharge: $('inp_pod')?.value || '',
+        shipping_line: $('inp_shipping_line')?.value || '',
+
+        // Exchange Rate Details — read from the real visible inputs ()
+        exchange_rate: parseFloat($('inp_base_rate')?.value || 0),
+        exchange_premium: parseFloat($('inp_premium')?.value || 0),
+        effective_exchange_rate: parseFloat($('lbl-cs-exr')?.value || 0),
+
+        // Final Offered Price — resolved from active variant input
+        final_offered_price: finalOfferedPrice,
+
+        // Product Cost Details (Child Table)
+        product_cost_details: collectProductCostDetails(),
+
+        // CNF Charges (Child Table)
+        cnf_charges: collectCNFCharges(),
+
+        // Sea Freight Details (Child Table)
+        sea_freight_details: collectSeaFreightDetails(),
+
+        // Margin Analysis (Child Table)
+        margin_analysis: collectMarginAnalysis(),
+
+        // Summary Totals
+        total_product_cost: parseFloat($('lbl-prod-tot-rs')?.textContent?.replace(/,/g, '') || 0),
+        total_cnf_cost: parseFloat($('lbl-cnf-tot-rs')?.textContent?.replace(/,/g, '') || 0),
+        total_freight_cost: parseFloat($('lbl-frt-tot-rs')?.textContent?.replace(/,/g, '') || 0),
+        net_cost: parseFloat($('lbl-net-tot')?.textContent?.replace(/,/g, '') || 0),
+        profit_amount: parseFloat($('lbl-pft-tot')?.textContent?.replace(/,/g, '') || 0),
+        profit_margin_percentage: parseFloat($('lbl-resolved-pct')?.textContent?.replace('%', '') || 0)
+      };
+
+      // Since we're in an iframe, use postMessage to communicate with parent
+      // The parent page has Frappe available and will handle the save
+      console.log('Sending data to parent window via postMessage');
+
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'save_cost_sheet',
+          data: data
+        }, '*');
+      } else {
+        // Fallback: Try direct Frappe call if available
+        if (typeof frappe !== 'undefined' && frappe.call) {
+          frappe.call({
+            method: 'sukha.sukha.doctype.cost_sheet.cost_sheet.create_from_dashboard',
+            args: { data: data },
+            freeze: true,
+            freeze_message: 'Saving Cost Sheet...',
+            callback: function (r) {
+              if (r.message) {
+                alert('Cost Sheet saved successfully!');
+                // Redirect to the saved Cost Sheet form
+                setTimeout(() => {
+                  window.location.href = `/app/cost-sheet/${r.message}`;
+                }, 1000);
+              }
+            },
+            error: function (r) {
+              alert('Failed to save Cost Sheet. Please check the console for details.');
+              console.error('Save error:', r);
+            }
+          });
+        } else {
+          alert('Unable to save. Please refresh the page and try again.');
+          console.error('Neither parent window nor Frappe available');
+        }
+      }
+    }
+
+    // Helper functions to collect child table data
+    function collectProductCostDetails() {
+      const rows = [];
+      console.log('Collecting Product Cost Details...');
+
+      const totalMt = parseFloat($('lbl-total-mt-box')?.value || 0);
+      const totalFcl = parseFloat($('inp_total_fcl')?.value || 0);
+      const csType = $('inp_master_cs_type')?.value || 'India-CIF';
+      const typeOfSale = $('inp_type_of_sale')?.value || 'Direct Export';
+      const exwSubType = $('inp_exw_subtype')?.value || '';
+
+      const isDomestic = typeOfSale === 'Domestic';
+      const isExw = csType.includes('EXW');
+      const isRepack = exwSubType === 'Repacking Service';
+
+      console.log('Cost Sheet Type:', csType, 'Type of Sale:', typeOfSale, 'EXW Sub-Type:', exwSubType);
+      console.log('Flags - Domestic:', isDomestic, 'EXW:', isExw, 'Repacking:', isRepack);
+      console.log('Total MT:', totalMt, 'Total FCL:', totalFcl);
+
+      // Domestic: Basic Price
+      if (isDomestic) {
+        const basicRsMt = parseFloat($('inp_dom_basic_rs_mt')?.value || 0);
+        if (basicRsMt !== 0 && totalMt > 0) {
+          rows.push({
+            cost_element: 'Basic Price',
+            category: 'Raw Material',
+            rate: basicRsMt,
+            amount: basicRsMt * totalMt,
+            amount_per_mt: basicRsMt,
+            currency: 'INR',
+            manual_entry: 1,
+            is_rm: 1
+          });
+        }
+
+        // Domestic: Freight Inward
+        const freightInward = parseFloat($('inp_dom_freight_inward')?.value || 0);
+        if (freightInward !== 0) {
+          const freightRsMt = totalMt > 0 ? freightInward / totalMt : 0;
+          rows.push({
+            cost_element: 'Freight Inward',
+            category: 'Freight',
+            amount: freightInward,
+            amount_per_mt: freightRsMt,
+            currency: 'INR',
+            manual_entry: 1
+          });
+        }
+      }
+
+      // RM Delivered Cost (for non-domestic and non-repacking)
+      if (!isDomestic && !isRepack) {
+        const rmRsMt = parseFloat($('inp_rm_rs_mt')?.value || 0);
+        if (rmRsMt !== 0 && totalMt > 0) {
+          rows.push({
+            cost_element: 'RM Delivered Cost',
+            category: 'Raw Material',
+            rate: rmRsMt,
+            amount: rmRsMt * totalMt,
+            amount_per_mt: rmRsMt,
+            currency: 'INR',
+            manual_entry: 1,
+            is_rm: 1
+          });
+        }
+      }
+
+      // PM Cost - Primary Packing
+      const pmUnitCost = parseFloat($('inp_pm_unit_cost')?.value || 0);
+      const pmUnits = parseFloat($('inp_pm_units_fcl')?.value || 0);
+      if (pmUnitCost !== 0 && pmUnits !== 0 && totalFcl > 0) {
+        const pmTotalRs = pmUnitCost * pmUnits * totalFcl;
+        const pmRsMt = totalMt > 0 ? pmTotalRs / totalMt : 0;
+        rows.push({
+          cost_element: 'Primary Packing Delivered Cost',
+          category: 'Packing Material',
+          quantity: pmUnits * totalFcl,
+          rate: pmUnitCost,
+          amount: pmTotalRs,
+          amount_per_mt: pmRsMt,
+          currency: 'INR',
+          manual_entry: 1,
+          is_pm: 1
+        });
+      }
+
+      // Ply/Pallets/Airbags
+      const plyPrice = parseFloat($('inp_dom_ply_price')?.value || 0);
+      const plyUnits = parseFloat($('inp_dom_ply_units')?.value || 0);
+      if (plyPrice !== 0 && plyUnits !== 0 && totalFcl > 0) {
+        const plyTotalRs = plyPrice * plyUnits * totalFcl;
+        const plyRsMt = totalMt > 0 ? plyTotalRs / totalMt : 0;
+        rows.push({
+          cost_element: 'Ply Sheet/Airbags/Pallets',
+          category: 'Pallet',
+          quantity: plyUnits * totalFcl,
+          rate: plyPrice,
+          amount: plyTotalRs,
+          amount_per_mt: plyRsMt,
+          currency: 'INR',
+          manual_entry: 1
+        });
+      }
+
+      // Repacking Cost (for non-repacking service)
+      if (!isRepack) {
+        const repackRsMt = parseFloat($('inp_repack_rs_mt')?.value || 0);
+        if (repackRsMt !== 0 && totalMt > 0) {
+          rows.push({
+            cost_element: 'Repacking Cost',
+            category: 'Repacking',
+            rate: repackRsMt,
+            amount: repackRsMt * totalMt,
+            amount_per_mt: repackRsMt,
+            currency: 'INR',
+            manual_entry: 1
+          });
+        }
+      }
+
+      // Repacking Labour (for Repacking Service EXW sub-type)
+      if (isRepack) {
+        const repackLabour = parseFloat($('inp_repack_labour_fcl')?.value || 0);
+        if (repackLabour !== 0 && totalFcl > 0) {
+          const labourTotal = repackLabour * totalFcl;
+          const labourRsMt = totalMt > 0 ? labourTotal / totalMt : 0;
+          rows.push({
+            cost_element: 'Repacking Labour Cost',
+            category: 'Repacking',
+            quantity: totalFcl,
+            rate: repackLabour,
+            amount: labourTotal,
+            amount_per_mt: labourRsMt,
+            currency: 'INR',
+            manual_entry: 1
+          });
+        }
+
+        // Stickers/Labels (for Repacking Service)
+        const stickers = parseFloat($('inp_repack_stickers_fcl')?.value || 0);
+        if (stickers !== 0 && totalFcl > 0) {
+          const stickersTotal = stickers * totalFcl;
+          const stickersRsMt = totalMt > 0 ? stickersTotal / totalMt : 0;
+          rows.push({
+            cost_element: 'Stickers/Labels',
+            category: 'Label',
+            quantity: totalFcl,
+            rate: stickers,
+            amount: stickersTotal,
+            amount_per_mt: stickersRsMt,
+            currency: 'INR',
+            manual_entry: 1
+          });
+        }
+      }
+
+      // Vanning (for EXW incoterm)
+      if (isExw) {
+        const vanningFcl = parseFloat($('inp_vanning_rs_fcl')?.value || 0);
+        if (vanningFcl !== 0 && totalFcl > 0) {
+          const vanningTotal = vanningFcl * totalFcl;
+          const vanningRsMt = totalMt > 0 ? vanningTotal / totalMt : 0;
+          rows.push({
+            cost_element: 'Addl. Vanning Requirement',
+            category: 'Loading',
+            quantity: totalFcl,
+            rate: vanningFcl,
+            amount: vanningTotal,
+            amount_per_mt: vanningRsMt,
+            currency: 'INR',
+            manual_entry: 1
+          });
+        }
+      }
+
+      // Domestic: Freight to Destination
+      if (isDomestic) {
+        const freightDest = parseFloat($('inp_dom_freight_dest')?.value || 0);
+        if (freightDest !== 0) {
+          const freightDestRsMt = totalMt > 0 ? freightDest / totalMt : 0;
+          rows.push({
+            cost_element: 'Freight Charges',
+            category: 'Freight',
+            amount: freightDest,
+            amount_per_mt: freightDestRsMt,
+            currency: 'INR',
+            manual_entry: 1
+          });
+        }
+
+        // Domestic: Handling Cost
+        const handling = parseFloat($('inp_dom_handling_cost')?.value || 0);
+        if (handling !== 0) {
+          const handlingRsMt = totalMt > 0 ? handling / totalMt : 0;
+          rows.push({
+            cost_element: 'Handling Cost',
+            category: 'Loading',
+            amount: handling,
+            amount_per_mt: handlingRsMt,
+            currency: 'INR',
+            manual_entry: 1
+          });
+        }
+      }
+
+      console.log('Product Cost Details collected:', rows.length, 'rows');
+      return rows;
+    }
+
+    function collectCNFCharges() {
+      const rows = [];
+      console.log('Collecting CNF Charges...');
+
+      const totalFcl = parseFloat($('inp_total_fcl')?.value || 0);
+      const totalMt = parseFloat($('lbl-total-mt-box')?.value || 0);
+
+      // Collect Transportation
+      const trans = parseFloat($('inp_cnf_trans')?.value || 0);
+      console.log('Transportation:', trans);
+
+      if (trans !== 0 && totalFcl > 0) {
+        const transRsMt = totalMt > 0 ? trans / totalMt : 0;
+        rows.push({
+          charge_type: 'Transportation',
+          quantity: totalFcl,
+          rate: trans / totalFcl,
+          amount: trans,
+          amount_per_mt: transRsMt,
+          currency: 'INR'
+        });
+      }
+
+      // Collect BL Charges
+      const blCharges = parseFloat($('inp_bl_charges')?.value || 0);
+      console.log('BL Charges:', blCharges);
+
+      if (blCharges !== 0) {
+        const blRsMt = totalMt > 0 ? blCharges / totalMt : 0;
+        rows.push({
+          charge_type: 'Total B/L charges',
+          quantity: 1,
+          rate: blCharges,
+          amount: blCharges,
+          amount_per_mt: blRsMt,
+          currency: 'INR',
+          bl_charges_total: blCharges
+        });
+      }
+
+      // Collect Any Other Charges
+      const otherCharges = parseFloat($('inp_cnf_other')?.value || 0);
+      console.log('Other Charges:', otherCharges);
+
+      if (otherCharges !== 0 && totalFcl > 0) {
+        const otherRsMt = totalMt > 0 ? otherCharges / totalMt : 0;
+        rows.push({
+          charge_type: 'Any Other Charges',
+          quantity: totalFcl,
+          rate: otherCharges / totalFcl,
+          amount: otherCharges,
+          amount_per_mt: otherRsMt,
+          currency: 'INR'
+        });
+      }
+
+      console.log('CNF Charges collected:', rows.length, 'rows');
+      return rows;
+    }
+
+    function collectSeaFreightDetails() {
+      const rows = [];
+      console.log('Collecting Sea Freight Details...');
+
+      const totalFcl = parseFloat($('inp_total_fcl')?.value || 0);
+      const totalMt = parseFloat($('lbl-total-mt-box')?.value || 0);
+
+      // Collect Sea Freight
+      const seaFreightFcl = parseFloat($('inp_tc_sf_fcl')?.value || 0);
+      console.log('Sea Freight FCL:', seaFreightFcl);
+
+      if (seaFreightFcl !== 0 && totalFcl > 0) {
+        const sfTotalUsd = seaFreightFcl * totalFcl;
+        const sfUsdMt = totalMt > 0 ? sfTotalUsd / totalMt : 0;
+        rows.push({
+          freight_type: 'Sea Freight',
+          number_of_containers: totalFcl,
+          freight_rate: seaFreightFcl,
+          freight_amount: sfTotalUsd,
+          freight_per_mt: sfUsdMt,
+          currency: 'USD',
+          container_type: $('inp_container')?.value || '20 FT'
+        });
+      }
+
+      // Collect Haz Surcharge
+      const hazSurcharge = parseFloat($('inp_tc_sf_haz')?.value || 0);
+      console.log('Haz Surcharge:', hazSurcharge);
+
+      if (hazSurcharge !== 0 && totalFcl > 0) {
+        const hazTotalUsd = hazSurcharge * totalFcl;
+        const hazUsdMt = totalMt > 0 ? hazTotalUsd / totalMt : 0;
+        rows.push({
+          freight_type: 'Other Surcharge',
+          number_of_containers: totalFcl,
+          freight_rate: hazSurcharge,
+          haz_surcharge: hazSurcharge,
+          freight_amount: hazTotalUsd,
+          freight_per_mt: hazUsdMt,
+          currency: 'USD'
+        });
+      }
+
+      // Collect Vanning Charges (if in freight context)
+      const vanningFcl = parseFloat($('inp_vanning_rs_fcl')?.value || 0);
+      console.log('Vanning FCL:', vanningFcl);
+
+      if (vanningFcl !== 0 && totalFcl > 0) {
+        const vanningTotalRs = vanningFcl * totalFcl;
+        const vanningRsMt = totalMt > 0 ? vanningTotalRs / totalMt : 0;
+        rows.push({
+          freight_type: 'Vanning',
+          number_of_containers: totalFcl,
+          freight_rate: vanningFcl,
+          freight_amount: vanningTotalRs,
+          freight_per_mt: vanningRsMt,
+          currency: 'INR'
+        });
+      }
+
+      console.log('Sea Freight Details collected:', rows.length, 'rows');
+      return rows;
+    }
+
+
+    function collectMarginAnalysis() {
+      console.log('Collecting Margin Analysis...');
+      const rows = [];
+
+      // Collect margin analysis data - typically one row
+      const row = {
+        analysis_type: 'Margin Analysis',
+        credit_days: $('inp_cust_terms')?.value || 'LC at Sight',
+        internal_cost_percentage: parseFloat($('inp_internal_cost_pct')?.value || 0),
+        document_charges_usd: parseFloat($('inp_doc_charges_usd')?.value || 0),
+        commission_value: parseFloat($('inp_commission_val')?.value || 0),
+        duty_drawback_percentage: parseFloat($('inp_dbk_pct')?.value || 0),
+        rodtep_percentage: parseFloat($('inp_rodtep_pct')?.value || 0),
+        base_cost: parseFloat($('lbl-margin-base')?.textContent?.replace(/,/g, '') || 0),
+        net_cost_total_rs: parseFloat($('lbl-net-tot')?.textContent?.replace(/,/g, '') || 0),
+        net_cost_per_mt_rs: parseFloat($('lbl-net-mt')?.textContent?.replace(/,/g, '') || 0),
+        profit_amount: parseFloat($('lbl-pft-tot')?.textContent?.replace(/,/g, '') || 0),
+        profit_margin_percentage: parseFloat($('lbl-resolved-pct')?.textContent?.replace('%', '') || 0),
+        offered_price: parseFloat($('inp_final_offered_price')?.value || 0)
+      };
+
+      console.log('Margin Analysis data:', row);
+
+      // Only add if there's meaningful data
+      if (row.net_cost_total_rs !== 0 || row.profit_amount !== 0) {
+        rows.push(row);
+      }
+
+      console.log('Margin Analysis collected:', rows.length, 'rows');
+      return rows;
+    }
+
+
+    // Helper function to convert cost sheet type from internal format to DocType format
+    function convertCostSheetType(internalType) {
+      const typeMap = {
+        'India-CIF': 'India CIF',
+        'India-FOB': 'India FOB',
+        'India-Domestic-EXW': 'India EXW',
+        'India-Merchant-EXW': 'Merchant Export',
+        'India-Repacking Service-EXW': 'India EXW',
+        'TC-CIF': 'TC CIF',
+        'TC-FOB': 'TC FOB'
+      };
+      return typeMap[internalType] || 'India CIF';
+    }
+
+    // Helper function to convert payment terms from days to text
+    function convertPaymentTerms(days) {
+      if (typeof days === 'string' && days.includes('Credit')) {
+        return days;
+      }
+      if (typeof days === 'string' && days.includes('Sight')) {
+        return days;
+      }
+      const termsMap = {
+        '0': 'LC at Sight',
+        '30': '30 Days Credit',
+        '60': '60 Days Credit',
+        '90': '90 Days Credit'
+      };
+      return termsMap[days] || 'LC at Sight';
+    }
+
+    // Initialize Frappe if not already initialized
+    if (typeof frappe !== 'undefined' && frappe.call) {
+      console.log('Frappe is available');
+    } else {
+      console.warn('Frappe not fully loaded, some features may not work');
+    }
+
+    /* ─── PRODUCT GRADE AUTO-FETCH ─── */
+    /* Fetches custom_item_grade from the Item doctype when a product is selected.
+       Field seen in Item: custom_item_grade = "64%" */
+    function fetchProductGrade(itemName) {
+      const gradeEl = $('inp_grade');
+      const statusEl = $('lbl-grade-status');
+      if (!gradeEl) return;
+
+      if (!itemName) {
+        gradeEl.value = '';
+        if (statusEl) statusEl.textContent = '';
+        return;
+      }
+
+      if (statusEl) {
+        statusEl.textContent = '\u23F3 fetching…';
+        statusEl.style.color = 'var(--color-text-subtle)';
+      }
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        frappe.call({
+          method: 'frappe.client.get_value',
+          args: {
+            doctype: 'Item',
+            filters: { name: itemName },
+            // custom_item_grade is the grade field on Item (e.g. "64%")
+            // variant_of gives the parent template if this is a variant
+            fieldname: ['custom_item_grade', 'variant_of', 'item_name']
+          },
+          callback: (r) => {
+            if (!r.message) {
+              if (statusEl) { statusEl.textContent = 'item not found'; statusEl.style.color = '#EF4444'; }
+              return;
+            }
+
+            const grade = r.message.custom_item_grade || '';
+            const parentItem = r.message.variant_of || '';
+
+            if (grade) {
+              // Grade found directly on this item
+              gradeEl.value = grade;
+              if (statusEl) {
+                statusEl.textContent = '\u2713 ' + grade;
+                statusEl.style.color = '#10B981';
+              }
+            } else if (parentItem) {
+              // This item is a variant — fetch grade from its parent template
+              if (statusEl) { statusEl.textContent = '\u23F3 fetching from parent…'; }
+              frappe.call({
+                method: 'frappe.client.get_value',
+                args: {
+                  doctype: 'Item',
+                  filters: { name: parentItem },
+                  fieldname: ['custom_item_grade']
+                },
+                callback: (rp) => {
+                  const parentGrade = (rp.message || {}).custom_item_grade || '';
+                  gradeEl.value = parentGrade;
+                  if (statusEl) {
+                    statusEl.textContent = parentGrade ? '\u2713 ' + parentGrade : 'no grade on parent';
+                    statusEl.style.color = parentGrade ? '#10B981' : 'var(--color-text-subtle)';
+                  }
+                }
+              });
+            } else {
+              gradeEl.value = '';
+              if (statusEl) { statusEl.textContent = 'no grade set on item'; statusEl.style.color = 'var(--color-text-subtle)'; }
+            }
+          },
+          error: () => {
+            if (statusEl) { statusEl.textContent = 'fetch failed'; statusEl.style.color = '#EF4444'; }
+          }
+        });
+      } else {
+        // No Frappe in this context — ask parent via postMessage
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'fetch_product_grade', item: itemName }, '*');
+        }
+        if (statusEl) { statusEl.textContent = 'loading…'; }
+      }
+    }
+
+    /* Listen for responses from parent window (product grade, exchange rate) */
+    window.addEventListener('message', (e) => {
+      if (!e.data) return;
+
+      if (e.data.type === 'product_grade_response') {
+        const gradeEl = $('inp_grade');
+        const statusEl = $('lbl-grade-status');
+        if (gradeEl) {
+          gradeEl.value = e.data.grade || '';
+          if (statusEl) {
+            statusEl.textContent = e.data.grade ? '\u2713 fetched' : 'no grade';
+            statusEl.style.color = e.data.grade ? '#10B981' : 'var(--color-text-subtle)';
+          }
+        }
+      }
+
+      if (e.data.type === 'exchange_rate_response') {
+        const btnEl = $('btn_fetch_rate');
+        const statusEl = $('lbl-rate-fetch-status');
+        if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\u21BB Fetch'; }
+        if (e.data.exchange_rate) {
+          const rate = parseFloat(e.data.exchange_rate);
+          if ($('inp_base_rate')) $('inp_base_rate').value = rate.toFixed(4);
+          if (statusEl) {
+            statusEl.textContent = `\u2713 Rate fetched: 1 ${e.data.from_currency || ''} = ${rate.toFixed(4)} INR`;
+            statusEl.style.color = '#10B981';
+          }
+          calculateEngine();
+        } else {
+          if (statusEl) {
+            statusEl.textContent = `No rate found. Please enter manually.`;
+            statusEl.style.color = '#EF4444';
+          }
+        }
+      }
+
+      if (e.data.type === 'supplier_stuffing_location_response') {
+        const locField = $('inp_stuffing_loc');
+        if (locField) {
+          locField.value = e.data.location || "Supplier's Premises";
+        }
+      }
+
+      if (e.data.type === 'payment_terms_data') {
+        const hiddenDays = $('inp_cust_credit_days');
+        if (hiddenDays && e.data.credit_days !== undefined) {
+          hiddenDays.value = e.data.credit_days;
+          calculateEngine();
+        }
+      }
+    });
+
+    /* ─── PAYMENT TERMS ─── */
+    function onCustTermsChange(selectedName) {
+      const hiddenDays = $('inp_cust_credit_days');
+
+      if (!selectedName) {
+        if (hiddenDays) hiddenDays.value = 0;
+        calculateEngine();
+        return;
+      }
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        frappe.call({
+          method: 'frappe.client.get_value',
+          args: {
+            doctype: 'Payment Terms Template',
+            filters: { name: selectedName },
+            fieldname: ['payment_terms_template_detail']
+          },
+          callback: (r) => {
+            // Try to infer credit days from the template name (fallback heuristic)
+            let days = extractDaysFromTermsName(selectedName);
+            if (hiddenDays) hiddenDays.value = days;
+            calculateEngine();
+          },
+          error: () => {
+            let days = extractDaysFromTermsName(selectedName);
+            if (hiddenDays) hiddenDays.value = days;
+            calculateEngine();
+          }
+        });
+      } else {
+        let days = extractDaysFromTermsName(selectedName);
+        if (hiddenDays) hiddenDays.value = days;
+        calculateEngine();
+      }
+    }
+
+    function extractDaysFromTermsName(name) {
+      // Try to extract days from common patterns: "30 Days Credit", "Net 60", "LC at Sight" etc.
+      if (!name) return 0;
+      const lcName = name.toLowerCase();
+      if (lcName.includes('sight') || lcName.includes('advance') || lcName.includes('upfront')) return 0;
+      const match = lcName.match(/(\d+)\s*days?/);
+      if (match) return parseInt(match[1]);
+      const numMatch = lcName.match(/\b(\d+)\b/);
+      if (numMatch) return parseInt(numMatch[1]);
+      return 0;
+    }
+
+    /* ─── EXCHANGE RATE FETCH FROM CURRENCY EXCHANGE DOCTYPE ─── */
+    function syncPremiumAndRecalc() {
+      // Keep hidden inp_premium in sync with the visible inp_exchange_premium
+      const premiumVal = $('inp_exchange_premium')?.value || '0';
+      if ($('inp_premium')) $('inp_premium').value = premiumVal;
+      calculateEngine();
+    }
+
+    function fetchExchangeRate() {
+      const fromCcy = $('inp_cs_currency')?.value || 'USD';
+      const toCcy = 'INR';
+      const statusEl = $('lbl-rate-fetch-status');
+      const btnEl = $('btn_fetch_rate');
+
+      if (statusEl) { statusEl.textContent = '\u23F3 Fetching rate from Currency Exchange...'; statusEl.style.color = 'var(--color-text-subtle)'; }
+      if (btnEl) { btnEl.disabled = true; btnEl.textContent = '\u23F3 Fetching'; }
+
+      const doFetch = () => {
+        frappe.call({
+          method: 'frappe.client.get_value',
+          args: {
+            doctype: 'Currency Exchange',
+            filters: [
+              ['from_currency', '=', fromCcy],
+              ['to_currency', '=', toCcy],
+            ],
+            fieldname: 'exchange_rate',
+            order_by: 'date desc'
+          },
+          callback: (r) => {
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\u21BB Fetch'; }
+            if (r.message && r.message.exchange_rate) {
+              const rate = parseFloat(r.message.exchange_rate);
+              if ($('inp_base_rate')) {
+                $('inp_base_rate').value = rate.toFixed(4);
+                if (statusEl) {
+                  statusEl.textContent = `\u2713 Rate fetched: 1 ${fromCcy} = ${rate.toFixed(4)} INR`;
+                  statusEl.style.color = '#10B981';
+                }
+              }
+              calculateEngine();
+            } else {
+              // Try reverse: no record found for selling, try buying
+              frappe.call({
+                method: 'frappe.client.get_value',
+                args: {
+                  doctype: 'Currency Exchange',
+                  filters: [['from_currency', '=', fromCcy], ['to_currency', '=', toCcy]],
+                  fieldname: 'exchange_rate',
+                  order_by: 'date desc'
+                },
+                callback: (r2) => {
+                  if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\u21BB Fetch'; }
+                  if (r2.message && r2.message.exchange_rate) {
+                    const rate = parseFloat(r2.message.exchange_rate);
+                    if ($('inp_base_rate')) $('inp_base_rate').value = rate.toFixed(4);
+                    if (statusEl) {
+                      statusEl.textContent = `\u2713 Rate fetched: 1 ${fromCcy} = ${rate.toFixed(4)} INR`;
+                      statusEl.style.color = '#10B981';
+                    }
+                    calculateEngine();
+                  } else {
+                    if (statusEl) {
+                      statusEl.textContent = `No Currency Exchange record found for ${fromCcy}\u2192INR. Please enter manually.`;
+                      statusEl.style.color = '#EF4444';
+                    }
+                  }
+                }
+              });
+            }
+          },
+          error: () => {
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\u21BB Fetch'; }
+            if (statusEl) { statusEl.textContent = 'Fetch failed. Enter rate manually.'; statusEl.style.color = '#EF4444'; }
+          }
+        });
+      };
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        doFetch();
+      } else {
+        // frappe not in this context — request parent
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'fetch_exchange_rate', from_currency: fromCcy, to_currency: toCcy }, '*');
+        }
+        if (statusEl) { statusEl.textContent = 'Requesting rate from parent...'; }
+        if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\u21BB Fetch'; }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      syncAliasFields();
+      updateContainerDefaults();
+      deriveMasterVariantFromFields();
+      // Sync premium hidden field on load
+      if ($('inp_premium') && $('inp_exchange_premium')) {
+        $('inp_exchange_premium').value = $('inp_premium').value;
+      }
+    });
+  </script>
+</body>
+
+</html>

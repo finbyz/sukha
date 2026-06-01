@@ -1,0 +1,172 @@
+{
+ "actions": [],
+ "creation": "2026-05-25 13:26:37.587290",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "freight_type",
+  "shipping_line",
+  "container_type",
+  "number_of_containers",
+  "col_break_1",
+  "transit_days",
+  "valid_till",
+  "remarks",
+  "section_break_costing",
+  "freight_rate",
+  "freight_amount",
+  "freight_per_mt",
+  "col_break_currency",
+  "currency",
+  "exchange_rate",
+  "usd_amount",
+  "section_break_shipping",
+  "haz_surcharge",
+  "shipping_premium",
+  "col_break_shipping",
+  "shipping_exchange_rate"
+ ],
+ "fields": [
+  {
+   "fieldname": "freight_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Freight Type",
+   "options": "\nSea Freight\nVanning\nLocal Transportation\nInsurance\nBAF\nCAF\nOther Surcharge",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shipping_line",
+   "fieldtype": "Link",
+   "label": "Shipping Line",
+   "options": "Preferred Shipping Line"
+  },
+  {
+   "fieldname": "container_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Container Type",
+   "options": "\n20 FT\n40 FT\n40 HC\nISO Tank Container"
+  },
+  {
+   "fieldname": "number_of_containers",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Number of Containers",
+   "precision": "2"
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "transit_days",
+   "fieldtype": "Int",
+   "label": "Transit Days"
+  },
+  {
+   "fieldname": "valid_till",
+   "fieldtype": "Date",
+   "label": "Valid Till"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "section_break_costing",
+   "fieldtype": "Section Break",
+   "label": "Freight Costing"
+  },
+  {
+   "fieldname": "freight_rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Freight Rate",
+   "options": "currency"
+  },
+  {
+   "fieldname": "freight_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Freight Amount",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "freight_per_mt",
+   "fieldtype": "Currency",
+   "label": "Freight / MT",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break_currency",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency"
+  },
+  {
+   "fieldname": "exchange_rate",
+   "fieldtype": "Currency",
+   "label": "Exchange Rate",
+   "precision": "4"
+  },
+  {
+   "fieldname": "usd_amount",
+   "fieldtype": "Currency",
+   "label": "USD Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_shipping",
+   "fieldtype": "Section Break",
+   "label": "Shipping Premium & Haz"
+  },
+  {
+   "description": "Additional hazardous cargo surcharge per FCL",
+   "fieldname": "haz_surcharge",
+   "fieldtype": "Currency",
+   "label": "Haz Surcharge ($/FCL)"
+  },
+  {
+   "description": "Added to base exchange rate to derive shipping exchange rate",
+   "fieldname": "shipping_premium",
+   "fieldtype": "Currency",
+   "label": "Shipping Premium",
+   "precision": "4"
+  },
+  {
+   "fieldname": "col_break_shipping",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Base Exchange Rate + Shipping Premium",
+   "fieldname": "shipping_exchange_rate",
+   "fieldtype": "Currency",
+   "label": "Shipping Exchange Rate (Rs./$)",
+   "precision": "4",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-27 14:27:12.422616",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Cost Sheet Sea Freight",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

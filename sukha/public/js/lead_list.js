@@ -132,3 +132,27 @@
 		},
 	};
 })();
+
+
+
+frappe.ui.form.on('Lead', {
+    refresh(frm) {
+        set_state_options(frm);
+    },
+
+    country(frm) {
+        set_state_options(frm);
+    }
+});
+
+function set_state_options(frm) {
+    let field = frm.fields_dict.custom_stateprovince;
+
+    if (!field) return;
+
+    if (frm.doc.country === "India") {
+        field.set_data(frappe.boot.india_state_options || []);
+    } else {
+        field.set_data([]);
+    }
+}

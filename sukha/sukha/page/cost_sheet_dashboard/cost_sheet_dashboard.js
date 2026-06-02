@@ -1,409 +1,3 @@
-// frappe.pages['cost-sheet-dashboard'].on_page_load = function(wrapper) {
-// 	new CostSheetDashboard(wrapper);
-// };
-
-// class CostSheetDashboard {
-// 	constructor(wrapper) {
-// 		this.page = frappe.ui.make_app_page({
-// 			parent: wrapper,
-// 			title: 'Cost Sheet Engine',
-// 			single_column: true
-// 		});
-
-// 		this.wrapper = $(wrapper);
-// 		this.page_content = this.wrapper.find('.page-content');
-
-// 		this.setup_page();
-// 		this.render_html();
-// 	}
-
-// 	setup_page() {
-// 		// Add primary action button
-// 		this.page.set_primary_action('Save Cost Sheet', () => {
-// 			this.save_cost_sheet();
-// 		}, 'octicon octicon-check');
-
-// 		// Add secondary actions
-// 		this.page.add_menu_item('New Cost Sheet', () => {
-// 			this.reset_form();
-// 		});
-
-// 		this.page.add_menu_item('Load Existing', () => {
-// 			this.show_cost_sheet_selector();
-// 		});
-
-// 		// Add search field in the page
-// 		this.setup_search();
-// 	}
-
-// 	setup_search() {
-// 		// Create search input in the page
-// 		const search_html = `
-// 			<div class="form-group" style="margin: 0; min-width: 300px;">
-// 				<input type="text" 
-// 					class="form-control" 
-// 					id="cost-sheet-search" 
-// 					placeholder="Search in form fields..."
-// 					style="padding: 6px 12px; font-size: 13px;">
-// 			</div>
-// 		`;
-
-// 		// Add to page header
-// 		$(this.page.wrapper).find('.page-head-content .standard-actions').prepend(search_html);
-
-// 		// Setup search functionality
-// 		let search_timeout;
-// 		$('#cost-sheet-search').on('input', (e) => {
-// 			clearTimeout(search_timeout);
-// 			search_timeout = setTimeout(() => {
-// 				this.search_in_form(e.target.value);
-// 			}, 300);
-// 		});
-// 	}
-
-// 	search_in_form(query) {
-// 		const iframe = document.getElementById('cost-sheet-iframe');
-// 		if (!iframe || !iframe.contentWindow) return;
-
-// 		try {
-// 			const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-
-// 			// Remove previous highlights
-// 			$(iframeDoc).find('.search-highlight').removeClass('search-highlight');
-
-// 			if (!query || query.length < 2) return;
-
-// 			// Search in all form inputs, selects, and labels
-// 			const searchableElements = $(iframeDoc).find('input, select, textarea, label, .rp-summary-val, .kpi-box-val');
-
-// 			searchableElements.each(function() {
-// 				const $el = $(this);
-// 				let text = '';
-
-// 				if ($el.is('input, select, textarea')) {
-// 					text = $el.val() || '';
-// 				} else {
-// 					text = $el.text() || '';
-// 				}
-
-// 				if (text.toLowerCase().includes(query.toLowerCase())) {
-// 					// Highlight the element or its parent
-// 					if ($el.is('input, select, textarea')) {
-// 						$el.addClass('search-highlight');
-// 					} else {
-// 						$el.closest('.form-group, .kb-stat, .section-card').addClass('search-highlight');
-// 					}
-
-// 					// Scroll to first match
-// 					if ($(iframeDoc).find('.search-highlight').length === 1) {
-// 						$el[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-// 					}
-// 				}
-// 			});
-
-// 			// Add highlight CSS if not exists
-// 			if (!$(iframeDoc).find('#search-highlight-style').length) {
-// 				$(iframeDoc.head).append(`
-// 					<style id="search-highlight-style">
-// 						.search-highlight {
-// 							background-color: #FEF3C7 !important;
-// 							border: 2px solid #F59E0B !important;
-// 							border-radius: 4px;
-// 							transition: all 0.3s;
-// 						}
-// 					</style>
-// 				`);
-// 			}
-
-// 		} catch (e) {
-// 			console.error('Search error:', e);
-// 		}
-// 	}
-
-// 	render_html() {
-// 		// Load the complete cost sheet HTML via iframe
-// 		this.page_content.html(`
-// 			<div style="width: 100%; height: calc(100vh - 100px); overflow: hidden;">
-// 				<iframe 
-// 					src="/cost_sheet" 
-// 					style="width: 100%; height: 100%; border: none;"
-// 					id="cost-sheet-iframe"
-// 				></iframe>
-// 			</div>
-// 		`);
-
-// 		// Setup communication with iframe
-// 		this.setup_iframe_communication();
-
-// 		// Wait for iframe to load
-// 		const iframe = document.getElementById('cost-sheet-iframe');
-// 		if (iframe) {
-// 			iframe.onload = () => {
-// 				console.log('Cost sheet iframe loaded successfully');
-// 				// Make save function accessible
-// 				this.iframe_loaded = true;
-// 			};
-// 		}
-// 	}
-
-// 	setup_iframe_communication() {
-// 		// Listen for messages from the iframe
-// 		window.addEventListener('message', (event) => {
-// 			if (event.data.type === 'save_cost_sheet') {
-// 				this.save_cost_sheet_from_iframe(event.data.data);
-// 			}
-// 		});
-// 	}
-
-// 	save_cost_sheet_from_iframe(data) {
-// 		frappe.call({
-// 			method: 'sukha.sukha.doctype.cost_sheet.cost_sheet.create_from_dashboard',
-// 			args: { data: data },
-// 			callback: (r) => {
-// 				if (r.message) {
-// 					frappe.msgprint(__('Cost Sheet saved successfully'));
-// 					frappe.set_route('Form', 'Cost Sheet', r.message);
-// 				}
-// 			}
-// 		});
-// 	}
-
-// 	save_cost_sheet() {
-// 		// Get the iframe
-// 		const iframe = document.getElementById('cost-sheet-iframe');
-// 		if (!iframe) {
-// 			frappe.msgprint(__('Cost sheet form not loaded. Please refresh the page.'));
-// 			return;
-// 		}
-
-// 		// Wait for iframe to be fully loaded
-// 		if (!iframe.contentWindow) {
-// 			frappe.msgprint(__('Cost sheet form is still loading. Please wait a moment and try again.'));
-// 			return;
-// 		}
-
-// 		try {
-// 			// Check if the function exists in iframe
-// 			if (typeof iframe.contentWindow.saveCostSheet === 'function') {
-// 				// Call the saveCostSheet function inside the iframe
-// 				iframe.contentWindow.saveCostSheet();
-// 			} else {
-// 				// Fallback: wait a bit and try again
-// 				setTimeout(() => {
-// 					if (typeof iframe.contentWindow.saveCostSheet === 'function') {
-// 						iframe.contentWindow.saveCostSheet();
-// 					} else {
-// 						frappe.msgprint(__('Cost sheet form not ready. Please refresh the page and try again.'));
-// 					}
-// 				}, 500);
-// 			}
-// 		} catch (e) {
-// 			console.error('Error calling saveCostSheet:', e);
-// 			frappe.msgprint({
-// 				title: __('Error'),
-// 				indicator: 'red',
-// 				message: __('Unable to save cost sheet. Error: ' + e.message)
-// 			});
-// 		}
-// 	}
-
-// 	reset_form() {
-// 		// Reload the iframe to reset the form
-// 		const iframe = document.getElementById('cost-sheet-iframe');
-// 		if (iframe) {
-// 			iframe.src = iframe.src;
-// 		}
-// 	}
-
-// 	show_cost_sheet_selector() {
-// 		new frappe.ui.form.MultiSelectDialog({
-// 			doctype: 'Cost Sheet',
-// 			target: this,
-// 			setters: {
-// 				cost_sheet_type: null,
-// 				status: null
-// 			},
-// 			action(selections) {
-// 				if (selections && selections.length > 0) {
-// 					frappe.set_route('Form', 'Cost Sheet', selections[0]);
-// 				}
-// 			}
-// 		});
-// 	}
-// 	// ─────────────────────────────────────────────────────────────
-// 	// DYNAMIC REQUIRED FIELDS (NEW)
-// 	// ─────────────────────────────────────────────────────────────
-
-// 	setup_dynamic_required_fields(iframe) {
-// 		try {
-// 			const doc = iframe.contentDocument || iframe.contentWindow.document;
-
-// 			// Required field rules
-// 			// Add/remove fields here only
-// 			this.required_rules = {
-// 				"Domestic": [
-// 					"product_name",
-// 					"customer_name",
-// 					"delivery_location",
-// 					"packing_type",
-// 					"packing_unit_size",
-// 					"total_fcl"
-// 				],
-
-// 				"Export": [
-// 					"product_name",
-// 					"customer_name",
-// 					"loading_location",
-// 					"supplier_name",
-// 					"packing_type",
-// 					"packing_unit_size",
-// 					"total_fcl"
-// 				]
-// 			};
-
-// 			// Type of Sale selector
-// 			const $sale_type = this.get_iframe_select(doc, [
-// 				'#type-of-sale',
-// 				'[name="type_of_sale"]',
-// 				'select[id*="sale"]'
-// 			]);
-
-// 			// Initial load
-// 			this.apply_required_fields(
-// 				doc,
-// 				$sale_type.val() || "Domestic"
-// 			);
-
-// 			// Dynamic change
-// 			$sale_type.on("change", (e) => {
-// 				this.apply_required_fields(
-// 					doc,
-// 					e.target.value
-// 				);
-// 			});
-
-// 		} catch(e) {
-// 			console.error("Dynamic required setup:", e);
-// 		}
-// 	}
-
-
-// 	// Apply required rules
-// 	apply_required_fields(doc, rule_name) {
-
-// 		// Remove previous required
-// 		$(doc).find(".dynamic-required").removeClass("dynamic-required");
-// 		$(doc).find("[required]").removeAttr("required");
-
-// 		const fields = this.required_rules[rule_name] || [];
-
-// 		fields.forEach(field => {
-
-// 			let $field = this.get_iframe_select(doc, [
-// 				`[name="${field}"]`,
-// 				`#${field}`,
-// 				`input[id*="${field}"]`,
-// 				`select[id*="${field}"]`
-// 			]);
-
-// 			// Try input if select not found
-// 			if (!$field.length) {
-// 				$field = $(doc).find(
-// 					`input[name="${field}"],
-// 					textarea[name="${field}"]`
-// 				);
-// 			}
-
-// 			if (!$field.length) return;
-
-// 			$field.attr("required", true);
-// 			$field.addClass("dynamic-required");
-
-// 			// Add red star beside label
-// 			const label = $field
-// 				.closest(".form-group")
-// 				.find("label");
-
-// 			if (
-// 				label.length &&
-// 				!label.find(".required-star").length
-// 			) {
-// 				label.append(
-// 					`<span class="required-star"
-// 					style="color:red;margin-left:3px">*</span>`
-// 				);
-// 			}
-// 		});
-
-// 		this.add_required_styles(doc);
-// 	}
-
-
-// 	// Required styling only
-// 	add_required_styles(doc){
-
-// 		if($(doc).find("#required-style").length)
-// 			return;
-
-// 		$(doc.head).append(`
-// 		<style id="required-style">
-
-// 		.dynamic-required{
-// 			border-color:#ff5858 !important;
-// 		}
-
-// 		.dynamic-required:invalid{
-// 			border-color:#ff5858 !important;
-// 			box-shadow:none !important;
-// 		}
-
-// 		</style>
-// 		`);
-// 	}
-
-
-// 	// Validate before save
-// 	validate_dynamic_required(iframe){
-
-// 		const doc = iframe.contentDocument || iframe.contentWindow.document;
-
-// 		let missing=[];
-
-// 		$(doc).find("[required]").each(function(){
-
-// 			const val=$(this).val();
-
-// 			if(!val || !String(val).trim()){
-// 				const label=$(this)
-// 					.closest(".form-group")
-// 					.find("label")
-// 					.text()
-// 					.trim();
-
-// 				missing.push(
-// 					label || $(this).attr("name")
-// 				);
-// 			}
-// 		});
-
-// 		if(missing.length){
-
-// 			frappe.msgprint({
-// 				title:"Missing Required Fields",
-// 				indicator:"red",
-// 				message:missing.join("<br>")
-// 			});
-
-// 			return false;
-// 		}
-
-// 		return true;
-// 	}
-// }
-
-
-
-
 frappe.pages['cost-sheet-dashboard'].on_page_load = function (wrapper) {
 	new CostSheetDashboard(wrapper);
 };
@@ -526,6 +120,9 @@ class CostSheetDashboard {
 				this.iframe_loaded = true;
 				this.setup_dynamic_link_fields(iframe);
 				this.setup_dynamic_required_fields(iframe);
+				
+				// Check if there's data to load from localStorage
+				this.load_cost_sheet_data(iframe);
 			};
 		}
 	}
@@ -620,6 +217,26 @@ class CostSheetDashboard {
 					}
 				});
 			}
+			// Warehouse fetch request from iframe
+			if (event.data.type === 'fetch_warehouses') {
+				const iframe = document.getElementById('cost-sheet-iframe');
+				if (!iframe || !iframe.contentWindow) return;
+				frappe.call({
+					method: 'frappe.client.get_list',
+					args: {
+						doctype: 'Warehouse',
+						fields: ['name'],
+						limit_page_length: 500,
+						order_by: 'name asc'
+					},
+					callback: (r) => {
+						iframe.contentWindow.postMessage({
+							type: 'warehouses_response',
+							warehouses: r.message || []
+						}, '*');
+					}
+				});
+			}
 		});
 	}
 
@@ -629,9 +246,22 @@ class CostSheetDashboard {
 			args: { data: data },
 			callback: (r) => {
 				if (r.message) {
-					frappe.msgprint(__('Cost Sheet saved successfully'));
-					frappe.set_route('Form', 'Cost Sheet', r.message);
+					frappe.msgprint({
+						title: __('Success'),
+						message: __('Cost Sheet saved successfully'),
+						indicator: 'green'
+					});
+					// Clear localStorage after successful save
+					localStorage.removeItem('cost_sheet_load_data');
+					// DO NOT route to form - just stay on dashboard
 				}
+			},
+			error: (r) => {
+				frappe.msgprint({
+					title: __('Error'),
+					message: __('Failed to save Cost Sheet. Please try again.'),
+					indicator: 'red'
+				});
 			}
 		});
 	}
@@ -690,6 +320,123 @@ class CostSheetDashboard {
 				}
 			}
 		});
+	}
+
+	// ─────────────────────────────────────────────────────────────
+	// LOAD COST SHEET DATA FROM LOCALSTORAGE
+	// ─────────────────────────────────────────────────────────────
+
+	load_cost_sheet_data(iframe) {
+		try {
+			const storedData = localStorage.getItem('cost_sheet_load_data');
+			if (!storedData) return;
+
+			const data = JSON.parse(storedData);
+			const doc = iframe.contentDocument || iframe.contentWindow.document;
+			
+			console.log('Loading Cost Sheet data:', data);
+
+			// Map Cost Sheet doctype fields to iframe input IDs
+			const fieldMapping = {
+				// Basic Info
+				'product': 'inp_product',
+				'product_grade': 'inp_grade',
+				'customer': 'inp_customer',
+				'supplier': 'inp_supplier',
+				'company': 'inp_company',
+				
+				// Payment Terms
+				'customer_payment_terms': 'inp_cust_terms',
+				'supplier_payment_terms': 'inp_supp_terms',
+				
+				// Locations & Logistics
+				'country_of_destination': 'inp_destination',
+				'port_of_discharge': 'inp_pod',
+				'port_of_loading': 'inp_pol',
+				'delivery_location': 'inp_dom_delivery_location',
+				'stuffing_at': 'inp_stuffing_at',
+				'stuffing_location': 'inp_stuffing_loc',
+				
+				// Container & Packing
+				'container_type': 'inp_container',
+				'packing_type': 'inp_packing_type',
+				'packing_unit_size': 'inp_unit_size',
+				'units_per_fcl': 'inp_units_per_fcl',
+				'total_fcl': 'inp_total_fcl',
+				
+				// Currency & Exchange
+				'currency': 'inp_cs_currency',
+				'exchange_premium': 'inp_exchange_premium',
+				'exchange_rate': 'inp_base_rate',
+				
+				// Cost Sheet Type & Incoterm
+				'cost_sheet_type': 'inp_master_cs_type',
+				'incoterm': 'inp_user_incoterm',
+				'origin_scope': 'inp_user_origin',
+				'type_of_sale': 'inp_type_of_sale',
+				'exw_sub_type': 'inp_exw_subtype',
+				
+				// Additional
+				'shipping_line': 'inp_shipping_line',
+				'final_offered_price': 'inp_offered_price'
+			};
+
+			// Populate main fields
+			Object.keys(fieldMapping).forEach(docField => {
+				if (data[docField] !== undefined && data[docField] !== null && data[docField] !== '') {
+					const inputId = fieldMapping[docField];
+					const element = doc.getElementById(inputId);
+					
+					if (element) {
+						element.value = data[docField];
+						// Trigger change event to update dependent fields
+						const event = new Event('change', { bubbles: true });
+						element.dispatchEvent(event);
+						const inputEvent = new Event('input', { bubbles: true });
+						element.dispatchEvent(inputEvent);
+					} else {
+						console.log(`Element not found: ${inputId}`);
+					}
+				}
+			});
+
+			// Populate child table data if available
+			if (data.product_cost_details && data.product_cost_details.length > 0) {
+				console.log('Loading product cost details:', data.product_cost_details);
+				// You can populate child tables here if needed
+			}
+
+			if (data.cnf_charges && data.cnf_charges.length > 0) {
+				console.log('Loading CNF charges:', data.cnf_charges);
+			}
+
+			if (data.sea_freight_details && data.sea_freight_details.length > 0) {
+				console.log('Loading sea freight details:', data.sea_freight_details);
+			}
+
+			// Trigger calculation after a delay to ensure all fields are populated
+			setTimeout(() => {
+				if (iframe.contentWindow && typeof iframe.contentWindow.calculateEngine === 'function') {
+					iframe.contentWindow.calculateEngine();
+				}
+			}, 1000);
+
+			// Clear localStorage after loading
+			localStorage.removeItem('cost_sheet_load_data');
+
+			frappe.show_alert({
+				message: __('Cost Sheet data loaded successfully'),
+				indicator: 'green'
+			}, 5);
+
+		} catch (e) {
+			console.error('Error loading cost sheet data:', e);
+			frappe.msgprint({
+				title: __('Error'),
+				message: __('Failed to load Cost Sheet data. Please try again.'),
+				indicator: 'red'
+			});
+		}
 	}
 
 	// ─────────────────────────────────────────────────────────────
@@ -799,12 +546,6 @@ class CostSheetDashboard {
 
 		// Hardcoded options from Cost Sheet DocType JSON (must stay in sync with doctype)
 		const field_options = {
-			'stuffing_at': [
-				"Supplier's Place",
-				'Own Warehouse \u2014 Panoli',
-				'Own Warehouse \u2014 Mundra',
-				'CFS / ICD'
-			],
 			'container_type': [
 				'20 FT',
 				'40 FT',
@@ -938,10 +679,7 @@ class CostSheetDashboard {
 			);
 
 			// Populate Select fields with hardcoded options from Cost Sheet DocType
-			this.populate_select_from_field(doc,
-				['#inp_stuffing_at', 'select[id*="stuffing_at"]'],
-				'stuffing_at'
-			);
+			// Note: stuffing_at is NOT populated here - it has only 2 options in HTML and handles dynamic location population
 
 			this.populate_select_from_field(doc,
 				['#inp_container', 'select[id*="container"]'],

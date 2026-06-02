@@ -296,7 +296,7 @@
    "fieldname": "stuffing_at",
    "fieldtype": "Select",
    "label": "Packing & Stuffing At",
-   "options": "\nSupplier's Place\nOwn Warehouse \u2014 Panoli\nOwn Warehouse \u2014 Mundra\nCFS / ICD"
+   "options": "\nSupplier's Place\nWarehouse"
   },
   {
    "fieldname": "col_break_stuffing",

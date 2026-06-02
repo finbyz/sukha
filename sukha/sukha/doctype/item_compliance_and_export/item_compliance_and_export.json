@@ -1,0 +1,121 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-06-01 14:23:46.561232",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "product_category",
+  "hazar_based",
+  "sub_category_name",
+  "description",
+  "flash_point",
+  "un_number",
+  "packing_group",
+  "column_break_zwbm",
+  "imdg_code",
+  "boiling_point",
+  "density",
+  "hazard_class",
+  "export_documentation_required",
+  "dg_required"
+ ],
+ "fields": [
+  {
+   "fieldname": "product_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Product Category by Compliance",
+   "options": "\nHazardous\nNon Hazardous"
+  },
+  {
+   "fieldname": "hazar_based",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Hazard-Based Classification",
+   "options": "Hazard Category"
+  },
+  {
+   "fieldname": "sub_category_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sub Category Name",
+   "options": "Sub Category"
+  },
+  {
+   "fetch_from": "sub_category_name.description",
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "imdg_code",
+   "fieldtype": "Data",
+   "label": "IMDG Code"
+  },
+  {
+   "fieldname": "flash_point",
+   "fieldtype": "Data",
+   "label": "Flash Point"
+  },
+  {
+   "fieldname": "boiling_point",
+   "fieldtype": "Select",
+   "label": "Boiling Point",
+   "options": "\nHandling\nStorage"
+  },
+  {
+   "fieldname": "density",
+   "fieldtype": "Data",
+   "label": "Density"
+  },
+  {
+   "fieldname": "un_number",
+   "fieldtype": "Data",
+   "label": "UN Number"
+  },
+  {
+   "fieldname": "column_break_zwbm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "packing_group",
+   "fieldtype": "Select",
+   "label": "Packing Group",
+   "options": "\n1\n2\n3"
+  },
+  {
+   "fieldname": "hazard_class",
+   "fieldtype": "Data",
+   "label": "Hazard Class"
+  },
+  {
+   "fieldname": "dg_required",
+   "fieldtype": "Select",
+   "label": "DG Required",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "export_documentation_required",
+   "fieldtype": "Data",
+   "label": "Export Documentation Required"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-01 15:51:31.924279",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Item Compliance and Export",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

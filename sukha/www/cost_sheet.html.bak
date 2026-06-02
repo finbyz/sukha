@@ -974,8 +974,12 @@
                   <td>RM Delivered Cost</td>
                   <td class="text-right font-mono" id="lbl-rm-rs-tot">(102,150)</td>
                   <td style="padding:4px 12px">
-                    <input type="number" step="50" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px" id="inp_rm_rs_mt" oninput="calculateEngine()">
+                    <div class="domestic-hide">
+                      <input type="number" step="50" class="cell-input cell-manual font-mono text-right"
+                        style="font-size:12px;padding:4px" id="inp_rm_rs_mt" oninput="calculateEngine()">
+                    </div>
+                    <div class="domestic-only d-none font-mono text-right" id="lbl-dom-rm-mt"
+                      style="font-size:12px;padding:4px">-1,471</div>
                   </td>
                   <td class="text-right font-mono col-usd" id="lbl-rm-usd-tot">(1,169)</td>
                   <td class="text-right font-mono col-usd" id="lbl-rm-usd-mt">(17.2)</td>
@@ -1048,9 +1052,9 @@
                     <div class="repack-only d-none"
                       style="display:flex; align-items:center; justify-content:space-between; gap:6px">
                       <span style="font-size:10px;color:var(--color-text-muted)">Repacking Labour Cost</span>
-                      <input type="number" class="cell-input font-mono text-right"
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
                         style="width:70px;font-size:11px;padding:2px" id="inp_repack_labour_fcl"
-                        oninput="calculateEngine()" readonly>
+                        oninput="calculateEngine()">
                     </div>
                   </td>
                 </tr>
@@ -1080,19 +1084,14 @@
                       <span style="font-size:10px;color:var(--color-text-muted)">Addl. Vanning Requirement
                         (chocking/lashing)</span>
                       <input type="number" class="cell-input cell-manual font-mono text-right"
-                        style="width:70px;font-size:11px;padding:2px" id="inp_vanning_rs_fcl"
-                        oninput="calculateEngine()">
+                        style="width:70px;font-size:11px;padding:2px" id="inp_vanning_rs_fcl" readonly>
                     </div>
                   </td>
                 </tr>
                 <tr class="domestic-only d-none">
                   <td>Freight Charges</td>
                   <td class="text-right font-mono" id="lbl-dom-freight-out-tot">45,000</td>
-                  <td style="padding:4px 12px">
-                    <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px" id="inp_dom_freight_out_mt"
-                      oninput="syncFreightOutMt()">
-                  </td>
+                  <td class="text-right font-mono" id="lbl-dom-freight-out-mt">661</td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td style="padding:4px 8px">
@@ -1100,34 +1099,22 @@
                       <span style="font-size:10px;color:var(--color-text-muted)">Total Freight to Destination</span>
                       <input type="number" class="cell-input cell-manual font-mono text-right"
                         style="width:70px;font-size:11px;padding:2px" id="inp_dom_freight_dest"
-                        oninput="syncFreightOutTot()">
+                        oninput="calculateEngine()">
                     </div>
                   </td>
                 </tr>
                 <tr class="domestic-only d-none">
                   <td>Handling (Loading+Unloading) Cost</td>
                   <td class="text-right font-mono" id="lbl-dom-handling-tot">9,000</td>
-                  <td style="padding:4px 12px">
-                    <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px" id="inp_dom_handling_mt"
-                      oninput="syncHandlingMt()">
-                  </td>
+                  <td class="text-right font-mono" id="lbl-dom-handling-mt">132</td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td style="padding:4px 8px">
-                    <div style="display:flex; flex-direction:column; gap:4px">
-                      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
-                        <span style="font-size:10px;color:var(--color-text-muted)">Total Loading Cost</span>
-                        <input type="number" class="cell-input cell-manual font-mono text-right"
-                          style="width:70px;font-size:11px;padding:2px" id="inp_dom_loading_tot"
-                          oninput="syncHandlingTot()">
-                      </div>
-                      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:4px">
-                        <span style="font-size:10px;color:var(--color-text-muted)">Total Unloading Cost</span>
-                        <input type="number" class="cell-input cell-manual font-mono text-right"
-                          style="width:70px;font-size:11px;padding:2px" id="inp_dom_unloading_tot"
-                          oninput="syncHandlingTot()">
-                      </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Total Loading + Unloading Cost</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_dom_handling_cost"
+                        oninput="calculateEngine()">
                     </div>
                   </td>
                 </tr>
@@ -1156,7 +1143,7 @@
                     </div>
                   </td>
                 </tr>
-                <tr class="d-none">
+                <tr class="repack-only d-none">
                   <td>QC Charges (Sampling, Surveyor etc)</td>
                   <td class="text-right font-mono" id="lbl-repack-qc-tot">0</td>
                   <td class="text-right font-mono" id="lbl-repack-qc-mt">0</td>
@@ -1176,27 +1163,27 @@
                   <td id="lbl-labels-row-name">Any Other : Labels Charges</td>
                   <td class="text-right font-mono" id="lbl-labels-rs-tot">3,405</td>
                   <td style="padding:4px 12px">
-                    <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px" id="inp_labels_rs_mt" oninput="syncLabelsMt()">
+                    <div class="domestic-hide">
+                      <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
+                        style="font-size:12px;padding:4px" id="inp_labels_rs_mt" oninput="calculateEngine()">
+                    </div>
+                    <div class="domestic-only d-none font-mono text-right" id="lbl-dom-labels-mt"
+                      style="font-size:12px;padding:4px">88</div>
                   </td>
                   <td class="text-right font-mono col-usd" id="lbl-labels-usd-tot">39</td>
                   <td class="text-right font-mono col-usd" id="lbl-labels-usd-mt">0.6</td>
                   <td style="padding:4px 8px">
-                    <div class="domestic-hide">
+                    <div class="domestic-hide repack-hide">
                       <span class="help-text" style="font-size:10px" id="lbl-labels-helper">Excel row: Labels /
                         Other</span>
                     </div>
-                    <div class="domestic-only d-none"
-                      style="display:flex; flex-direction:column; gap:4px; align-items:flex-end">
-                      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; width:100%">
-                        <span style="font-size:10px;color:var(--color-text-muted)">Any other cost</span>
-                        <input type="number" class="cell-input cell-manual font-mono text-right"
-                          style="width:70px;font-size:11px;padding:2px" id="inp_dom_labels_fcl"
-                          oninput="syncLabelsTot()">
-                      </div>
-                      <input type="text" class="cell-input cell-manual text-left" id="inp_labels_remarks" 
-                        placeholder="Specify Remarks..." 
-                        style="width:100%;font-size:11px;padding:4px;display:none;">
+                    <div class="domestic-only repack-only d-none"
+                      style="display:flex; align-items:center; justify-content:space-between; gap:6px">
+                      <span style="font-size:10px;color:var(--color-text-muted)">Any other cost - Specify with
+                        Remarks</span>
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
+                        style="width:70px;font-size:11px;padding:2px" id="inp_dom_labels_fcl"
+                        oninput="calculateEngine()">
                     </div>
                   </td>
                 </tr>
@@ -1725,7 +1712,7 @@
       "India-FOB": { offered: 155, comm: 10, doc: 250, intPct: 2, rm: 1300, pmUnit: 7500, pmUnits: 20, repack: 500, labels: 50 },
       "India-Domestic-EXW": { offered: 8500, comm: 500, doc: 0, intPct: 1.5, creditPct: 1, basic: -2000, freightInward: 12000, pmUnit: 8200, pmUnits: 20, plyPrice: 350, plyUnits: 5, repack: 500, vanning: 7000, freightDest: 15000, handling: 3000, warehouse: 250, labels: 50, labelsFcl: 2000 },
       "India-Merchant-EXW": { offered: 8000, comm: 500, doc: 320, intPct: 1.5, creditPct: 1, rm: -1500, pmUnit: 8200, pmUnits: 20, plyPrice: 350, plyUnits: 5, repack: 500, vanning: 7000, labels: 50 },
-      "India-Repacking Service-EXW": { offered: 2000, comm: 100, doc: 0, intPct: 0.5, creditPct: 1, basic: 0, freightInward: 0, pmUnit: 0, pmUnits: 20, plyPrice: 350, plyUnits: 5, repack: 7500, vanning: 800, freightDest: 0, handling: 2500, warehouse: 2000, labelsFcl: 1000, stickersFcl: 1000 },
+      "India-Repacking Service-EXW": { offered: 2000, comm: 100, doc: 0, intPct: 0.5, creditPct: 1, basic: 0, freightInward: 0, pmUnit: 0, pmUnits: 20, plyPrice: 350, plyUnits: 5, repack: 7500, vanning: 800, freightDest: 0, handling: 2500, warehouse: 2000, labelsFcl: 1000, qc: 2000, stickersFcl: 1000 },
       "TC-FOB": { offered: 255, comm: 10, doc: 250, intPct: 2, tcBuy: 185, sfFcl: 650, vanUsd: 150 },
       "TC-CIF": { offered: 230, comm: 5, doc: 500, intPct: 2, tcBuy: 185 }
     };
@@ -1751,35 +1738,6 @@
       return variant;
     }
 
-    /* Clear all editable EXW cost fields so users must enter values manually */
-    function clearExwCostFields() {
-      const fieldsToClear = [
-        'inp_dom_basic_rs_mt',    // Basic Price
-        'inp_rm_rs_mt',           // RM Delivered Cost
-        'inp_repack_rs_mt',       // Repacking Cost
-        'inp_dom_freight_out_mt', // Freight Charges Rs/MT
-        'inp_dom_handling_mt',    // Handling Cost Rs/MT
-        'inp_dom_warehouse_rs_mt',// Warehouse Rent/Storage
-        'inp_labels_rs_mt',       // Any Other: Inventory Holding Cost
-        'inp_dom_freight_inward', // Total Freight Inward
-        'inp_pm_unit_cost',       // Packing Cost Per Unit
-        'inp_pm_units_fcl',       // No. of Units
-        'inp_dom_ply_price',      // Airbag/Ply/Pallets Price
-        'inp_dom_ply_units',      // Total no of Bags/Ply/Pallets
-        'inp_dom_freight_dest',   // Total Freight to Destination
-        'inp_dom_loading_tot',    // Total Loading Cost
-        'inp_dom_unloading_tot',  // Total Unloading Cost
-        'inp_vanning_rs_fcl',     // Vanning Requirement
-        'inp_repack_qc_fcl',      // QC Charges
-        'inp_dom_labels_fcl',     // Any other cost
-        'inp_dom_warehouse_tot_input' // Total Warehouse Rent Considered
-      ];
-      fieldsToClear.forEach(id => {
-        const el = $(id);
-        if (el) el.value = '';
-      });
-    }
-
     function applyVariantDefaults(variant) {
       const d = WORKBOOK_DEFAULTS[variant] || WORKBOOK_DEFAULTS["India-CIF"];
       setVal('inp_offered_price', d.offered);
@@ -1790,19 +1748,6 @@
       setVal('inp_mer_doc_usd_tot', d.doc);
       setVal('inp_int_cost_pct', d.intPct);
       if (d.creditPct !== undefined) setVal('inp_dom_credit_pct', d.creditPct);
-
-      // For EXW variants: clear all editable cost fields — user must enter manually
-      if (isExwVariant(variant)) {
-        clearExwCostFields();
-        if ($('cell_dbk_pct')) $('cell_dbk_pct').value = isAdvanceLicenseActive() ? 0 : 1.1;
-        if ($('cell_rodtep_pct')) $('cell_rodtep_pct').value = isAdvanceLicenseActive() ? 0 : 0.7;
-        
-        // Collapse all tabs when EXW is selected
-        document.querySelectorAll('.section-card').forEach(el => el.classList.add('collapsed'));
-        
-        return;
-      }
-
       if (d.basic !== undefined) setVal('inp_dom_basic_rs_mt', d.basic);
       if (d.freightInward !== undefined) setVal('inp_dom_freight_inward', d.freightInward);
       if (d.rm !== undefined) setVal('inp_rm_rs_mt', d.rm);
@@ -1817,7 +1762,7 @@
       }
       if (d.vanning !== undefined) setVal('inp_vanning_rs_fcl', d.vanning);
       if (d.freightDest !== undefined) setVal('inp_dom_freight_dest', d.freightDest);
-      if (d.handling !== undefined) setVal('inp_dom_loading_tot', d.handling);
+      if (d.handling !== undefined) setVal('inp_dom_handling_cost', d.handling);
       if (d.warehouse !== undefined) {
         setVal('inp_dom_warehouse_rs_mt', d.warehouse);
         if ($('inp_dom_warehouse_tot_input')) setVal('inp_dom_warehouse_tot_input', d.warehouse * parseFloat($('inp_total_fcl')?.value || 3));
@@ -2223,63 +2168,6 @@
       calculateEngine();
     }
 
-    function syncFreightOutMt() {
-      const rsMt = v('inp_dom_freight_out_mt');
-      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
-      const totalRs = rsMt * totalMt;
-      const totalFcl = v('inp_total_fcl') || 1;
-      if ($('inp_dom_freight_dest')) $('inp_dom_freight_dest').value = Math.round(totalRs / totalFcl);
-      calculateEngine();
-    }
-
-    function syncFreightOutTot() {
-      const fclRs = v('inp_dom_freight_dest');
-      const totalFcl = v('inp_total_fcl') || 1;
-      const totalRs = fclRs * totalFcl;
-      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * totalFcl;
-      if ($('inp_dom_freight_out_mt')) $('inp_dom_freight_out_mt').value = totalMt > 0 ? Math.round(totalRs / totalMt) : 0;
-      calculateEngine();
-    }
-
-    function syncLabelsMt() {
-      const rsMt = v('inp_labels_rs_mt');
-      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
-      const totalRs = rsMt * totalMt;
-      const totalFcl = v('inp_total_fcl') || 1;
-      if ($('inp_dom_labels_fcl')) $('inp_dom_labels_fcl').value = Math.round(totalRs / totalFcl);
-      calculateEngine();
-    }
-
-    function syncLabelsTot() {
-      const fclRs = v('inp_dom_labels_fcl');
-      const totalFcl = v('inp_total_fcl') || 1;
-      const totalRs = fclRs * totalFcl;
-      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * totalFcl;
-      if ($('inp_labels_rs_mt')) $('inp_labels_rs_mt').value = totalMt > 0 ? (totalRs / totalMt).toFixed(3) : 0;
-      calculateEngine();
-    }
-
-    function syncHandlingMt() {
-      const rsMt = v('inp_dom_handling_mt');
-      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
-      const totalRs = rsMt * totalMt;
-      const totalFcl = v('inp_total_fcl') || 1;
-      const fclRs = totalRs / totalFcl;
-      // Split evenly between loading and unloading
-      if ($('inp_dom_loading_tot')) $('inp_dom_loading_tot').value = Math.round(fclRs / 2);
-      if ($('inp_dom_unloading_tot')) $('inp_dom_unloading_tot').value = Math.round(fclRs / 2);
-      calculateEngine();
-    }
-
-    function syncHandlingTot() {
-      const fclRs = v('inp_dom_loading_tot') + v('inp_dom_unloading_tot');
-      const totalFcl = v('inp_total_fcl') || 1;
-      const totalRs = fclRs * totalFcl;
-      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * totalFcl;
-      if ($('inp_dom_handling_mt')) $('inp_dom_handling_mt').value = totalMt > 0 ? Math.round(totalRs / totalMt) : 0;
-      calculateEngine();
-    }
-
     function calculateEngine() {
       const variant = $('inp_master_cs_type').value;
       const isTC = variant.startsWith('TC-');
@@ -2340,7 +2228,7 @@
           setTxt('lbl-dom-basic-tot', basicTotalRs);
           setTxt('lbl-dom-freight-in-tot', freightInwardTotalRs);
           setTxt('lbl-dom-freight-in-mt', qtyFcl > 0 ? (v('inp_dom_freight_inward') / qtyFcl) : 0);
-          setVal('inp_rm_rs_mt', Number(rmDisplayRsMt).toFixed(3));
+          setVal('inp_rm_rs_mt', rmDisplayRsMt);
         }
         if ($('lbl-dom-rm-mt')) $('lbl-dom-rm-mt').textContent = isDomestic ? Math.round(rmDisplayRsMt).toLocaleString('en-US') : '';
         const rmTotalUsd = rmTotalRs / csExr;
@@ -2372,11 +2260,11 @@
         let vanningRsMt = 0;
         if (isExw) {
           const vanningFcl = v('inp_vanning_rs_fcl');
-          // Formula: Rs per FCL ÷ Quantity per FCL (MT)
-          vanningRsMt = qtyFcl > 0 ? (vanningFcl / qtyFcl) : 0;
-          vanningTotalRs = vanningFcl * totalFcl; // Total Rs
-          
-          if ($('lbl-vanning-rs-tot')) $('lbl-vanning-rs-tot').textContent = fmt(vanningTotalRs, 0);
+          // Formula: (Rs per FCL ÷ Quantity per FCL) × Total Qty
+          // vanningRsMt = vanningFcl / qtyFcl * totalMt
+          vanningRsMt = qtyFcl > 0 ? (vanningFcl / qtyFcl) * totalMt : 0;
+          vanningTotalRs = vanningRsMt;
+          if ($('lbl-vanning-rs-tot')) $('lbl-vanning-rs-tot').textContent = fmt(vanningTotalRs, 3);
           if ($('lbl-vanning-rs-mt')) $('lbl-vanning-rs-mt').textContent = fmt(vanningRsMt, 3);
         }
 
@@ -2389,12 +2277,9 @@
 
         if (isDomestic || isRepack) {
           domesticFreightTotalRs = v('inp_dom_freight_dest') * totalFcl;
-          domesticFreightRsMt = v('inp_dom_freight_out_mt') ? v('inp_dom_freight_out_mt') : (qtyFcl > 0 ? v('inp_dom_freight_dest') / qtyFcl : 0);
-          
-          const handlingCostPerFcl = v('inp_dom_loading_tot') + v('inp_dom_unloading_tot');
-          domesticHandlingTotalRs = handlingCostPerFcl * totalFcl;
-          domesticHandlingRsMt = v('inp_dom_handling_mt') ? v('inp_dom_handling_mt') : (qtyFcl > 0 ? handlingCostPerFcl / qtyFcl : 0);
-          
+          domesticFreightRsMt = qtyFcl > 0 ? v('inp_dom_freight_dest') / qtyFcl : 0;
+          domesticHandlingTotalRs = v('inp_dom_handling_cost') * totalFcl;
+          domesticHandlingRsMt = qtyFcl > 0 ? v('inp_dom_handling_cost') / qtyFcl : 0;
           domesticWarehouseRsMt = v('inp_dom_warehouse_rs_mt');
           domesticWarehouseTotalRs = domesticWarehouseRsMt * totalMt;
         }
@@ -2402,7 +2287,10 @@
         let qcTotalRs = 0;
         let stickersTotalRs = 0;
         if (isRepack) {
+          qcTotalRs = v('inp_repack_qc_fcl') * totalFcl;
           stickersTotalRs = v('inp_repack_stickers_fcl') * totalFcl;
+          if ($('lbl-repack-qc-tot')) setTxt('lbl-repack-qc-tot', qcTotalRs);
+          if ($('lbl-repack-qc-mt')) setTxt('lbl-repack-qc-mt', qcTotalRs / totalMt);
           if ($('lbl-repack-stickers-tot')) setTxt('lbl-repack-stickers-tot', stickersTotalRs);
           if ($('lbl-repack-stickers-mt')) setTxt('lbl-repack-stickers-mt', stickersTotalRs / totalMt);
         }
@@ -2412,14 +2300,10 @@
         if (isDomestic || isRepack) {
           labelsTotalRs = v('inp_dom_labels_fcl') * totalFcl;
           labelsRsMt = labelsTotalRs / totalMt;
+          if ($('lbl-dom-labels-mt')) setTxt('lbl-dom-labels-mt', Math.round(labelsRsMt));
         } else {
           labelsRsMt = v('inp_labels_rs_mt');
           labelsTotalRs = labelsRsMt * totalMt;
-        }
-
-        if ($('inp_labels_remarks')) {
-          const hasOtherCost = labelsTotalRs > 0 || labelsRsMt > 0 || v('inp_dom_labels_fcl') > 0 || v('inp_labels_rs_mt') > 0;
-          $('inp_labels_remarks').style.display = hasOtherCost ? 'block' : 'none';
         }
         const labelsTotalUsd = labelsTotalRs / csExr;
 
@@ -2443,9 +2327,9 @@
         setTxt('lbl-repack-usd-tot', repackTotalUsd);
         setTxt('lbl-repack-usd-mt', repackTotalUsd / totalMt, 1);
         setTxt('lbl-dom-freight-out-tot', domesticFreightTotalRs);
-        if ($('lbl-dom-freight-out-mt')) setTxt('lbl-dom-freight-out-mt', domesticFreightRsMt);
+        setTxt('lbl-dom-freight-out-mt', domesticFreightRsMt);
         setTxt('lbl-dom-handling-tot', domesticHandlingTotalRs);
-        if ($('lbl-dom-handling-mt')) setTxt('lbl-dom-handling-mt', domesticHandlingRsMt);
+        setTxt('lbl-dom-handling-mt', domesticHandlingRsMt);
         setTxt('lbl-dom-warehouse-tot', domesticWarehouseTotalRs);
         setTxt('lbl-labels-rs-tot', labelsTotalRs);
         setTxt('lbl-labels-usd-tot', labelsTotalUsd);
@@ -2544,8 +2428,8 @@
       if ($('lbl-rp-off')) $('lbl-rp-off').textContent = isExw ? `Rs. ${offeredMtRs}` : `$${offeredMtUsd}`;
 
       const intPctVal = parseFloat($('inp_int_cost_pct')?.value) || 2.0;
-      const intTotalRs = offeredTotalRs * (intPctVal / 100);
-      const intMtRs = offeredMtRs * (intPctVal / 100);
+      const intTotalRs = (isExw ? baseCostForPercentRs : offeredTotalRs) * (intPctVal / 100);
+      const intMtRs = isExw ? baseCostForPercentMtRs * (intPctVal / 100) : intTotalRs / totalMt;
       setTxt('lbl-marg-int-tot', intTotalRs);
       setTxt('lbl-marg-int-mt', intMtRs);
       setTxt('lbl-marg-int-utot', intTotalRs / csExr);
@@ -2564,8 +2448,8 @@
       if ($('inp_dom_credit_pct')) {
         $('inp_dom_credit_pct').value = (creditPct * 100).toFixed(1);
       }
-      const creditTotalRs = offeredTotalRs * creditPct;
-      const creditMtRs = offeredMtRs * creditPct;
+      const creditTotalRs = (isExw ? baseCostForPercentRs : offeredTotalRs) * creditPct;
+      const creditMtRs = isExw ? baseCostForPercentMtRs * creditPct : creditTotalRs / totalMt;
       setTxt('lbl-marg-cr-tot', creditTotalRs);
       setTxt('lbl-marg-cr-mt', creditMtRs);
       setTxt('lbl-marg-cr-utot', creditTotalRs / csExr);
@@ -2616,7 +2500,7 @@
       setTxt('lbl-net-utot', netTotalUsd);
       setTxt('lbl-net-umt', netMtUsd, null);
       setTxt('kpi_net', isExw ? netDisplayMtRs : netMtUsd, null);
-      if ($('lbl-rp-net')) $('lbl-rp-net').textContent = isExw ? `Rs. ${Number(netDisplayMtRs).toFixed(3)}` : `$${Number(netMtUsd).toFixed(3)}`;
+      if ($('lbl-rp-net')) $('lbl-rp-net').textContent = isExw ? `Rs. ${netDisplayMtRs}` : `$${netMtUsd}`;
 
       const primaryMtRs = isExw ? baseCostForPercentMtRs : primaryBuyTotalRs / totalMt;
       const primaryMtUsd = primaryMtRs / csExr;

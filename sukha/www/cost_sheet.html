@@ -2317,9 +2317,18 @@
 
         const plyRsFcl = v('inp_dom_ply_price') * v('inp_dom_ply_units');
         const plyTotalRs = plyRsFcl * totalFcl;
-        const plyRsMt = qtyFcl > 0 ? (plyRsFcl / qtyFcl) : 0;
-        const plyUsdMt = plyRsMt / csExr;
-        const plyTotalUsd = plyUsdMt * totalMt;
+        let plyRsMt = 0;
+        let plyUsdMt = 0;
+        let plyTotalUsd = 0;
+        if (isExw) {
+          plyRsMt = qtyFcl > 0 ? (plyRsFcl / qtyFcl) : 0;
+          plyUsdMt = plyRsMt / csExr;
+          plyTotalUsd = plyUsdMt * totalMt;
+        } else {
+          plyRsMt = qtyFcl > 0 ? (plyTotalRs / qtyFcl) : 0;
+          plyUsdMt = plyRsMt / csExr;
+          plyTotalUsd = plyUsdMt * totalMt;
+        }
 
         let repackTotalRs = 0;
         let repackRsMt = 0;
@@ -2660,12 +2669,12 @@
       if ($('lbl-rp-buy')) $('lbl-rp-buy').textContent = isExw ? `Rs. ${primaryMtRs}` : `$${primaryMtUsd}`;
 
       const pftTotalRs = offeredTotalRs - netTotalRs;
-      const pftMtRs = isExw ? offeredMtRs - netDisplayMtRs : pftTotalRs / totalMt;
+      const pftMtRs = offeredMtRs - netDisplayMtRs;
       const pftTotalUsd = offeredTotalUsd - netTotalUsd;
-      const pftMtUsd = isExw ? (offeredMtRs - netDisplayMtRs) / csExr : offeredMtUsd - netMtUsd;
+      const pftMtUsd = offeredMtUsd - netMtUsd;
       const pftPctVal = isExw
         ? (offeredMtRs !== 0 ? (pftMtRs / offeredMtRs) * 100 : 0)
-        : (offeredTotalRs !== 0 ? (pftTotalRs / offeredTotalRs) * 100 : 0);
+        : (offeredMtUsd !== 0 ? (pftMtUsd / offeredMtUsd) * 100 : 0);
 
       setTxt('lbl-pft-tot', pftTotalRs);
       setTxt('lbl-pft-mt', pftMtRs);

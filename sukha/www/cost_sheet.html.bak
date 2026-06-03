@@ -1668,10 +1668,7 @@
                       style="font-size:13px;padding:4px" id="inp_offered_price" value="255.0"
                       oninput="calculateEngine()">
                   </td>
-                  <td id="lbl-offered-helper"
-                    style="padding-left:16px; background-color:#F8FAFC; font-size:9px; color:#047857">
-                    Green cell = Manual $/MT offer entry
-                  </td>
+                 
                 </tr>
 
               </tbody>
@@ -2111,7 +2108,6 @@
       if ($('lbl-labels-row-name')) $('lbl-labels-row-name').textContent = (isDom || isRepack) ? 'Any Other : Inventory Holding Cost' : 'Any Other : Labels Charges';
       if ($('lbl-labels-helper')) $('lbl-labels-helper').textContent = (isDom || isRepack) ? 'Any other cost - Specify with Remarks' : (isMer ? '' : 'Excel row: Labels / Other');
       if ($('lbl-comm-row-name')) $('lbl-comm-row-name').textContent = isExw ? 'Comission (Rs./MT)' : 'Comission';
-      if ($('lbl-offered-helper')) $('lbl-offered-helper').textContent = isExw ? 'Green cell = Manual Rs./MT offer entry' : 'Green cell = Manual $/MT offer entry';
       if ($('inp_rm_rs_mt')) $('inp_rm_rs_mt').readOnly = (isDom || isRepack);
 
       if ($('lbl-type-sale-view')) $('lbl-type-sale-view').textContent = saleType;

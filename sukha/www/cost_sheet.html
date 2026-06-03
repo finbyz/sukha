@@ -632,7 +632,8 @@
                   class="req">*</span></label>
               <select class="form-control manual-input font-mono" style="font-size:13px; font-weight:700"
                 id="inp_user_incoterm" onchange="deriveMasterVariantFromFields()">
-                <option value="CIF" selected>CIF (Cost, Insurance &amp; Freight)</option>
+                <option value="" selected>Select Base Incoterm</option>
+                <option value="CIF">CIF (Cost, Insurance &amp; Freight)</option>
                 <option value="FOB">FOB (Free On Board)</option>
                 <option value="EXW">EXW (Ex-Works)</option>
               </select>
@@ -643,7 +644,8 @@
                   class="req">*</span></label>
               <select class="form-control manual-input font-mono" style="font-size:13px; font-weight:700"
                 id="inp_user_origin" onchange="deriveMasterVariantFromFields()">
-                <option value="India" selected>India (Local Sourcing)</option>
+                <option value="" selected>Select Origin...</option>
+                <option value="India">India (Local Sourcing)</option>
                 <option value="TC">TC (Third Country Sourcing)</option>
               </select>
             </div>
@@ -652,7 +654,8 @@
               <label style="color:var(--color-primary); font-size:12px">3. EXW Sale Sub-Type</label>
               <select class="form-control font-mono" style="font-size:13px" id="inp_exw_subtype"
                 onchange="deriveMasterVariantFromFields()">
-                <option value="Domestic" selected>Domestic Sale</option>
+                <option value="" selected>Select Sub-Type...</option>
+                <option value="Domestic">Domestic Sale</option>
                 <option value="Merchant">Merchant Export</option>
                 <option value="Repacking Service">Repacking Service</option>
               </select>
@@ -723,7 +726,7 @@
 
           <!-- Fully Clickable/Editable Demo Fields -->
           <!-- hidden: numeric credit days for calculateEngine() -->
-          <input type="hidden" id="inp_cust_credit_days" value="30">
+          <input type="hidden" id="inp_cust_credit_days" value="">
           <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
               <label>Product Name</label>
@@ -756,7 +759,8 @@
             <div class="form-group">
               <label>Supplier Name</label>
               <select class="form-control" id="inp_supplier" onchange="updateStuffingLoc()">
-                <option value="Direct Sourcing Partner" selected>Direct Sourcing Partner</option>
+                <option value="" selected>Select Supplier...</option>
+                <option value="Direct Sourcing Partner">Direct Sourcing Partner</option>
                 <option value="Local Vendor A">Local Vendor A</option>
                 <option value="Overseas Principal">Overseas Principal</option>
               </select>
@@ -770,7 +774,8 @@
             <div class="form-group">
               <label id="lbl-destination-label">Final Country of Destination</label>
               <select class="form-control" id="inp_destination">
-                <option value="South Africa" selected>South Africa</option>
+                <option value="" selected>Select Destination...</option>
+                <option value="South Africa">South Africa</option>
                 <option value="United Arab Emirates">United Arab Emirates</option>
                 <option value="United States">United States</option>
                 <option value="Germany">Germany</option>
@@ -780,7 +785,8 @@
             <div class="form-group domestic-hide exw-hide">
               <label>Port of Discharge</label>
               <select class="form-control" id="inp_pod">
-                <option value="Durban" selected>Durban Gateway</option>
+                <option value="" selected>Select Port...</option>
+                <option value="Durban">Durban Gateway</option>
                 <option value="Jebel Ali">Jebel Ali Terminal</option>
                 <option value="Rotterdam">Rotterdam Hub</option>
                 <option value="Houston">Houston Gateway</option>
@@ -789,7 +795,8 @@
             <div class="form-group domestic-only d-none">
               <label>Delivery Location</label>
               <select class="form-control manual-input" id="inp_dom_delivery_location">
-                <option value="Panoli" selected>Panoli</option>
+                <option value="" selected>Select Location...</option>
+                <option value="Panoli">Panoli</option>
                 <option value="Mundra">Mundra</option>
                 <option value="Customer Location">Customer Location</option>
               </select>
@@ -798,7 +805,8 @@
             <div class="form-group">
               <label id="lbl-pol-label">Port of Loading</label>
               <select class="form-control" id="inp_pol">
-                <option value="Hazira" selected>Hazira Port</option>
+                <option value="" selected>Select Port...</option>
+                <option value="Hazira">Hazira Port</option>
                 <option value="Nhava Sheva">Nhava Sheva (JNPT)</option>
                 <option value="Mundra">Mundra Port</option>
                 <option value="Kandla">Kandla Terminal</option>
@@ -821,8 +829,8 @@
             <div class="form-group">
               <label id="lbl-container-label">Container type</label>
               <select class="form-control" id="inp_container" onchange="updateContainerDefaults()">
-                <option value="">Select...</option>
-                <option value="20 FT" selected>20 FT Container</option>
+                <option value="" selected>Select...</option>
+                <option value="20 FT">20 FT Container</option>
                 <option value="40 FT">40 FT Container</option>
                 <option value="40 HC">40 HC Container</option>
                 <option value="ISO Tank Container">ISO Tank Container</option>
@@ -834,12 +842,12 @@
             <div class="form-group">
               <label>Packing type</label>
               <select class="form-control" style="font-size:11px">
-                <option value="">Select...</option>
+                <option value="" selected>Select...</option>
                 <option value="Bags">Bags</option>
                 <option value="Drums">Drums</option>
                 <option value="Cartons">Cartons</option>
                 <option value="Bulk">Bulk</option>
-                <option value="Pallets" selected>Pallets</option>
+                <option value="Pallets">Pallets</option>
                 <option value="Jumbo Bags">Jumbo Bags</option>
                 <option value="IBC Composite Pallet">IBC Composite Pallet</option>
                 <option value="HMHDPE Drums">HMHDPE Drums</option>
@@ -914,7 +922,7 @@
           </div>
 
           <!-- Hidden fields for exchange logic -->
-          <input type="hidden" id="inp_premium" value="0.30">
+          <input type="hidden" id="inp_premium" value="">
         </div>
       </div>
 
@@ -1048,9 +1056,9 @@
                     <div class="repack-only d-none"
                       style="display:flex; align-items:center; justify-content:space-between; gap:6px">
                       <span style="font-size:10px;color:var(--color-text-muted)">Repacking Labour Cost</span>
-                      <input type="number" class="cell-input font-mono text-right"
+                      <input type="number" class="cell-input cell-manual font-mono text-right"
                         style="width:70px;font-size:11px;padding:2px" id="inp_repack_labour_fcl"
-                        oninput="calculateEngine()" readonly>
+                        oninput="calculateEngine()">
                     </div>
                   </td>
                 </tr>
@@ -1070,14 +1078,14 @@
                   </td>
                 </tr>
                 <tr class="exw-only d-none">
-                  <td>Addl. Vanning Requirement (chocking/lashing)</td>
+                  <td id="lbl-vanning-row-name">Addl. Vanning Requirement (chocking/lashing)</td>
                   <td class="text-right font-mono" id="lbl-vanning-rs-tot">21,000</td>
                   <td class="text-right font-mono" id="lbl-vanning-rs-mt">308</td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td style="padding:4px 8px">
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
-                      <span style="font-size:10px;color:var(--color-text-muted)">Addl. Vanning Requirement
+                      <span id="lbl-vanning-helper-name" style="font-size:10px;color:var(--color-text-muted)">Addl. Vanning Requirement
                         (chocking/lashing)</span>
                       <input type="number" class="cell-input cell-manual font-mono text-right"
                         style="width:70px;font-size:11px;padding:2px" id="inp_vanning_rs_fcl"
@@ -1156,7 +1164,7 @@
                     </div>
                   </td>
                 </tr>
-                <tr class="d-none">
+                <tr class="repack-only d-none">
                   <td>QC Charges (Sampling, Surveyor etc)</td>
                   <td class="text-right font-mono" id="lbl-repack-qc-tot">0</td>
                   <td class="text-right font-mono" id="lbl-repack-qc-mt">0</td>
@@ -1338,43 +1346,43 @@
                   <span style="color:var(--color-text-muted)">Agency</span>
                   <input type="number" class="form-control font-mono text-right"
                     style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_agency"
-                    value="1200" oninput="calculateEngine()">
+                    value="" oninput="calculateEngine()">
                 </div>
                 <div style="display:flex; align-items:center; justify-content:space-between">
                   <span style="color:var(--color-text-muted)">LOLO</span>
                   <input type="number" class="form-control font-mono text-right"
-                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_lolo" value="2000"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_lolo" value=""
                     oninput="calculateEngine()">
                 </div>
                 <div style="display:flex; align-items:center; justify-content:space-between">
                   <span style="color:var(--color-text-muted)">Seal Charges</span>
                   <input type="number" class="form-control font-mono text-right"
-                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_seal" value="800"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_seal" value=""
                     oninput="calculateEngine()">
                 </div>
                 <div style="display:flex; align-items:center; justify-content:space-between">
                   <span style="color:var(--color-text-muted)">THC at Port</span>
                   <input type="number" class="form-control font-mono text-right"
-                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_thc" value="12025"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_thc" value=""
                     oninput="calculateEngine()">
                 </div>
                 <div style="display:flex; align-items:center; justify-content:space-between">
                   <span style="color:var(--color-text-muted)">Port Charge</span>
                   <input type="number" class="form-control font-mono text-right"
-                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_port" value="750"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_port" value=""
                     oninput="calculateEngine()">
                 </div>
                 <div style="display:flex; align-items:center; justify-content:space-between">
                   <span style="color:var(--color-text-muted)">Haz documentation</span>
                   <input type="number" class="form-control font-mono text-right"
-                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_haz" value="0"
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_haz" value=""
                     oninput="calculateEngine()">
                 </div>
                 <div style="border-top:1px solid var(--color-border); padding-top:4px">
                   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px">
                     <span style="color:var(--color-primary); font-weight:500">Transportation</span>
                     <input type="number" class="form-control manual-input font-mono text-right"
-                      style="width:75px;padding:2px 4px;font-size:11px" id="inp_cnf_trans" value="11000"
+                      style="width:75px;padding:2px 4px;font-size:11px" id="inp_cnf_trans" value=""
                       oninput="calculateEngine()">
                   </div>
                   <span style="font-size:9px;color:var(--color-text-subtle);display:block">Remark: Based on Location
@@ -1384,7 +1392,7 @@
                 <div
                   style="display:flex; align-items:center; justify-content:space-between; background:#E5E7EB; padding:2px 6px; border-radius:3px">
                   <strong>Total Standard Charges</strong>
-                  <strong class="font-mono" id="lbl-cnf-std-tot">27,775</strong>
+                  <strong class="font-mono" id="lbl-cnf-std-tot">0.000</strong>
                 </div>
                 <div style="border-top:1px solid var(--color-border); padding-top:4px">
                   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px">
@@ -1399,7 +1407,7 @@
                 <div
                   style="display:flex; align-items:center; justify-content:space-between; background:#E5E7EB; padding:2px 6px; border-radius:3px">
                   <strong>Total Cost/FCI</strong>
-                  <strong class="font-mono" id="lbl-cnf-fcl-tot">37,775</strong>
+                  <strong class="font-mono" id="lbl-cnf-fcl-tot">0.000</strong>
                 </div>
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:2px 6px">
                   <span style="color:var(--color-text-muted)">Total BL Charges for 1 FCL</span>
@@ -1553,9 +1561,9 @@
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
                       <span>Credit Cost (Customer Payment Terms)</span>
                       <div class="exw-only d-none" style="display:flex; align-items:center; gap:4px">
-                        <input type="number" step="0.1" class="cell-input font-mono"
-                          style="width:45px; padding:2px 4px; font-size:11px; text-align:center; background:#F3F4F6; color:var(--color-brand); border:1px solid transparent"
-                          id="inp_dom_credit_pct" value="1.0" readonly>
+                        <input type="number" step="0.1" class="form-control manual-input font-mono"
+                          style="width:55px; padding:2px 4px; font-size:11px; text-align:center"
+                          id="inp_dom_credit_pct" value="" oninput="calculateEngine()">
                         <strong style="color:var(--color-brand)">%</strong>
                       </div>
                     </div>
@@ -1681,10 +1689,7 @@
                       style="font-size:13px;padding:4px" id="inp_offered_price" value="255.0"
                       oninput="calculateEngine()">
                   </td>
-                  <td id="lbl-offered-helper"
-                    style="padding-left:16px; background-color:#F8FAFC; font-size:9px; color:#047857">
-                    Green cell = Manual $/MT offer entry
-                  </td>
+                  
                 </tr>
 
               </tbody>
@@ -1781,60 +1786,16 @@
     }
 
     function applyVariantDefaults(variant) {
-      const d = WORKBOOK_DEFAULTS[variant] || WORKBOOK_DEFAULTS["India-CIF"];
-      setVal('inp_offered_price', d.offered);
-      setVal('inp_offered_price_exw', d.offered);
-      setVal('cell_comm_val', d.comm);
-      setVal('cell_comm_val_exw', d.comm);
-      setVal('inp_doc_usd_tot', d.doc);
-      setVal('inp_mer_doc_usd_tot', d.doc);
-      setVal('inp_int_cost_pct', d.intPct);
-      if (d.creditPct !== undefined) setVal('inp_dom_credit_pct', d.creditPct);
-
-      // For EXW variants: clear all editable cost fields — user must enter manually
+      // Clear all manual and calculated cost inputs so they start blank
+      document.querySelectorAll('.cell-input, .cell-manual, .manual-input').forEach(el => {
+        if (el.tagName === 'INPUT') {
+          el.value = '';
+        }
+      });
+      // Ensure specific EXW fields are also cleared
       if (isExwVariant(variant)) {
         clearExwCostFields();
-        if ($('cell_dbk_pct')) $('cell_dbk_pct').value = isAdvanceLicenseActive() ? 0 : 1.1;
-        if ($('cell_rodtep_pct')) $('cell_rodtep_pct').value = isAdvanceLicenseActive() ? 0 : 0.7;
-        
-        // Collapse all tabs when EXW is selected
-        document.querySelectorAll('.section-card').forEach(el => el.classList.add('collapsed'));
-        
-        return;
       }
-
-      if (d.basic !== undefined) setVal('inp_dom_basic_rs_mt', d.basic);
-      if (d.freightInward !== undefined) setVal('inp_dom_freight_inward', d.freightInward);
-      if (d.rm !== undefined) setVal('inp_rm_rs_mt', d.rm);
-      if (d.pmUnit !== undefined) setVal('inp_pm_unit_cost', d.pmUnit);
-      if (d.pmUnits !== undefined) setVal('inp_pm_units_fcl', d.pmUnits);
-      if (d.plyPrice !== undefined) setVal('inp_dom_ply_price', d.plyPrice);
-      if (d.plyUnits !== undefined) setVal('inp_dom_ply_units', d.plyUnits);
-      if (d.plyPrice !== undefined && d.plyUnits !== undefined) setVal('inp_ply_rs_fcl', d.plyPrice * d.plyUnits);
-      if (d.repack !== undefined) {
-        setVal('inp_repack_rs_mt', d.repack);
-        if ($('inp_repack_labour_fcl')) setVal('inp_repack_labour_fcl', d.repack); // the fcl version uses the same prop but different value in defaults
-      }
-      if (d.vanning !== undefined) setVal('inp_vanning_rs_fcl', d.vanning);
-      if (d.freightDest !== undefined) setVal('inp_dom_freight_dest', d.freightDest);
-      if (d.handling !== undefined) setVal('inp_dom_loading_tot', d.handling);
-      if (d.warehouse !== undefined) {
-        setVal('inp_dom_warehouse_rs_mt', d.warehouse);
-        if ($('inp_dom_warehouse_tot_input')) setVal('inp_dom_warehouse_tot_input', d.warehouse * parseFloat($('inp_total_fcl')?.value || 3));
-        if (typeof syncWarehouseMt === 'function') syncWarehouseMt();
-      }
-      if (d.qc !== undefined && $('inp_repack_qc_fcl')) setVal('inp_repack_qc_fcl', d.qc);
-      if (d.stickersFcl !== undefined && $('inp_repack_stickers_fcl')) setVal('inp_repack_stickers_fcl', d.stickersFcl);
-      if (d.labels !== undefined) setVal('inp_labels_rs_mt', d.labels);
-      if (d.labelsFcl !== undefined) setVal('inp_dom_labels_fcl', d.labelsFcl);
-      if (d.tcBuy !== undefined) setVal('inp_tc_usd_mt', d.tcBuy);
-      if (d.sfFcl !== undefined) setVal('inp_tc_sf_fcl', d.sfFcl);
-      if (d.vanUsd !== undefined) setVal('inp_tc_van_usd', d.vanUsd);
-      if ($('inp_tc_ship_exr') && (variant === 'TC-FOB' || variant === 'India-CIF')) {
-        setVal('inp_tc_ship_exr', ((v('inp_base_rate') - v('inp_premium')) + 2.5).toFixed(2));
-      }
-      if ($('cell_dbk_pct')) $('cell_dbk_pct').value = isAdvanceLicenseActive() ? 0 : 1.1;
-      if ($('cell_rodtep_pct')) $('cell_rodtep_pct').value = isAdvanceLicenseActive() ? 0 : 0.7;
     }
 
     function toggleSection(header) { header.parentElement.classList.toggle('collapsed'); }
@@ -1970,23 +1931,13 @@
 
     /* Adjust stuffing defaults when container mode switches to demonstrate dynamic logic */
     function updateContainerDefaults() {
-      const cType = $('inp_container')?.value || "";
-      if (cType === '40 FT' || cType === '40 HC') {
-        if ($('inp_units_per_fcl')) $('inp_units_per_fcl').value = 40;
-      } else if (cType === 'ISO Tank Container') {
-        if ($('inp_units_per_fcl')) $('inp_units_per_fcl').value = 1;
-        if ($('inp_unit_size')) $('inp_unit_size').value = 24000;
-      } else {
-        /* Standard 20 FT defaults */
-        if ($('inp_units_per_fcl')) $('inp_units_per_fcl').value = 20;
-        if ($('inp_unit_size')) $('inp_unit_size').value = 1135;
-      }
+      // Intentionally left blank as per user request to not auto-fill default values
       calculateEngine();
     }
 
     /* Derive underlying Master Variant ID automatically from sequential user input fields */
     function deriveMasterVariantFromFields() {
-      const inc = $('inp_user_incoterm')?.value || 'CIF';
+      const inc = $('inp_user_incoterm')?.value || '';
       const originEl = $('inp_user_origin');
       const originWrapper = $('wrapper-origin-scope');
       const tcOption = originEl?.querySelector('option[value="TC"]');
@@ -2000,17 +1951,17 @@
         exwWrapper.style.display = inc === 'EXW' ? 'block' : 'none';
       }
 
-      let masterVal = 'India-CIF';
-      let saleType = 'Direct Export';
+      let masterVal = '';
+      let saleType = '';
 
       if (orig === 'TC') {
-        masterVal = inc === 'CIF' ? 'TC-CIF' : 'TC-FOB';
+        masterVal = inc === 'CIF' ? 'TC-CIF' : (inc === 'FOB' ? 'TC-FOB' : 'TC-CIF');
         saleType = 'Third Country';
       } else {
         if (inc === 'CIF') { masterVal = 'India-CIF'; saleType = 'Direct Export'; }
         else if (inc === 'FOB') { masterVal = 'India-FOB'; saleType = 'Direct Export'; }
         else if (inc === 'EXW') {
-          const sub = $('inp_exw_subtype')?.value || 'Domestic';
+          const sub = $('inp_exw_subtype')?.value;
           if (sub === 'Merchant') {
             masterVal = 'India-Merchant-EXW';
             saleType = 'Merchant Export';
@@ -2019,9 +1970,13 @@
             masterVal = 'India-Repacking Service-EXW';
             saleType = 'Direct Export';  // Repacking Service goes to exw_sub_type, not type_of_sale
           }
-          else {
+          else if (sub === 'Domestic') {
             masterVal = 'India-Domestic-EXW';
             saleType = 'Domestic';
+          } else {
+            // Unselected state
+            masterVal = 'India-Domestic-EXW'; // Layout fallback
+            saleType = '';
           }
         }
       }
@@ -2163,11 +2118,14 @@
       if ($('lbl-container-label')) $('lbl-container-label').textContent = (isDom || isRepack) ? 'Delivery In' : 'Container type';
       if ($('lbl-pol-label')) $('lbl-pol-label').textContent = (isDom || isRepack) ? 'Loading Location' : 'Port of Loading';
       if ($('lbl-helper-th')) $('lbl-helper-th').textContent = (isDom || isRepack) ? 'Rs/Tanker or Trucks' : 'Rs/FCL & Helper Inputs';
+      if ($('lbl-vanning-row-name')) $('lbl-vanning-row-name').textContent = isRepack ? 'Chocking Belt' : 'Addl. Vanning Requirement (chocking/lashing)';
+      if ($('lbl-vanning-helper-name')) $('lbl-vanning-helper-name').textContent = isRepack ? 'Chocking Belt' : 'Addl. Vanning Requirement (chocking/lashing)';
       if ($('lbl-labels-row-name')) $('lbl-labels-row-name').textContent = (isDom || isRepack) ? 'Any Other : Inventory Holding Cost' : 'Any Other : Labels Charges';
       if ($('lbl-labels-helper')) $('lbl-labels-helper').textContent = (isDom || isRepack) ? 'Any other cost - Specify with Remarks' : (isMer ? '' : 'Excel row: Labels / Other');
       if ($('lbl-comm-row-name')) $('lbl-comm-row-name').textContent = isExw ? 'Comission (Rs./MT)' : 'Comission';
-      if ($('lbl-offered-helper')) $('lbl-offered-helper').textContent = isExw ? 'Green cell = Manual Rs./MT offer entry' : 'Green cell = Manual $/MT offer entry';
       if ($('inp_rm_rs_mt')) $('inp_rm_rs_mt').readOnly = (isDom || isRepack);
+      if ($('inp_dom_freight_out_mt')) $('inp_dom_freight_out_mt').readOnly = isExw;
+      if ($('inp_dom_handling_mt')) $('inp_dom_handling_mt').readOnly = isExw;
 
       if ($('lbl-type-sale-view')) $('lbl-type-sale-view').textContent = saleType;
       if ($('lbl-cs-type-view')) $('lbl-cs-type-view').textContent = mappedSheet;
@@ -2184,13 +2142,11 @@
 
       if ($('cell_dbk_pct')) {
         $('cell_dbk_pct').disabled = isAdvLicense;
-        $('cell_dbk_pct').value = isAdvLicense ? 0 : $('cell_dbk_pct').value;
-        if (!isAdvLicense && Number($('cell_dbk_pct').value) === 0) $('cell_dbk_pct').value = 1.1;
+        if (isAdvLicense) $('cell_dbk_pct').value = 0;
       }
       if ($('cell_rodtep_pct')) {
         $('cell_rodtep_pct').disabled = isAdvLicense;
-        $('cell_rodtep_pct').value = isAdvLicense ? 0 : $('cell_rodtep_pct').value;
-        if (!isAdvLicense && Number($('cell_rodtep_pct').value) === 0) $('cell_rodtep_pct').value = 0.7;
+        if (isAdvLicense) $('cell_rodtep_pct').value = 0;
       }
 
       const stuffingAt = $('inp_stuffing_at');
@@ -2212,14 +2168,19 @@
     function syncWarehouseMt() {
       const rsMt = v('inp_dom_warehouse_rs_mt');
       const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
-      if ($('inp_dom_warehouse_tot_input')) $('inp_dom_warehouse_tot_input').value = Math.round(rsMt * totalMt);
+      const totalRs = rsMt * totalMt;
+      const totalFcl = v('inp_total_fcl');
+      if ($('inp_dom_warehouse_tot_input')) $('inp_dom_warehouse_tot_input').value = totalFcl > 0 ? Math.round(totalRs / totalFcl) : '';
       calculateEngine();
     }
 
+
     function syncWarehouseTot() {
-      const tot = v('inp_dom_warehouse_tot_input');
-      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
-      if ($('inp_dom_warehouse_rs_mt')) $('inp_dom_warehouse_rs_mt').value = totalMt > 0 ? (tot / totalMt) : 0;
+      const fclRs = v('inp_dom_warehouse_tot_input');
+      const totalFcl = v('inp_total_fcl');
+      const totalRs = fclRs * totalFcl;
+      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * totalFcl;
+      if ($('inp_dom_warehouse_rs_mt')) $('inp_dom_warehouse_rs_mt').value = totalMt > 0 ? (totalRs / totalMt).toFixed(3) : '';
       calculateEngine();
     }
 
@@ -2227,14 +2188,14 @@
       const rsMt = v('inp_dom_freight_out_mt');
       const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
       const totalRs = rsMt * totalMt;
-      const totalFcl = v('inp_total_fcl') || 1;
+      const totalFcl = v('inp_total_fcl');
       if ($('inp_dom_freight_dest')) $('inp_dom_freight_dest').value = Math.round(totalRs / totalFcl);
       calculateEngine();
     }
 
     function syncFreightOutTot() {
       const fclRs = v('inp_dom_freight_dest');
-      const totalFcl = v('inp_total_fcl') || 1;
+      const totalFcl = v('inp_total_fcl');
       const totalRs = fclRs * totalFcl;
       const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * totalFcl;
       if ($('inp_dom_freight_out_mt')) $('inp_dom_freight_out_mt').value = totalMt > 0 ? Math.round(totalRs / totalMt) : 0;
@@ -2245,14 +2206,14 @@
       const rsMt = v('inp_labels_rs_mt');
       const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
       const totalRs = rsMt * totalMt;
-      const totalFcl = v('inp_total_fcl') || 1;
+      const totalFcl = v('inp_total_fcl');
       if ($('inp_dom_labels_fcl')) $('inp_dom_labels_fcl').value = Math.round(totalRs / totalFcl);
       calculateEngine();
     }
 
     function syncLabelsTot() {
       const fclRs = v('inp_dom_labels_fcl');
-      const totalFcl = v('inp_total_fcl') || 1;
+      const totalFcl = v('inp_total_fcl');
       const totalRs = fclRs * totalFcl;
       const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * totalFcl;
       if ($('inp_labels_rs_mt')) $('inp_labels_rs_mt').value = totalMt > 0 ? (totalRs / totalMt).toFixed(3) : 0;
@@ -2263,7 +2224,7 @@
       const rsMt = v('inp_dom_handling_mt');
       const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * v('inp_total_fcl');
       const totalRs = rsMt * totalMt;
-      const totalFcl = v('inp_total_fcl') || 1;
+      const totalFcl = v('inp_total_fcl');
       const fclRs = totalRs / totalFcl;
       // Split evenly between loading and unloading
       if ($('inp_dom_loading_tot')) $('inp_dom_loading_tot').value = Math.round(fclRs / 2);
@@ -2273,7 +2234,7 @@
 
     function syncHandlingTot() {
       const fclRs = v('inp_dom_loading_tot') + v('inp_dom_unloading_tot');
-      const totalFcl = v('inp_total_fcl') || 1;
+      const totalFcl = v('inp_total_fcl');
       const totalRs = fclRs * totalFcl;
       const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * totalFcl;
       if ($('inp_dom_handling_mt')) $('inp_dom_handling_mt').value = totalMt > 0 ? Math.round(totalRs / totalMt) : 0;
@@ -2292,16 +2253,15 @@
       const isRepack = variant === 'India-Repacking Service-EXW';
 
       const unitKg = v('inp_unit_size');
-      const unitsFcl = parseFloat($('inp_units_per_fcl')?.value) || 20;
-      const totalFcl = v('inp_total_fcl');
+      const unitsFcl = parseFloat($('inp_units_per_fcl')?.value) || 0;
       const qtyFcl = (unitsFcl * unitKg) / 1000;
+      const totalFcl = v('inp_total_fcl');
       const totalMt = qtyFcl * totalFcl;
 
-      if ($('lbl-qty-fcl-box')) $('lbl-qty-fcl-box').value = qtyFcl.toFixed(3);
-      if ($('lbl-total-mt-box')) $('lbl-total-mt-box').value = totalMt.toFixed(3);
+      if ($('lbl-qty-fcl-box')) $('lbl-qty-fcl-box').value = qtyFcl > 0 ? qtyFcl.toFixed(3) : '';
+      if ($('lbl-total-mt-box')) $('lbl-total-mt-box').value = totalMt > 0 ? totalMt.toFixed(3) : '';
       setTxt('kpi_weight', totalMt, 3);
       if ($('lbl-rp-weight')) $('lbl-rp-weight').textContent = `${totalMt.toFixed(3)} MT`;
-      if (totalMt <= 0) return;
 
       const baseRate = v('inp_base_rate');
       const premium = v('inp_premium');
@@ -2395,16 +2355,23 @@
           domesticHandlingTotalRs = handlingCostPerFcl * totalFcl;
           domesticHandlingRsMt = v('inp_dom_handling_mt') ? v('inp_dom_handling_mt') : (qtyFcl > 0 ? handlingCostPerFcl / qtyFcl : 0);
           
-          domesticWarehouseRsMt = v('inp_dom_warehouse_rs_mt');
-          domesticWarehouseTotalRs = domesticWarehouseRsMt * totalMt;
+          const warehouseFclRs = v('inp_dom_warehouse_tot_input');
+          domesticWarehouseTotalRs = warehouseFclRs * totalFcl;
+          domesticWarehouseRsMt = v('inp_dom_warehouse_rs_mt') ? v('inp_dom_warehouse_rs_mt') : (qtyFcl > 0 ? warehouseFclRs / qtyFcl : 0);
         }
 
         let qcTotalRs = 0;
+        let qcRsMt = 0;
         let stickersTotalRs = 0;
         if (isRepack) {
           stickersTotalRs = v('inp_repack_stickers_fcl') * totalFcl;
           if ($('lbl-repack-stickers-tot')) setTxt('lbl-repack-stickers-tot', stickersTotalRs);
           if ($('lbl-repack-stickers-mt')) setTxt('lbl-repack-stickers-mt', stickersTotalRs / totalMt);
+          
+          qcTotalRs = v('inp_repack_qc_fcl') * totalFcl;
+          qcRsMt = qcTotalRs / totalMt;
+          if ($('lbl-repack-qc-tot')) setTxt('lbl-repack-qc-tot', qcTotalRs);
+          if ($('lbl-repack-qc-mt')) setTxt('lbl-repack-qc-mt', qcRsMt);
         }
 
         let labelsRsMt = 0;
@@ -2542,7 +2509,7 @@
       setTxt('kpi_off', isExw ? offeredMtRs : offeredMtUsd, null);
       if ($('lbl-rp-off')) $('lbl-rp-off').textContent = isExw ? `Rs. ${offeredMtRs}` : `$${offeredMtUsd}`;
 
-      const intPctVal = parseFloat($('inp_int_cost_pct')?.value) || 2.0;
+      const intPctVal = parseFloat($('inp_int_cost_pct')?.value) || 0;
       const intTotalRs = baseCostForPercentRs * (intPctVal / 100);
       const intMtRs = offeredMtRs * (intPctVal / 100);
       setTxt('lbl-marg-int-tot', intTotalRs);
@@ -2559,10 +2526,8 @@
           : 'LC at Sight';
         $('lbl-credit-cost-name').textContent = `Credit Cost : ${termsText}`;
       }
-      const creditPct = creditDays > 0 ? (creditDays / 30) * 0.01 : 0;
-      if ($('inp_dom_credit_pct')) {
-        $('inp_dom_credit_pct').value = (creditPct * 100).toFixed(1);
-      }
+      const creditPctVal = parseFloat($('inp_dom_credit_pct')?.value) || 0;
+      const creditPct = creditPctVal / 100;
       const creditTotalRs = baseCostForPercentRs * creditPct;
       const creditMtRs = offeredMtRs * creditPct;
       setTxt('lbl-marg-cr-tot', creditTotalRs);
@@ -3322,11 +3287,19 @@
     });
 
     /* ─── PAYMENT TERMS ─── */
+    function syncCreditPctFromDays(days) {
+      if ($('inp_dom_credit_pct')) {
+        const pct = days > 0 ? (days / 30) * 1.0 : 0;
+        $('inp_dom_credit_pct').value = pct > 0 ? pct.toFixed(1) : '';
+      }
+    }
+
     function onCustTermsChange(selectedName) {
       const hiddenDays = $('inp_cust_credit_days');
 
       if (!selectedName) {
         if (hiddenDays) hiddenDays.value = 0;
+        syncCreditPctFromDays(0);
         calculateEngine();
         return;
       }
@@ -3340,20 +3313,22 @@
             fieldname: ['payment_terms_template_detail']
           },
           callback: (r) => {
-            // Try to infer credit days from the template name (fallback heuristic)
             let days = extractDaysFromTermsName(selectedName);
             if (hiddenDays) hiddenDays.value = days;
+            syncCreditPctFromDays(days);
             calculateEngine();
           },
           error: () => {
             let days = extractDaysFromTermsName(selectedName);
             if (hiddenDays) hiddenDays.value = days;
+            syncCreditPctFromDays(days);
             calculateEngine();
           }
         });
       } else {
         let days = extractDaysFromTermsName(selectedName);
         if (hiddenDays) hiddenDays.value = days;
+        syncCreditPctFromDays(days);
         calculateEngine();
       }
     }

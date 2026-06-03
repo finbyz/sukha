@@ -2131,9 +2131,7 @@
       if ($('lbl-doc-helper-rate')) {
         $('lbl-doc-helper-rate').textContent = isMer
           ? 'Special Export Documents Required'
-          : isTCFob
-            ? 'BV/CRIA/PVOC/HC/Legalization ($/Container) [83]'
-            : 'BV/CRIA/PVOC/HC/Legalization ($/Container) [167]';
+          : 'BV/CRIA/PVOC/HC/Legalization ($/Container)';
       }
 
       document.querySelectorAll('.col-benefits').forEach(el => el.classList.toggle('d-none', !isExport || isTC || !isRodtepActive || isAdvLicense));
@@ -2515,14 +2513,16 @@
 
         const sfFclUsd = v('inp_tc_sf_fcl') + v('inp_tc_sf_haz');
         const sfTotalUsd = sfFclUsd * totalFcl;
-        const sfTotalRs = sfTotalUsd * shipExr;
+        const sfUsdMt = sfTotalUsd / totalMt;
+        const sfRsMt = sfUsdMt * csExr;
+        const sfTotalRs = sfRsMt * totalMt;
         const vanTotalUsd = v('inp_tc_van_usd');
         const vanTotalRs = vanTotalUsd * shipExr;
         seaFreightTotalRs = sfTotalRs + vanTotalRs;
         seaFreightTotalUsd = sfTotalUsd + vanTotalUsd;
 
         setTxt('lbl-tc-sf-rs-tot', sfTotalRs);
-        setTxt('lbl-tc-sf-rs-mt', sfTotalRs / totalMt);
+        setTxt('lbl-tc-sf-rs-mt', sfRsMt);
         setTxt('lbl-tc-sf-usd-tot', sfTotalUsd);
         setTxt('lbl-tc-sf-usd-mt', sfTotalUsd / totalMt, 1);
         setTxt('lbl-tc-van-rs-tot', vanTotalRs);
@@ -2598,6 +2598,13 @@
       const docTotalRs = isDomestic ? 0 : docTotalUsd * csExr;
       const docMtRs = isDomestic ? 0 : docTotalRs / totalMt;
       const docUsdMt = isDomestic ? 0 : docTotalUsd / totalMt;
+
+      if ($('lbl-doc-helper-rate')) {
+        const docPerFcl = totalFcl > 0 ? Math.round(docTotalUsd / totalFcl) : 0;
+        $('lbl-doc-helper-rate').textContent = isMerchant
+          ? 'Special Export Documents Required'
+          : `BV/CRIA/PVOC/HC/Legalization ($/Container) [${docPerFcl}]`;
+      }
       setTxt('lbl-marg-doc-tot', docTotalRs);
       setTxt('lbl-marg-doc-mt', docMtRs);
       setTxt('lbl-marg-doc-umt', docUsdMt, 1);
@@ -2617,20 +2624,23 @@
       const isAdvLicense = isAdvanceLicenseActive();
       const isRodtepActive = $('chk_scheme_rodtep')?.checked || false;
       if (isIndExport && isRodtepActive && !isAdvLicense) {
-        dbkTotalRs = offeredTotalRs * (v('cell_dbk_pct') / 100);
-        dbkMtRs = dbkTotalRs / totalMt;
-        dbkUsdTotal = dbkTotalRs / csExr;
-        dbkUsdMt = dbkUsdTotal / totalMt;
+        const seaFreightUsdMtVal = seaFreightTotalUsd ? (seaFreightTotalUsd / totalMt) : 0;
+        const seaFreightMtRsVal = seaFreightTotalRs ? (seaFreightTotalRs / totalMt) : 0;
+        
+        dbkUsdMt = (offeredMtUsd - seaFreightUsdMtVal) * (v('cell_dbk_pct') / 100);
+        dbkUsdTotal = dbkUsdMt * totalMt;
+        dbkMtRs = (offeredMtRs - seaFreightMtRsVal) * (v('cell_dbk_pct') / 100);
+        dbkTotalRs = dbkMtRs * totalMt;
 
         setTxt('lbl-marg-dbk-tot', dbkTotalRs);
         setTxt('lbl-marg-dbk-mt', dbkMtRs);
         setTxt('lbl-marg-dbk-utot', dbkUsdTotal);
         setTxt('lbl-marg-dbk-umt', dbkUsdMt, 1);
 
-        rodtepTotalRs = offeredTotalRs * (v('cell_rodtep_pct') / 100);
-        rodtepMtRs = rodtepTotalRs / totalMt;
-        rodtepUsdTotal = rodtepTotalRs / csExr;
-        rodtepUsdMt = rodtepUsdTotal / totalMt;
+        rodtepUsdMt = (offeredMtUsd - seaFreightUsdMtVal) * (v('cell_rodtep_pct') / 100);
+        rodtepUsdTotal = rodtepUsdMt * totalMt;
+        rodtepMtRs = (offeredMtRs - seaFreightMtRsVal) * (v('cell_rodtep_pct') / 100);
+        rodtepTotalRs = rodtepMtRs * totalMt;
 
         setTxt('lbl-marg-rod-tot', rodtepTotalRs);
         setTxt('lbl-marg-rod-mt', rodtepMtRs);
@@ -2640,20 +2650,20 @@
         ['lbl-marg-dbk-tot', 'lbl-marg-dbk-mt', 'lbl-marg-dbk-utot', 'lbl-marg-dbk-umt', 'lbl-marg-rod-tot', 'lbl-marg-rod-mt', 'lbl-marg-rod-utot', 'lbl-marg-rod-umt'].forEach(id => setTxt(id, NaN));
       }
 
-      // We explicitly carry down the vertically summed values from the prior stages (EXW or FOB)
-      const baseBuyTotalRs = isExw ? exwCostRs : fobCostRs;
-      const baseBuyMtRs = isExw ? exwCostMtRs : fobCostMtRs;
-      const baseBuyTotalUsd = isExw ? exwTotalUsd : fobUsdTotal;
-      const baseBuyUsdMt = isExw ? exwUsdMt : fobUsdMt;
+      // We explicitly carry down the vertically summed values from the prior stages (TC, EXW, or FOB)
+      const baseBuyTotalRs = isTC ? primaryBuyTotalRs : (isExw ? exwCostRs : fobCostRs);
+      const baseBuyMtRs = isTC ? baseCostForPercentMtRs : (isExw ? exwCostMtRs : fobCostMtRs);
+      const baseBuyTotalUsd = isTC ? (v('inp_tc_usd_mt') * totalMt) : (isExw ? exwTotalUsd : fobUsdTotal);
+      const baseBuyUsdMt = isTC ? v('inp_tc_usd_mt') : (isExw ? exwUsdMt : fobUsdMt);
 
       const seaFreightMtRs = seaFreightTotalRs ? seaFreightTotalRs / totalMt : 0;
       const seaFreightUsdMt = seaFreightTotalUsd ? seaFreightTotalUsd / totalMt : 0;
 
-      // Strict vertical summation of all columns to guarantee matching UI rows
-      const netTotalRs = baseBuyTotalRs + seaFreightTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs - dbkTotalRs - rodtepTotalRs;
-      const netDisplayMtRs = baseBuyMtRs + seaFreightMtRs + intMtRs + creditMtRs + docMtRs + commMtRs - dbkMtRs - rodtepMtRs;
-      const netTotalUsd = baseBuyTotalUsd + seaFreightTotalUsd + intUsdTotal + creditUsdTotal + docTotalUsd + commTotalUsd - dbkUsdTotal - rodtepUsdTotal;
-      const netMtUsd = baseBuyUsdMt + seaFreightUsdMt + intUsdMt + creditUsdMt + docUsdMt + commUsdMt - dbkUsdMt - rodtepUsdMt;
+      // Strict vertical summation of all columns to guarantee matching UI rows (Rebates excluded per request)
+      const netTotalRs = baseBuyTotalRs + seaFreightTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs;
+      const netDisplayMtRs = baseBuyMtRs + seaFreightMtRs + intMtRs + creditMtRs + docMtRs + commMtRs;
+      const netTotalUsd = baseBuyTotalUsd + seaFreightTotalUsd + intUsdTotal + creditUsdTotal + docTotalUsd + commTotalUsd;
+      const netMtUsd = baseBuyUsdMt + seaFreightUsdMt + intUsdMt + creditUsdMt + docUsdMt + commUsdMt;
 
       setTxt('lbl-net-tot', netTotalRs);
       setTxt('lbl-net-mt', netDisplayMtRs);
@@ -2667,10 +2677,11 @@
       setTxt('kpi_exw', isExw ? primaryMtRs : primaryMtUsd, null);
       if ($('lbl-rp-buy')) $('lbl-rp-buy').textContent = isExw ? `Rs. ${primaryMtRs}` : `$${primaryMtUsd}`;
 
-      const pftTotalRs = offeredTotalRs - netTotalRs;
-      const pftMtRs = offeredMtRs - netDisplayMtRs;
-      const pftTotalUsd = offeredTotalUsd - netTotalUsd;
-      const pftMtUsd = offeredMtUsd - netMtUsd;
+      // Rebates are now added directly to Profit Margin since they were removed from Net Cost
+      const pftTotalRs = offeredTotalRs - netTotalRs + dbkTotalRs + rodtepTotalRs;
+      const pftMtRs = offeredMtRs - netDisplayMtRs + dbkMtRs + rodtepMtRs;
+      const pftTotalUsd = offeredTotalUsd - netTotalUsd + dbkUsdTotal + rodtepUsdTotal;
+      const pftMtUsd = offeredMtUsd - netMtUsd + dbkUsdMt + rodtepUsdMt;
       const pftPctVal = isExw
         ? (offeredMtRs !== 0 ? (pftMtRs / offeredMtRs) * 100 : 0)
         : (offeredMtUsd !== 0 ? (pftMtUsd / offeredMtUsd) * 100 : 0);

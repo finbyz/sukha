@@ -7,19 +7,14 @@
  "engine": "InnoDB",
  "field_order": [
   "product_category",
+  "un_number",
   "hazar_based",
   "sub_category_name",
-  "description",
-  "flash_point",
-  "un_number",
-  "packing_group",
   "column_break_zwbm",
-  "imdg_code",
-  "boiling_point",
-  "density",
   "hazard_class",
-  "export_documentation_required",
-  "dg_required"
+  "flash_point",
+  "dg_required",
+  "packing_group"
  ],
  "fields": [
   {
@@ -44,32 +39,9 @@
    "options": "Sub Category"
   },
   {
-   "fetch_from": "sub_category_name.description",
-   "fieldname": "description",
-   "fieldtype": "Data",
-   "label": "Description",
-   "read_only": 1
-  },
-  {
-   "fieldname": "imdg_code",
-   "fieldtype": "Data",
-   "label": "IMDG Code"
-  },
-  {
    "fieldname": "flash_point",
    "fieldtype": "Data",
    "label": "Flash Point"
-  },
-  {
-   "fieldname": "boiling_point",
-   "fieldtype": "Select",
-   "label": "Boiling Point",
-   "options": "\nHandling\nStorage"
-  },
-  {
-   "fieldname": "density",
-   "fieldtype": "Data",
-   "label": "Density"
   },
   {
    "fieldname": "un_number",
@@ -96,18 +68,13 @@
    "fieldtype": "Select",
    "label": "DG Required",
    "options": "\nYes\nNo"
-  },
-  {
-   "fieldname": "export_documentation_required",
-   "fieldtype": "Data",
-   "label": "Export Documentation Required"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-01 15:51:31.924279",
+ "modified": "2026-06-03 17:16:02.744433",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Item Compliance and Export",

@@ -747,7 +747,7 @@
                 <option value="">Select Customer...</option>
               </select>
             </div>
-            <div class="form-group merchant-hide">
+            <div class="form-group">
               <label>Customer Payment Terms</label>
               <select class="form-control manual-input" id="inp_cust_terms" onchange="onCustTermsChange(this.value)">
                 <option value="">Select terms...</option>
@@ -1560,7 +1560,7 @@
                     style="padding-left:16px; background-color:#F8FAFC; font-size:11px; color:var(--color-text-muted)">
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
                       <span>Credit Cost (Customer Payment Terms)</span>
-                      <div class="exw-only d-none" style="display:flex; align-items:center; gap:4px">
+                      <div style="display:flex; align-items:center; gap:4px">
                         <input type="number" step="0.1" class="form-control manual-input font-mono"
                           style="width:55px; padding:2px 4px; font-size:11px; text-align:center"
                           id="inp_dom_credit_pct" value="" oninput="calculateEngine()">
@@ -2303,18 +2303,22 @@
           setVal('inp_rm_rs_mt', Number(rmDisplayRsMt).toFixed(3));
         }
         if ($('lbl-dom-rm-mt')) $('lbl-dom-rm-mt').textContent = isDomestic ? Math.round(rmDisplayRsMt).toLocaleString('en-US') : '';
-        const rmTotalUsd = rmTotalRs / csExr;
+        const rmUsdMt = Number(rmDisplayRsMt) / csExr;
+        const rmTotalUsd = rmUsdMt * totalMt;
 
         const pmUnitCost = v('inp_pm_unit_cost');
         const pmUnitsFcl = v('inp_pm_units_fcl');
         const pmTotalRs = pmUnitCost * pmUnitsFcl * totalFcl;
         const pmRsMt = pmTotalRs / totalMt;
-        const pmTotalUsd = pmTotalRs / csExr;
+        const pmUsdMt = pmRsMt / csExr;
+        const pmTotalUsd = pmUsdMt * totalMt;
 
         const plyRsFcl = v('inp_dom_ply_price') * v('inp_dom_ply_units');
         const plyTotalRs = plyRsFcl * totalFcl;
-        const plyRsMt = plyTotalRs / totalMt;
-        const plyTotalUsd = plyTotalRs / csExr;
+        // Replicating exact user requested formulas:
+        const plyRsMt = qtyFcl > 0 ? (plyTotalRs / qtyFcl) : 0;
+        const plyUsdMt = plyRsMt / csExr;
+        const plyTotalUsd = plyUsdMt * totalMt;
 
         let repackTotalRs = 0;
         let repackRsMt = 0;
@@ -2326,7 +2330,8 @@
           repackRsMt = v('inp_repack_rs_mt');
           repackTotalRs = repackRsMt * totalMt;
         }
-        const repackTotalUsd = repackTotalRs / csExr;
+        const repackUsdMt = repackRsMt / csExr;
+        const repackTotalUsd = repackUsdMt * totalMt;
 
         let vanningTotalRs = 0;
         let vanningRsMt = 0;
@@ -2388,19 +2393,20 @@
           const hasOtherCost = labelsTotalRs > 0 || labelsRsMt > 0 || v('inp_dom_labels_fcl') > 0 || v('inp_labels_rs_mt') > 0;
           $('inp_labels_remarks').style.display = hasOtherCost ? 'block' : 'none';
         }
-        const labelsTotalUsd = labelsTotalRs / csExr;
+        const labelsUsdMt = labelsRsMt / csExr;
+        const labelsTotalUsd = labelsUsdMt * totalMt;
 
         setTxt('lbl-rm-rs-tot', rmTotalRs);
         setTxt('lbl-rm-usd-tot', rmTotalUsd);
-        setTxt('lbl-rm-usd-mt', rmTotalUsd / totalMt, 1);
+        setTxt('lbl-rm-usd-mt', rmUsdMt, 1);
         setTxt('lbl-pm-rs-tot', pmTotalRs);
         setTxt('lbl-pm-rs-mt', pmRsMt);
         setTxt('lbl-pm-usd-tot', pmTotalUsd);
-        setTxt('lbl-pm-usd-mt', pmTotalUsd / totalMt, 1);
+        setTxt('lbl-pm-usd-mt', pmUsdMt, 1);
         setTxt('lbl-ply-rs-tot', plyTotalRs);
         setTxt('lbl-ply-rs-mt', plyRsMt);
         setTxt('lbl-ply-usd-tot', plyTotalUsd);
-        setTxt('lbl-ply-usd-mt', plyTotalUsd / totalMt, 1);
+        setTxt('lbl-ply-usd-mt', plyUsdMt, 1);
         setTxt('lbl-repack-rs-tot', repackTotalRs);
         if (!isRepack) {
           if ($('lbl-repack-rs-mt')) setTxt('lbl-repack-rs-mt', repackRsMt);
@@ -2408,7 +2414,7 @@
           if ($('lbl-repack-rs-mt')) setTxt('lbl-repack-rs-mt', repackRsMt); // reusing it for display
         }
         setTxt('lbl-repack-usd-tot', repackTotalUsd);
-        setTxt('lbl-repack-usd-mt', repackTotalUsd / totalMt, 1);
+        setTxt('lbl-repack-usd-mt', repackUsdMt, 1);
         setTxt('lbl-dom-freight-out-tot', domesticFreightTotalRs);
         if ($('lbl-dom-freight-out-mt')) setTxt('lbl-dom-freight-out-mt', domesticFreightRsMt);
         setTxt('lbl-dom-handling-tot', domesticHandlingTotalRs);
@@ -2416,18 +2422,19 @@
         setTxt('lbl-dom-warehouse-tot', domesticWarehouseTotalRs);
         setTxt('lbl-labels-rs-tot', labelsTotalRs);
         setTxt('lbl-labels-usd-tot', labelsTotalUsd);
-        setTxt('lbl-labels-usd-mt', labelsTotalUsd / totalMt, 1);
+        setTxt('lbl-labels-usd-mt', labelsUsdMt, 1);
 
         const exwCostRs = rmTotalRs + pmTotalRs + plyTotalRs + repackTotalRs + vanningTotalRs + domesticFreightTotalRs + domesticHandlingTotalRs + domesticWarehouseTotalRs + labelsTotalRs + qcTotalRs + stickersTotalRs;
-        const exwCostMtRs = isDomestic
-          ? rmDisplayRsMt + pmRsMt + plyRsMt + repackRsMt + vanningRsMt + domesticFreightRsMt + domesticHandlingRsMt + domesticWarehouseRsMt + labelsRsMt
-          : isMerchant
-            ? rmDisplayRsMt + pmRsMt + plyRsMt + repackRsMt + vanningRsMt + labelsRsMt
-            : exwCostRs / totalMt;
+        const exwCostMtRs = rmDisplayRsMt + pmRsMt + plyRsMt + repackRsMt + vanningRsMt + domesticFreightRsMt + domesticHandlingRsMt + domesticWarehouseRsMt + labelsRsMt + qcRsMt + (stickersTotalRs / totalMt || 0);
+        
         setTxt('lbl-ind-prod-tot-rs', exwCostRs);
         setTxt('lbl-ind-prod-mt-rs', exwCostMtRs);
-        setTxt('lbl-ind-prod-tot-usd', exwCostRs / csExr);
-        setTxt('lbl-ind-prod-mt-usd', (exwCostRs / totalMt) / csExr, 1);
+        
+        const exwTotalUsd = rmTotalUsd + pmTotalUsd + plyTotalUsd + repackTotalUsd + (vanningTotalRs / csExr) + (domesticFreightTotalRs / csExr) + (domesticHandlingTotalRs / csExr) + (domesticWarehouseTotalRs / csExr) + labelsTotalUsd + (qcTotalRs / csExr) + (stickersTotalRs / csExr);
+        const exwUsdMt = rmUsdMt + pmUsdMt + plyUsdMt + repackUsdMt + (vanningRsMt / csExr) + (domesticFreightRsMt / csExr) + (domesticHandlingRsMt / csExr) + (domesticWarehouseRsMt / csExr) + labelsUsdMt + (qcRsMt / csExr) + ((stickersTotalRs / totalMt || 0) / csExr);
+        
+        setTxt('lbl-ind-prod-tot-usd', exwTotalUsd);
+        setTxt('lbl-ind-prod-mt-usd', exwUsdMt, 1);
         primaryBuyTotalRs = exwCostRs;
         baseCostForPercentRs = exwCostRs;
         baseCostForPercentMtRs = exwCostMtRs;
@@ -2443,29 +2450,49 @@
         const otherCharges = v('inp_cnf_other');
         const totalCostFcl = stdCharges + otherCharges;
         const blCharges = v('inp_bl_charges');
-        const totalCnfChargesRs = (totalCostFcl * totalFcl) + blCharges;
+        const cnfBaseRs = totalCostFcl * totalFcl;
+        const cnfBaseMtRs = cnfBaseRs / totalMt;
+        const cnfBaseUsd = totalCostFcl / csExr;
+        const cnfBaseUsdMt = cnfBaseMtRs / csExr;
+
+        const blMtRs = blCharges / totalMt;
+        const blUsdTotal = blCharges / csExr;
+        const blUsdMt = blMtRs / csExr;
+
+        const cnfTotRs = cnfBaseRs + blCharges;
+        const cnfTotMtRs = cnfBaseMtRs + blMtRs;
+        const cnfTotUsdMt = cnfBaseUsdMt + blUsdMt;
+        const cnfTotUsd = cnfBaseUsd + blUsdTotal;
 
         setTxt('lbl-cnf-std-tot', stdCharges);
         setTxt('lbl-cnf-fcl-tot', totalCostFcl);
-        setTxt('lbl-cnf-base-rs', totalCostFcl * totalFcl);
-        setTxt('lbl-cnf-base-mt', (totalCostFcl * totalFcl) / totalMt);
-        setTxt('lbl-cnf-base-usd', totalCostFcl / csExr);
-        setTxt('lbl-cnf-base-umt', ((totalCostFcl * totalFcl) / totalMt) / csExr, 1);
-        setTxt('lbl-bl-mt', blCharges / totalMt);
-        setTxt('lbl-bl-usd', blCharges / csExr);
-        setTxt('lbl-bl-umt', (blCharges / totalMt) / csExr, 1);
+        
+        setTxt('lbl-cnf-base-rs', cnfBaseRs);
+        setTxt('lbl-cnf-base-mt', cnfBaseMtRs);
+        setTxt('lbl-cnf-base-usd', cnfBaseUsd);
+        setTxt('lbl-cnf-base-umt', cnfBaseUsdMt, 1);
+        
+        setTxt('lbl-bl-mt', blMtRs);
+        setTxt('lbl-bl-usd', blUsdTotal);
+        setTxt('lbl-bl-umt', blUsdMt, 1);
+        
         setTxt('lbl-cnf-bl-fcl', blCharges / totalFcl);
         setTxt('lbl-cnf-fcl-grand', totalCostFcl + (blCharges / totalFcl));
-        setTxt('lbl-cnf-tot-rs', totalCnfChargesRs);
-        setTxt('lbl-cnf-tot-mt', totalCnfChargesRs / totalMt);
-        setTxt('lbl-cnf-tot-usd', totalCnfChargesRs / csExr);
-        setTxt('lbl-cnf-tot-umt', (totalCnfChargesRs / totalMt) / csExr, 1);
+        
+        setTxt('lbl-cnf-tot-rs', cnfTotRs);
+        setTxt('lbl-cnf-tot-mt', cnfTotMtRs);
+        setTxt('lbl-cnf-tot-usd', cnfTotUsd);
+        setTxt('lbl-cnf-tot-umt', cnfTotUsdMt, 1);
 
-        const fobCostRs = exwCostRs + totalCnfChargesRs;
+        const fobCostRs = exwCostRs + cnfTotRs;
+        const fobCostMtRs = exwCostMtRs + cnfTotMtRs;
+        const fobUsdMt = exwUsdMt + cnfTotUsdMt;
+        const fobUsdTotal = exwTotalUsd + cnfTotUsd;
+        
         setTxt('lbl-ind-fob-tot-rs', fobCostRs);
-        setTxt('lbl-ind-fob-mt-rs', fobCostRs / totalMt);
-        setTxt('lbl-ind-fob-tot-usd', fobCostRs / csExr);
-        setTxt('lbl-ind-fob-mt-usd', (fobCostRs / totalMt) / csExr, 1);
+        setTxt('lbl-ind-fob-mt-rs', fobCostMtRs);
+        setTxt('lbl-ind-fob-tot-usd', fobUsdTotal);
+        setTxt('lbl-ind-fob-mt-usd', fobUsdMt, 1);
 
         if (isIndExport) {
           primaryBuyTotalRs = fobCostRs;
@@ -2510,12 +2537,15 @@
       if ($('lbl-rp-off')) $('lbl-rp-off').textContent = isExw ? `Rs. ${offeredMtRs}` : `$${offeredMtUsd}`;
 
       const intPctVal = parseFloat($('inp_int_cost_pct')?.value) || 0;
-      const intTotalRs = baseCostForPercentRs * (intPctVal / 100);
-      const intMtRs = offeredMtRs * (intPctVal / 100);
+      const intUsdMt = offeredMtUsd * (intPctVal / 100);
+      const intUsdTotal = intUsdMt * totalMt;
+      const intMtRs = intUsdMt * csExr;
+      const intTotalRs = intMtRs * totalMt;
+      
       setTxt('lbl-marg-int-tot', intTotalRs);
       setTxt('lbl-marg-int-mt', intMtRs);
-      setTxt('lbl-marg-int-utot', intTotalRs / csExr);
-      setTxt('lbl-marg-int-umt', (intTotalRs / totalMt) / csExr, 1);
+      setTxt('lbl-marg-int-utot', intUsdTotal);
+      setTxt('lbl-marg-int-umt', intUsdMt, 1);
 
       // Read credit days from the dedicated hidden field (populated by onCustTermsChange)
       const creditDays = parseFloat($('inp_cust_credit_days')?.value) || 0;
@@ -2528,52 +2558,77 @@
       }
       const creditPctVal = parseFloat($('inp_dom_credit_pct')?.value) || 0;
       const creditPct = creditPctVal / 100;
-      const creditTotalRs = baseCostForPercentRs * creditPct;
-      const creditMtRs = offeredMtRs * creditPct;
+      const creditUsdMt = offeredMtUsd * creditPct;
+      const creditUsdTotal = creditUsdMt * totalMt;
+      const creditMtRs = creditUsdMt * csExr;
+      const creditTotalRs = creditMtRs * totalMt;
+      
       setTxt('lbl-marg-cr-tot', creditTotalRs);
       setTxt('lbl-marg-cr-mt', creditMtRs);
-      setTxt('lbl-marg-cr-utot', creditTotalRs / csExr);
-      setTxt('lbl-marg-cr-umt', (creditTotalRs / totalMt) / csExr, 1);
+      setTxt('lbl-marg-cr-utot', creditUsdTotal);
+      setTxt('lbl-marg-cr-umt', creditUsdMt, 1);
 
       const docTotalUsd = isMerchant ? v('inp_mer_doc_usd_tot') : v('inp_doc_usd_tot');
       const docTotalRs = isDomestic ? 0 : docTotalUsd * csExr;
-      const docMtRs = docTotalRs / totalMt;
+      const docMtRs = isDomestic ? 0 : docTotalRs / totalMt;
+      const docUsdMt = isDomestic ? 0 : docTotalUsd / totalMt;
       setTxt('lbl-marg-doc-tot', docTotalRs);
       setTxt('lbl-marg-doc-mt', docMtRs);
-      setTxt('lbl-marg-doc-umt', isDomestic ? 0 : docTotalUsd / totalMt, 1);
+      setTxt('lbl-marg-doc-umt', docUsdMt, 1);
 
       const commInput = isExw ? v('cell_comm_val_exw') : v('cell_comm_val');
       const commTotalRs = isExw ? commInput * totalMt : commInput * totalMt * csExr;
       const commTotalUsd = commTotalRs / csExr;
       const commMtRs = isExw ? commInput : commTotalRs / totalMt;
+      const commUsdMt = commTotalUsd / totalMt;
       setTxt('lbl-marg-comm-tot', commTotalRs);
       setTxt('lbl-marg-comm-mt', commMtRs);
       setTxt('lbl-marg-comm-utot', commTotalUsd);
+      setTxt('lbl-marg-comm-umt', commUsdMt, 1);
 
-      let dbkTotalRs = 0;
-      let rodtepTotalRs = 0;
+      let dbkTotalRs = 0, dbkMtRs = 0, dbkUsdTotal = 0, dbkUsdMt = 0;
+      let rodtepTotalRs = 0, rodtepMtRs = 0, rodtepUsdTotal = 0, rodtepUsdMt = 0;
       const isAdvLicense = isAdvanceLicenseActive();
       const isRodtepActive = $('chk_scheme_rodtep')?.checked || false;
       if (isIndExport && isRodtepActive && !isAdvLicense) {
         dbkTotalRs = offeredTotalRs * (v('cell_dbk_pct') / 100);
-        rodtepTotalRs = offeredTotalRs * (v('cell_rodtep_pct') / 100);
+        dbkMtRs = dbkTotalRs / totalMt;
+        dbkUsdTotal = dbkTotalRs / csExr;
+        dbkUsdMt = dbkUsdTotal / totalMt;
+
         setTxt('lbl-marg-dbk-tot', dbkTotalRs);
-        setTxt('lbl-marg-dbk-mt', dbkTotalRs / totalMt);
-        setTxt('lbl-marg-dbk-utot', dbkTotalRs / csExr);
-        setTxt('lbl-marg-dbk-umt', (dbkTotalRs / totalMt) / csExr, 1);
+        setTxt('lbl-marg-dbk-mt', dbkMtRs);
+        setTxt('lbl-marg-dbk-utot', dbkUsdTotal);
+        setTxt('lbl-marg-dbk-umt', dbkUsdMt, 1);
+
+        rodtepTotalRs = offeredTotalRs * (v('cell_rodtep_pct') / 100);
+        rodtepMtRs = rodtepTotalRs / totalMt;
+        rodtepUsdTotal = rodtepTotalRs / csExr;
+        rodtepUsdMt = rodtepUsdTotal / totalMt;
+
         setTxt('lbl-marg-rod-tot', rodtepTotalRs);
-        setTxt('lbl-marg-rod-mt', rodtepTotalRs / totalMt);
-        setTxt('lbl-marg-rod-utot', rodtepTotalRs / csExr);
-        setTxt('lbl-marg-rod-umt', (rodtepTotalRs / totalMt) / csExr, 1);
+        setTxt('lbl-marg-rod-mt', rodtepMtRs);
+        setTxt('lbl-marg-rod-utot', rodtepUsdTotal);
+        setTxt('lbl-marg-rod-umt', rodtepUsdMt, 1);
       } else {
         ['lbl-marg-dbk-tot', 'lbl-marg-dbk-mt', 'lbl-marg-dbk-utot', 'lbl-marg-dbk-umt', 'lbl-marg-rod-tot', 'lbl-marg-rod-mt', 'lbl-marg-rod-utot', 'lbl-marg-rod-umt'].forEach(id => setTxt(id, NaN));
       }
 
-      const netTotalRs = primaryBuyTotalRs + seaFreightTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs - dbkTotalRs - rodtepTotalRs;
-      const netMtRs = netTotalRs / totalMt;
-      const netDisplayMtRs = isExw ? baseCostForPercentMtRs + intMtRs + creditMtRs + docMtRs + commMtRs : netMtRs;
-      const netTotalUsd = netTotalRs / csExr;
-      const netMtUsd = netMtRs / csExr;
+      // We explicitly carry down the vertically summed values from the prior stages (EXW or FOB)
+      const baseBuyTotalRs = isExw ? exwCostRs : fobCostRs;
+      const baseBuyMtRs = isExw ? exwCostMtRs : fobCostMtRs;
+      const baseBuyTotalUsd = isExw ? exwTotalUsd : fobUsdTotal;
+      const baseBuyUsdMt = isExw ? exwUsdMt : fobUsdMt;
+
+      const seaFreightTotalUsd = seaFreightTotalRs ? seaFreightTotalRs / csExr : 0;
+      const seaFreightMtRs = seaFreightTotalRs ? seaFreightTotalRs / totalMt : 0;
+      const seaFreightUsdMt = seaFreightTotalUsd ? seaFreightTotalUsd / totalMt : 0;
+
+      // Strict vertical summation of all columns to guarantee matching UI rows
+      const netTotalRs = baseBuyTotalRs + seaFreightTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs - dbkTotalRs - rodtepTotalRs;
+      const netDisplayMtRs = baseBuyMtRs + seaFreightMtRs + intMtRs + creditMtRs + docMtRs + commMtRs - dbkMtRs - rodtepMtRs;
+      const netTotalUsd = baseBuyTotalUsd + seaFreightTotalUsd + intUsdTotal + creditUsdTotal + docTotalUsd + commTotalUsd - dbkUsdTotal - rodtepUsdTotal;
+      const netMtUsd = baseBuyUsdMt + seaFreightUsdMt + intUsdMt + creditUsdMt + docUsdMt + commUsdMt - dbkUsdMt - rodtepUsdMt;
 
       setTxt('lbl-net-tot', netTotalRs);
       setTxt('lbl-net-mt', netDisplayMtRs);
@@ -2582,15 +2637,15 @@
       setTxt('kpi_net', isExw ? netDisplayMtRs : netMtUsd, null);
       if ($('lbl-rp-net')) $('lbl-rp-net').textContent = isExw ? `Rs. ${Number(netDisplayMtRs).toFixed(3)}` : `$${Number(netMtUsd).toFixed(3)}`;
 
-      const primaryMtRs = isExw ? baseCostForPercentMtRs : primaryBuyTotalRs / totalMt;
-      const primaryMtUsd = primaryMtRs / csExr;
+      const primaryMtRs = baseBuyMtRs;
+      const primaryMtUsd = baseBuyUsdMt;
       setTxt('kpi_exw', isExw ? primaryMtRs : primaryMtUsd, null);
       if ($('lbl-rp-buy')) $('lbl-rp-buy').textContent = isExw ? `Rs. ${primaryMtRs}` : `$${primaryMtUsd}`;
 
       const pftTotalRs = offeredTotalRs - netTotalRs;
       const pftMtRs = isExw ? offeredMtRs - netDisplayMtRs : pftTotalRs / totalMt;
-      const pftTotalUsd = pftTotalRs / csExr;
-      const pftMtUsd = pftMtRs / csExr;
+      const pftTotalUsd = offeredTotalUsd - netTotalUsd;
+      const pftMtUsd = isExw ? (offeredMtRs - netDisplayMtRs) / csExr : offeredMtUsd - netMtUsd;
       const pftPctVal = isExw
         ? (offeredMtRs !== 0 ? (pftMtRs / offeredMtRs) * 100 : 0)
         : (offeredTotalRs !== 0 ? (pftTotalRs / offeredTotalRs) * 100 : 0);

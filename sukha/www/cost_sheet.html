@@ -2502,7 +2502,6 @@
 
         if (isIndExport) {
           primaryBuyTotalRs = fobCostRs;
-          baseCostForPercentRs = fobCostRs;
         }
       }
 
@@ -2544,7 +2543,7 @@
       if ($('lbl-rp-off')) $('lbl-rp-off').textContent = isExw ? `Rs. ${offeredMtRs}` : `$${offeredMtUsd}`;
 
       const intPctVal = parseFloat($('inp_int_cost_pct')?.value) || 2.0;
-      const intTotalRs = offeredTotalRs * (intPctVal / 100);
+      const intTotalRs = baseCostForPercentRs * (intPctVal / 100);
       const intMtRs = offeredMtRs * (intPctVal / 100);
       setTxt('lbl-marg-int-tot', intTotalRs);
       setTxt('lbl-marg-int-mt', intMtRs);
@@ -2564,7 +2563,7 @@
       if ($('inp_dom_credit_pct')) {
         $('inp_dom_credit_pct').value = (creditPct * 100).toFixed(1);
       }
-      const creditTotalRs = offeredTotalRs * creditPct;
+      const creditTotalRs = baseCostForPercentRs * creditPct;
       const creditMtRs = offeredMtRs * creditPct;
       setTxt('lbl-marg-cr-tot', creditTotalRs);
       setTxt('lbl-marg-cr-mt', creditMtRs);

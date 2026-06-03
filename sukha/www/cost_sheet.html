@@ -890,8 +890,6 @@
             </div>
             <div class="form-group exw-hide">
               <label>Exchange Premium (Rs.)
-                <span style="font-size:9px;color:var(--color-text-subtle);font-weight:400">added on top of base
-                  rate</span>
               </label>
               <input type="number" step="0.01" class="form-control font-mono" id="inp_exchange_premium" value=""
                 oninput="syncPremiumAndRecalc()" placeholder="e.g. 0.30">
@@ -2270,6 +2268,7 @@
 
       let primaryBuyTotalRs = 0;
       let seaFreightTotalRs = 0;
+      let seaFreightTotalUsd = 0;
       let baseCostForPercentRs = 0;
       let baseCostForPercentMtRs = 0;
       let exwCostRs = 0, exwCostMtRs = 0, exwTotalUsd = 0, exwUsdMt = 0;
@@ -2511,7 +2510,7 @@
 
       if (isTCFob || isIndCif) {
         const shipPremium = v('inp_ship_premium');
-        const shipExr = csExr + shipPremium;
+        const shipExr = csExr + 2.5 + shipPremium;
         if ($('lbl_tc_ship_exr')) $('lbl_tc_ship_exr').value = shipExr;
 
         const sfFclUsd = v('inp_tc_sf_fcl') + v('inp_tc_sf_haz');
@@ -2520,6 +2519,7 @@
         const vanTotalUsd = v('inp_tc_van_usd');
         const vanTotalRs = vanTotalUsd * shipExr;
         seaFreightTotalRs = sfTotalRs + vanTotalRs;
+        seaFreightTotalUsd = sfTotalUsd + vanTotalUsd;
 
         setTxt('lbl-tc-sf-rs-tot', sfTotalRs);
         setTxt('lbl-tc-sf-rs-mt', sfTotalRs / totalMt);
@@ -2646,7 +2646,6 @@
       const baseBuyTotalUsd = isExw ? exwTotalUsd : fobUsdTotal;
       const baseBuyUsdMt = isExw ? exwUsdMt : fobUsdMt;
 
-      const seaFreightTotalUsd = seaFreightTotalRs ? seaFreightTotalRs / csExr : 0;
       const seaFreightMtRs = seaFreightTotalRs ? seaFreightTotalRs / totalMt : 0;
       const seaFreightUsdMt = seaFreightTotalUsd ? seaFreightTotalUsd / totalMt : 0;
 

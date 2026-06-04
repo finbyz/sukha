@@ -2514,8 +2514,8 @@
         const sfFclUsd = v('inp_tc_sf_fcl') + v('inp_tc_sf_haz');
         const sfTotalUsd = sfFclUsd * totalFcl;
         const sfUsdMt = sfTotalUsd / totalMt;
-        const sfRsMt = sfUsdMt * csExr;
-        const sfTotalRs = sfRsMt * totalMt;
+        const sfTotalRs = sfTotalUsd * shipExr;
+        const sfRsMt = sfTotalRs / totalMt;
         const vanTotalUsd = v('inp_tc_van_usd');
         const vanTotalRs = vanTotalUsd * shipExr;
         seaFreightTotalRs = sfTotalRs + vanTotalRs;

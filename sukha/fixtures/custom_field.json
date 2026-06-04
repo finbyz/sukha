@@ -25162,7 +25162,7 @@
   "in_list_view": 0,
   "in_preview": 0,
   "in_standard_filter": 0,
-  "insert_after": "custom_contact_person_signature",
+  "insert_after": "custom_contact_person_email_signature",
   "is_system_generated": 0,
   "is_virtual": 0,
   "label": "",

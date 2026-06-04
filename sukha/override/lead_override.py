@@ -218,6 +218,16 @@ def make_opportunity(source_name, target_doc=None):
     for field in custom_fields_to_map:
         if hasattr(lead, field) and getattr(lead, field):
             setattr(target_doc, field, getattr(lead, field))
+            
+    # Explicit custom field mappings from Lead to Opportunity
+    if hasattr(lead, "custom_desired_payment_terms") and lead.custom_desired_payment_terms:
+        target_doc.custom_customer_desired_payment_terms = lead.custom_desired_payment_terms
+        
+    if hasattr(lead, "custom_desired_incoterm") and lead.custom_desired_incoterm:
+        target_doc.custom_incoterm = lead.custom_desired_incoterm
+        
+    if hasattr(lead, "custom_current_suppliers") and lead.custom_current_suppliers:
+        target_doc.custom_preferred_supplier = lead.custom_current_suppliers
     
     # Set transaction date to today if not set
     if not target_doc.transaction_date:

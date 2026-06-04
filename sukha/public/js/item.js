@@ -8,9 +8,6 @@ frappe.ui.form.on("Item", {
                 let selected_packing_types = (frm.doc.custom_packing_type || [])
                     .map(row => row.packing_type)
                     .filter(Boolean);
-
-                console.log("Selected Packing Types:", selected_packing_types);
-
                 return {
                     filters: {
                         name: ["in", selected_packing_types]

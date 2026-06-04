@@ -1,5 +1,26 @@
 frappe.ui.form.on('Prospect', {
-    before_workflow_action: function(frm) {
+    custom_product_name(frm) {
+        frm.clear_table("custom_techno_approval");
+        if (frm.doc.custom_product_name) {
+            frappe.call({
+                method: "frappe.client.get",
+                args: {
+                    doctype: "Item",
+                    name: frm.doc.custom_product_name
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        // Store packing types for filter
+                        frm.packing_types = r.message.custom_packing_type
+                            .map(d => d.packing_type)
+                            .filter(Boolean);
+                        frm.refresh_field("custom_techno_approval");
+                    }
+                }
+            });
+        }
+    },
+    before_workflow_action: function (frm) {
         if (!frm.selected_workflow_action || !/reject/i.test(frm.selected_workflow_action)) {
             return;
         }
@@ -32,7 +53,7 @@ frappe.ui.form.on('Prospect', {
                     }
                 ],
                 primary_action_label: __("Reject"),
-                primary_action: function(values) {
+                primary_action: function (values) {
                     const reason = (values.rejection_reason || "").trim();
 
                     if (!reason) {
@@ -57,7 +78,7 @@ frappe.ui.form.on('Prospect', {
                         });
                 },
                 secondary_action_label: __("Cancel"),
-                secondary_action: function() {
+                secondary_action: function () {
                     dialog.hide();
                     frm.selected_workflow_action = null;
                     frappe.dom.unfreeze();
@@ -71,15 +92,15 @@ frappe.ui.form.on('Prospect', {
     custom_industry_segment(frm) {
         frm.set_value("industry", frm.doc.custom_industry_segment);
     },
-    custom_product: function(frm) {
+    custom_product: function (frm) {
         frm.set_value("custom_prroduct_p", frm.doc.custom_product);
     },
-    refresh: function(frm) {
+    refresh: function (frm) {
         render_prospect_top_summary(frm);
         sales_type_pop(frm);
         if (!frm.is_new()) {
             if (frm.doc.leads && frm.doc.leads.length > 0) {
-                frm.add_custom_button(__('View Leads ({0})', [frm.doc.leads.length]), function() {
+                frm.add_custom_button(__('View Leads ({0})', [frm.doc.leads.length]), function () {
                     frappe.route_options = {
                         "name": ["in", frm.doc.leads.map(l => l.lead)]
                     };
@@ -89,7 +110,7 @@ frappe.ui.form.on('Prospect', {
         }
     },
 
-    onload: function(frm) {
+    onload: function (frm) {
         if (frm.is_new() && frm.doc.leads && frm.doc.leads.length > 0) {
             let lead_name = frm.doc.leads[0].lead;
 
@@ -100,7 +121,7 @@ frappe.ui.form.on('Prospect', {
                         doctype: "Lead",
                         name: lead_name
                     },
-                    callback: function(r) {
+                    callback: function (r) {
                         if (r.message) {
                             let lead = r.message;
 
@@ -121,6 +142,19 @@ frappe.ui.form.on('Prospect', {
     }
 });
 
+frappe.ui.form.on("Techno Approval Details", {
+    setup(frm) {
+        frm.fields_dict.approved_packing.get_query = function(doc) {
+            let packing_types = frm.parent.packing_types || [];
+            
+            return {
+                filters: {
+                    name: ["in", packing_types.length > 0 ? packing_types : ["__NO_VALUE__"]]
+                }
+            };
+        };
+    }
+});
 
 function prospect_summary_item(label, value) {
     if (value === null || value === undefined || value === "" || value === 0 || value === false) return "";
@@ -141,10 +175,10 @@ function prospect_summary_item(label, value) {
     `;
 }
 
-let _summary_active_lead = null;       
-let _summary_active_tab  = "l0";      
-let _summary_render_fn   = null;      
-let _summary_debounce    = null;      
+let _summary_active_lead = null;
+let _summary_active_tab = "l0";
+let _summary_render_fn = null;
+let _summary_debounce = null;
 
 function _sync_summary_field(fieldname, value) {
     if (!_summary_active_lead || !_summary_render_fn) return;
@@ -157,42 +191,42 @@ function _sync_summary_field(fieldname, value) {
 
 const _lead_sync_fields = [
     // Domestic fields
-    "lead_name","first_name","middle_name","last_name","job_title","gender",
-    "request_type","type","lead_owner","status","custom_export_lead_status",
-    "customer","custom_product_name_m","custom_buyer_type",
-    "custom_tentative_requirement_mtpa","custom_end_use","email_id","website",
-    "mobile_no","whatsapp_no","city","country","state","territory","company_name",
-    "no_of_employees","annual_revenue","industry","market_segment","phone",
-    "phone_ext","utm_source","utm_medium","utm_campaign","utm_content",
-    "qualification_status","qualified_by","qualified_on","fax","company",
-    "language","title","disabled","unsubscribed","blog_subscriber",
+    "lead_name", "first_name", "middle_name", "last_name", "job_title", "gender",
+    "request_type", "type", "lead_owner", "status", "custom_export_lead_status",
+    "customer", "custom_product_name_m", "custom_buyer_type",
+    "custom_tentative_requirement_mtpa", "custom_end_use", "email_id", "website",
+    "mobile_no", "whatsapp_no", "city", "country", "state", "territory", "company_name",
+    "no_of_employees", "annual_revenue", "industry", "market_segment", "phone",
+    "phone_ext", "utm_source", "utm_medium", "utm_campaign", "utm_content",
+    "qualification_status", "qualified_by", "qualified_on", "fax", "company",
+    "language", "title", "disabled", "unsubscribed", "blog_subscriber",
     // Export L0 fields
-    "custom_organisations","custom_first_name_s","custom_country_of_hq",
-    "custom_board__number","custom_website_a","custom_linkedin",
-    "custom_central_email_id","custom_type_of_buyer","custom_lead_type_s",
-    "custom_approx_revenue_in_mil_us","custom_employee_size_on_linkedin",
-    "custom_industry_type","custom_specify_industry","custom_source_of_the_lead",
-    "custom_specific_source","custom_other_source","custom_notes__a","custom_l0_status",
+    "custom_organisations", "custom_first_name_s", "custom_country_of_hq",
+    "custom_board__number", "custom_1", "custom_2",
+    "custom_central_email_id", "custom_type_of_buyer", "custom_lead_type_s",
+    "custom_approx_revenue_in_mil_us", "custom_employee_size_on_linkedin",
+    "custom_industry_type", "custom_specify_industry", "custom_source_of_the_lead",
+    "custom_specific_source", "custom_other_source", "custom_notes__a", "custom_l0_status",
     // Export L1 fields
-    "custom_product","custom_volume_range","custom_specific_range","custom_l1_status",
-    "custom_product_category","custom_volume_range_assumption","custom_contact_person",
-    "custom_contact_person_phone_number","custom_contact_person_phone_email_id",
-    "custom_contact_person_contracted_via","custom_specify_contracted_via",
-    "custom_contact_person_designation__department","custom_contact_person_whatsapp_number",
-    "custom_bill_to_party_name","custom_bill_to_party_country","custom_bill_to_party_address",
+    "custom_product", "custom_volume_range", "custom_specific_range", "custom_l1_status",
+    "custom_product_category", "custom_volume_range_assumption", "custom_contact_person",
+    "custom_contact_person_phone_number", "custom_contact_person_phone_email_id",
+    "custom_contact_person_contracted_via", "custom_specify_contracted_via",
+    "custom_contact_person_designation__department", "custom_contact_person_whatsapp_number",
+    "custom_bill_to_party_name", "custom_bill_to_party_country", "custom_bill_to_party_address",
     "custom_remarks",
     // Export L2 fields
-    "custom_product_from_l1","custom_l2_status","custom_desired_payment_terms",
-    "custom_current_suppliers","custom_desired_incoterm",
-    "custom_contact_person_for_soft_inquiry","custom_contact_person_email_id",
-    "custom_decision_role","custom_designation","custom_contact_number",
+    "custom_product_from_l1", "custom_l2_status", "custom_desired_payment_terms",
+    "custom_current_suppliers", "custom_desired_incoterm",
+    "custom_contact_person_for_soft_inquiry", "custom_contact_person_email_id",
+    "custom_decision_role", "custom_designation", "custom_contact_number",
     "custom_preferred_communication"
 ];
 
-(function() {
+(function () {
     const handlers = {};
-    _lead_sync_fields.forEach(function(f) {
-        handlers[f] = function(frm) {
+    _lead_sync_fields.forEach(function (f) {
+        handlers[f] = function (frm) {
             _sync_summary_field(f, frm.doc[f]);
         };
     });
@@ -252,7 +286,7 @@ async function render_prospect_top_summary(frm) {
         activeTab = activeTab || "l0";
         // Expose to live-sync globals
         _summary_active_lead = lead;
-        _summary_render_fn   = renderLeadDetail;
+        _summary_render_fn = renderLeadDetail;
 
 
         if (lead.custom_buyer_type) {
@@ -332,7 +366,7 @@ async function render_prospect_top_summary(frm) {
                 </div>
             `);
 
-            return; 
+            return;
         }
 
 
@@ -341,8 +375,60 @@ async function render_prospect_top_summary(frm) {
             ${prospect_summary_item("Name of Company", lead.custom_first_name_s)}
             ${prospect_summary_item("Country of HQ", lead.custom_country_of_hq)}
             ${prospect_summary_item("Board Number", lead.custom_board__number)}
-            ${prospect_summary_item("Website", lead.custom_website_a ? "Yes" : null)}
-            ${prospect_summary_item("LinkedIn", lead.custom_linkedin ? "Yes" : null)}
+            ${lead.custom_1 ? `
+                <div style="
+                    padding:12px;
+                    border:1px solid var(--border-color);
+                    border-radius:10px;
+                    background:var(--bg-white);
+                ">
+                    <div style="
+                        font-size:11px;
+                        color:var(--text-muted);
+                        margin-bottom:4px;
+                        font-weight:500;
+                        text-transform:uppercase;
+                        letter-spacing:0.4px;
+                    ">
+                        Website
+                    </div>
+
+                    <div style="font-size:13px;">
+                        <a href="${lead.custom_1.startsWith('http') ? lead.custom_1 : 'https://' + lead.custom_1}"
+                        target="_blank"
+                        style="color:var(--primary);text-decoration:none;font-weight:600;">
+                            ${lead.custom_1}
+                        </a>
+                    </div>
+                </div>
+                ` : ""}
+                            ${lead.custom_2 ? `
+                <div style="
+                    padding:12px;
+                    border:1px solid var(--border-color);
+                    border-radius:10px;
+                    background:var(--bg-white);
+                ">
+                    <div style="
+                        font-size:11px;
+                        color:var(--text-muted);
+                        margin-bottom:4px;
+                        font-weight:500;
+                        text-transform:uppercase;
+                        letter-spacing:0.4px;
+                    ">
+                        LinkedIn
+                    </div>
+
+                    <div style="font-size:13px;">
+                        <a href="${lead.custom_2.startsWith('http') ? lead.custom_2 : 'https://' + lead.custom_2}"
+                        target="_blank"
+                        style="color:var(--primary);text-decoration:none;font-weight:600;">
+                            ${lead.custom_2}
+                        </a>
+                    </div>
+                </div>
+                ` : ""}
             ${prospect_summary_item("Central Email ID", lead.custom_central_email_id)}
             ${prospect_summary_item("Type of Buyer", lead.custom_type_of_buyer)}
             ${prospect_summary_item("Lead Type", lead.custom_lead_type_s)}
@@ -446,7 +532,7 @@ async function render_prospect_top_summary(frm) {
             </div>
         `);
 
-        $("#crm-lead-detail").off("click", ".lead-section-tab").on("click", ".lead-section-tab", function() {
+        $("#crm-lead-detail").off("click", ".lead-section-tab").on("click", ".lead-section-tab", function () {
             const section = $(this).data("section");
             $("#crm-lead-detail .lead-section-tab").css({ background: "var(--subtle-fg)", color: "var(--text)" });
             $(this).css({ background: "var(--primary)", color: "var(--white)    " });
@@ -472,110 +558,110 @@ async function render_prospect_top_summary(frm) {
 
 
 function sales_type_pop(frm) {
-        if (!frm.is_new() || frm.sales_type_dialog_shown) {
-            return;
-        }
-
-        frm.sales_type_dialog_shown = true;
-
-        let dialog = new frappe.ui.Dialog({
-            title: __("Select Sales Type"),
-            fields: [
-                {
-                    fieldname: "sales_type",
-                    label: __("Sales Type"),
-                    fieldtype: "Select",
-                    options: [
-                        "",
-                        "Domestic / Merchant",
-                        "Direct Export Sales"
-                    ],
-                    reqd: 1,
-                    onchange: function () {
-
-                        let sales_type = dialog.get_value("sales_type");
-
-                        // Show Buyer Type for Domestic
-                        if (sales_type === "Domestic / Merchant") {
-
-                            dialog.set_df_property("buyer_type", "hidden", 0);
-                            dialog.set_df_property("type_of_buyer", "hidden", 1);
-
-                        } else if (sales_type === "Direct Export Sales") {
-
-                            dialog.set_df_property("buyer_type", "hidden", 1);
-                            dialog.set_df_property("type_of_buyer", "hidden", 0);
-
-                        } else {
-
-                            dialog.set_df_property("buyer_type", "hidden", 1);
-                            dialog.set_df_property("type_of_buyer", "hidden", 1);
-                        }
-                    }
-                },
-
-                // Domestic / Merchant
-                {
-                    fieldname: "buyer_type",
-                    label: __("Buyer Type"),
-                    fieldtype: "Select",
-                    options: [
-                        "",
-                        "Domestic",
-                        "Merchant"
-                    ],
-                    hidden: 1
-                },
-
-                // Direct Export Sales
-                {
-                    fieldname: "type_of_buyer",
-                    label: __("Type of Buyer"),
-                    fieldtype: "Select",
-                    options: [
-                        "",
-                        "End User",
-                        "Trader",
-                        "Stockist / Distributor",
-                        "Agent"
-                    ],
-                    hidden: 1
-                }
-            ],
-
-            primary_action_label: __("Confirm"),
-
-            primary_action(values) {
-
-
-                // Domestic / Merchant
-                if (values.sales_type === "Domestic / Merchant") {
-
-                    if (!values.buyer_type) {
-                        frappe.msgprint(__("Please select Buyer Type"));
-                        return;
-                    }
-
-                    frm.set_value("custom_buyer_type", values.buyer_type);
-                    frm.set_value("custom_type_of_buyer", "");
-
-                }
-
-                // Direct Export Sales
-                if (values.sales_type === "Direct Export Sales") {
-
-                    if (!values.type_of_buyer) {
-                        frappe.msgprint(__("Please select Type of Buyer"));
-                        return;
-                    }
-
-                    frm.set_value("custom_type_of_buyer", values.type_of_buyer);
-                    frm.set_value("custom_buyer_type", "");
-                }
-
-                dialog.hide();
-            }
-        });
-
-        dialog.show();
+    if (!frm.is_new() || frm.sales_type_dialog_shown) {
+        return;
     }
+
+    frm.sales_type_dialog_shown = true;
+
+    let dialog = new frappe.ui.Dialog({
+        title: __("Select Sales Type"),
+        fields: [
+            {
+                fieldname: "sales_type",
+                label: __("Sales Type"),
+                fieldtype: "Select",
+                options: [
+                    "",
+                    "Domestic / Merchant",
+                    "Direct Export Sales"
+                ],
+                reqd: 1,
+                onchange: function () {
+
+                    let sales_type = dialog.get_value("sales_type");
+
+                    // Show Buyer Type for Domestic
+                    if (sales_type === "Domestic / Merchant") {
+
+                        dialog.set_df_property("buyer_type", "hidden", 0);
+                        dialog.set_df_property("type_of_buyer", "hidden", 1);
+
+                    } else if (sales_type === "Direct Export Sales") {
+
+                        dialog.set_df_property("buyer_type", "hidden", 1);
+                        dialog.set_df_property("type_of_buyer", "hidden", 0);
+
+                    } else {
+
+                        dialog.set_df_property("buyer_type", "hidden", 1);
+                        dialog.set_df_property("type_of_buyer", "hidden", 1);
+                    }
+                }
+            },
+
+            // Domestic / Merchant
+            {
+                fieldname: "buyer_type",
+                label: __("Buyer Type"),
+                fieldtype: "Select",
+                options: [
+                    "",
+                    "Domestic",
+                    "Merchant"
+                ],
+                hidden: 1
+            },
+
+            // Direct Export Sales
+            {
+                fieldname: "type_of_buyer",
+                label: __("Type of Buyer"),
+                fieldtype: "Select",
+                options: [
+                    "",
+                    "End User",
+                    "Trader",
+                    "Stockist / Distributor",
+                    "Agent"
+                ],
+                hidden: 1
+            }
+        ],
+
+        primary_action_label: __("Confirm"),
+
+        primary_action(values) {
+
+
+            // Domestic / Merchant
+            if (values.sales_type === "Domestic / Merchant") {
+
+                if (!values.buyer_type) {
+                    frappe.msgprint(__("Please select Buyer Type"));
+                    return;
+                }
+
+                frm.set_value("custom_buyer_type", values.buyer_type);
+                frm.set_value("custom_type_of_buyer", "");
+
+            }
+
+            // Direct Export Sales
+            if (values.sales_type === "Direct Export Sales") {
+
+                if (!values.type_of_buyer) {
+                    frappe.msgprint(__("Please select Type of Buyer"));
+                    return;
+                }
+
+                frm.set_value("custom_type_of_buyer", values.type_of_buyer);
+                frm.set_value("custom_buyer_type", "");
+            }
+
+            dialog.hide();
+        }
+    });
+
+    dialog.show();
+}

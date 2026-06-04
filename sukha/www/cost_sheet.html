@@ -2660,10 +2660,27 @@
       const seaFreightUsdMt = seaFreightTotalUsd ? seaFreightTotalUsd / totalMt : 0;
 
       // Strict vertical summation of all columns to guarantee matching UI rows (Rebates excluded per request)
-      const netTotalRs = baseBuyTotalRs + seaFreightTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs;
-      const netDisplayMtRs = baseBuyMtRs + seaFreightMtRs + intMtRs + creditMtRs + docMtRs + commMtRs;
-      const netTotalUsd = baseBuyTotalUsd + seaFreightTotalUsd + intUsdTotal + creditUsdTotal + docTotalUsd + commTotalUsd;
-      const netMtUsd = baseBuyUsdMt + seaFreightUsdMt + intUsdMt + creditUsdMt + docUsdMt + commUsdMt;
+      let netTotalRs, netDisplayMtRs, netTotalUsd, netMtUsd;
+      const currentIncoterm = $('inp_incoterm') ? $('inp_incoterm').value : '';
+      
+      if (currentIncoterm === 'FOB') {
+        if (isTC) {
+          netTotalRs = baseBuyTotalRs + seaFreightTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs;
+          netDisplayMtRs = baseBuyMtRs + seaFreightMtRs + intMtRs + creditMtRs + docMtRs + commMtRs;
+          netTotalUsd = baseBuyTotalUsd + seaFreightTotalUsd + intUsdTotal + creditUsdTotal + docTotalUsd + commTotalUsd;
+          netMtUsd = baseBuyUsdMt + seaFreightUsdMt + intUsdMt + creditUsdMt + docUsdMt + commUsdMt;
+        } else {
+          netTotalRs = baseBuyTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs - dbkTotalRs - rodtepTotalRs;
+          netDisplayMtRs = baseBuyMtRs + intMtRs + creditMtRs + docMtRs + commMtRs - dbkMtRs - rodtepMtRs;
+          netTotalUsd = baseBuyTotalUsd + intUsdTotal + creditUsdTotal + docTotalUsd + commTotalUsd - dbkUsdTotal - rodtepUsdTotal;
+          netMtUsd = baseBuyUsdMt + intUsdMt + creditUsdMt + docUsdMt + commUsdMt - dbkUsdMt - rodtepUsdMt;
+        }
+      } else {
+        netTotalRs = baseBuyTotalRs + seaFreightTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs;
+        netDisplayMtRs = baseBuyMtRs + seaFreightMtRs + intMtRs + creditMtRs + docMtRs + commMtRs;
+        netTotalUsd = baseBuyTotalUsd + seaFreightTotalUsd + intUsdTotal + creditUsdTotal + docTotalUsd + commTotalUsd;
+        netMtUsd = baseBuyUsdMt + seaFreightUsdMt + intUsdMt + creditUsdMt + docUsdMt + commUsdMt;
+      }
 
       setTxt('lbl-net-tot', netTotalRs);
       setTxt('lbl-net-mt', netDisplayMtRs);
@@ -2678,10 +2695,19 @@
       if ($('lbl-rp-buy')) $('lbl-rp-buy').textContent = isExw ? `Rs. ${primaryMtRs}` : `$${primaryMtUsd}`;
 
       // Rebates are now added directly to Profit Margin since they were removed from Net Cost
-      const pftTotalRs = offeredTotalRs - netTotalRs + dbkTotalRs + rodtepTotalRs;
-      const pftMtRs = offeredMtRs - netDisplayMtRs + dbkMtRs + rodtepMtRs;
-      const pftTotalUsd = offeredTotalUsd - netTotalUsd + dbkUsdTotal + rodtepUsdTotal;
-      const pftMtUsd = offeredMtUsd - netMtUsd + dbkUsdMt + rodtepUsdMt;
+      let pftTotalRs, pftMtRs, pftTotalUsd, pftMtUsd;
+      
+      if (currentIncoterm === 'FOB') {
+        pftTotalRs = offeredTotalRs - netTotalRs;
+        pftMtRs = offeredMtRs - netDisplayMtRs;
+        pftTotalUsd = offeredTotalUsd - netTotalUsd;
+        pftMtUsd = offeredMtUsd - netMtUsd;
+      } else {
+        pftTotalRs = offeredTotalRs - netTotalRs + dbkTotalRs + rodtepTotalRs;
+        pftMtRs = offeredMtRs - netDisplayMtRs + dbkMtRs + rodtepMtRs;
+        pftTotalUsd = offeredTotalUsd - netTotalUsd + dbkUsdTotal + rodtepUsdTotal;
+        pftMtUsd = offeredMtUsd - netMtUsd + dbkUsdMt + rodtepUsdMt;
+      }
       const pftPctVal = isExw
         ? (offeredMtRs !== 0 ? (pftMtRs / offeredMtRs) * 100 : 0)
         : (offeredMtUsd !== 0 ? (pftMtUsd / offeredMtUsd) * 100 : 0);

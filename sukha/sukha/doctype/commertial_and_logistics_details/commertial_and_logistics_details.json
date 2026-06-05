@@ -26,7 +26,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Desired Packing",
-   "options": "Desired Packing"
+   "options": "Packing Type"
   },
   {
    "fieldname": "port_destination",
@@ -43,11 +43,10 @@
    "options": "Country"
   },
   {
-   "fieldname": "desired_buying_region_country",
-   "fieldtype": "Link",
+   "fieldname": "quantity_mtpa",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Quantity (MTPA)",
-   "options": "Country"
+   "label": "Quantity (MTPA)"
   },
   {
    "fieldname": "final_destination",

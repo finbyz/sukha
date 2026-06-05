@@ -94,6 +94,7 @@ def create_prospect_from_lead(lead_name, prospect_name, create_contact=False, pr
     )
     fill_if_empty("custom_prroduct_p", getattr(lead, "custom_product_name", None))
     fill_if_empty("custom_designation", getattr(lead, "job_title", None))
+    fill_if_empty("industry", getattr(lead, "custom_industry_type", None))
     fill_if_empty("custom_contact_person_email_id", getattr(lead, "email_id", None))
     fill_if_empty("custom_industry_segment", getattr(lead, "custom_industry_type", None))
     fill_if_empty("custom_approved_packing", getattr(lead, "custom_desired_packing", None))

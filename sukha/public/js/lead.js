@@ -5,6 +5,21 @@ frappe.ui.form.on('Lead', {
     onload: function (frm) {
         clear_lead_top_summary(frm);
         set_port_filter(frm);
+        
+        // Set default tab for saved documents
+        if (!frm.is_new()) {
+            setTimeout(() => {
+                if (frm.layout && frm.layout.select_tab) {
+                    // Select tab based on sales type
+                    if (frm.doc.custom_sales_type === "Direct Export Sales") {
+                        frm.layout.select_tab("custom_l0marketing_research");
+                    } else if (frm.doc.custom_sales_type === "Domestic / Merchant") {
+                        frm.layout.select_tab("custom_lead_information");
+                    }
+                }
+            }, 300);
+        }
+        
         if (frm.is_new()) {
             let d = new frappe.ui.Dialog({
                 title: "Select Sales Type",
@@ -23,94 +38,68 @@ frappe.ui.form.on('Lead', {
                 primary_action_label: "Set",
                 primary_action(values) {
                     const set_value_result = frm.set_value("custom_sales_type", values.sales_type);
-
+    
                     const after_sales_type = () => {
                         if (values.sales_type === "Domestic / Merchant") {
+                            // Add any specific logic for Domestic/Merchant here
                         }
                         frm.trigger("custom_sales_type");
-
+    
                         if (values.sales_type === "Direct Export Sales") {
-
-                            // frm.events.show_direct_export_quick_entry_dialog(frm);
+                            // Add any specific logic for Direct Export here
                         }
                     };
-
+    
                     if (set_value_result && typeof set_value_result.then === "function") {
                         set_value_result.then(after_sales_type);
                     } else {
                         after_sales_type();
                     }
-
+    
                     d.hide();
                 }
             });
-
+    
             d.show();
         }
     },
-    // custom_save_l0: async function (frm) {
-    //     try {
-    //         await frm.set_value(
-    //             "custom_l0_status",
-    //             "Saved"
-    //         );
-    //         frm.set_value("custom_export_lead_status", "L0")
 
-    //         frm.ignore_permission_validation = true;
-    //         await frm.save();
-    //         frappe.show_alert({
-    //             message: __("L0 Saved Successfully"),
-    //             indicator: "green"
-    //         });
+    custom_save_l0: async function (frm) {
 
-    //     } catch (e) {
+        // Prevent reverse save
+        if (
+            frm.doc.custom_l1_status === "Saved" ||
+            frm.doc.custom_l2_status === "Saved"
+        ) {
+            return;
+        }
 
-    //         console.error(e);
+        try {
 
-    //         frappe.msgprint({
-    //             title: __("Error"),
-    //             message: __("Failed to Save L0"),
-    //             indicator: "red"
-    //         });
+            await frm.set_value(
+                "custom_l0_status",
+                "Saved"
+            );
 
-    //     }
-    // },
-custom_save_l0: async function (frm) {
+            frm.set_value(
+                "custom_export_lead_status",
+                "L0"
+            );
 
-    // Prevent reverse save
-    if (
-        frm.doc.custom_l1_status === "Saved" ||
-        frm.doc.custom_l2_status === "Saved"
-    ) {
-        return;
-    }
+            frm.ignore_permission_validation = true;
 
-    try {
+            await frm.save();
 
-        await frm.set_value(
-            "custom_l0_status",
-            "Saved"
-        );
+            frappe.show_alert({
+                message: __("L0 Saved Successfully"),
+                indicator: "green"
+            });
 
-        frm.set_value(
-            "custom_export_lead_status",
-            "L0"
-        );
+        } catch (e) {
 
-        frm.ignore_permission_validation = true;
-
-        await frm.save();
-
-        frappe.show_alert({
-            message: __("L0 Saved Successfully"),
-            indicator: "green"
-        });
-
-    } catch (e) {
-
-        console.error(e);
-    }
-},
+            console.error(e);
+        }
+    },
     custom_save_l1: async function (frm) {
         if (frm.doc.custom_l2_status === "Saved") {
             return;
@@ -311,27 +300,33 @@ custom_save_l0: async function (frm) {
     custom_sales_type(frm) {
         frm.refresh_fields();
         frm.refresh();
-        // ONLY FOR DIRECT EXPORT SALES
-        if (frm.doc.custom_sales_type === "Direct Export Sales") {
-            setTimeout(() => {
-                if (frm.layout && frm.layout.refresh) {
-                    frm.layout.refresh();
+        
+        // Expand tabs for BOTH sales types, not just Direct Export Sales
+        setTimeout(() => {
+            if (frm.layout && frm.layout.refresh) {
+                frm.layout.refresh();
+            }
+            
+            // Expand all collapsed sections
+            $(".form-section .section-head.collapsed").each(function () {
+                $(this).trigger("click");
+            });
+    
+            $(".form-dashboard-section .collapsed").each(function () {
+                $(this).trigger("click");
+            });
+    
+            // Select appropriate tab based on sales type
+            if (frm.layout && frm.layout.select_tab) {
+                if (frm.doc.custom_sales_type === "Direct Export Sales") {
+                    frm.layout.select_tab("custom_l0marketing_research");
+                } else if (frm.doc.custom_sales_type === "Domestic / Merchant") {
+                    // Change "custom_lead_information" to your actual first tab name
+                    // Check your form definition to find the correct fieldname
+                    frm.layout.select_tab("custom_lead_information");
                 }
-                $(".form-section .section-head.collapsed").each(function () {
-                    $(this).trigger("click");
-                });
-
-                $(".form-dashboard-section .collapsed").each(function () {
-                    $(this).trigger("click");
-                });
-
-                if (frm.layout && frm.layout.select_tab) {
-                    frm.layout.select_tab(
-                        "custom_l0marketing_research"
-                    );
-                }
-            }, 200);
-        }
+            }
+        }, 200);
     },
     first_name(frm) {
         frm.set_value("custom_first_name_s", frm.doc.first_name)
@@ -805,26 +800,6 @@ function lead_summary_value(value) {
     return frappe.utils.escape_html(value);
 }
 
-// function get_lead_level_status(frm) {
-//     if (frm.doc.custom_export_lead_status) {
-//         return frm.doc.custom_export_lead_status;
-//     }
-
-//     if (frm.doc.custom_l2_status === "Saved") {
-//         return "L2";
-//     }
-
-//     if (frm.doc.custom_l1_status === "Saved") {
-//         return "L1";
-//     }
-
-//     if (frm.doc.custom_l0_status === "Saved") {
-//         return "L0";
-//     }
-
-//     return "";
-// }
-
 function get_lead_level_status(frm) {
 
     // Highest level always wins
@@ -987,7 +962,12 @@ function render_lead_top_summary(frm) {
                 grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
                 gap:14px;
             ">
-                ${lead_summary_item("Company", frm.doc.first_name || frm.doc.custom_namee_of_the_company || frm.doc.company_name)}
+               ${lead_summary_item(
+                    frm.doc.custom_sales_type === "Domestic / Merchant" ? "First Name" : "Company",
+                    frm.doc.custom_sales_type === "Domestic / Merchant" 
+                        ? (frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
+                        : (frm.doc.company_name || frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
+                )}
                 ${lead_summary_item("Product", frm.doc.custom_product || frm.doc.custom_product_name_m)}
                 ${lead_summary_item(
         frm.doc.custom_buyer_type

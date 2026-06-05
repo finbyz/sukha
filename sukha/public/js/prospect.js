@@ -108,6 +108,32 @@ frappe.ui.form.on('Prospect', {
                 }, __('View'));
             }
         }
+
+        frm.set_query("approved_packing", "custom_techno_approval", function (doc, cdt, cdn) {
+            let packing_types = frm.packing_types || [];
+            return {
+                filters: {
+                    name: ["in", packing_types.length > 0 ? packing_types : ["__NO_VALUE__"]]
+                }
+            };
+        });
+
+        if (frm.doc.custom_product_name && !frm.packing_types) {
+            frappe.call({
+                method: "frappe.client.get",
+                args: {
+                    doctype: "Item",
+                    name: frm.doc.custom_product_name
+                },
+                callback: function(r) {
+                    if (r.message && r.message.custom_packing_type) {
+                        frm.packing_types = r.message.custom_packing_type
+                            .map(d => d.packing_type)
+                            .filter(Boolean);
+                    }
+                }
+            });
+        }
     },
 
     onload: function (frm) {
@@ -141,21 +167,6 @@ frappe.ui.form.on('Prospect', {
         }
     }
 });
-
-frappe.ui.form.on("Techno Approval Details", {
-    setup(frm) {
-        frm.fields_dict.approved_packing.get_query = function(doc) {
-            let packing_types = frm.parent.packing_types || [];
-            
-            return {
-                filters: {
-                    name: ["in", packing_types.length > 0 ? packing_types : ["__NO_VALUE__"]]
-                }
-            };
-        };
-    }
-});
-
 function prospect_summary_item(label, value) {
     if (value === null || value === undefined || value === "" || value === 0 || value === false) return "";
     return `

@@ -2,6 +2,26 @@ frappe.ui.form.on('Lead', {
     before_load: function (frm) {
         clear_lead_top_summary(frm);
     },
+    custom_product_from_l1(frm) {
+        frm.clear_table("custom_commercials__logistic");
+        if (frm.doc.custom_product_from_l1) {
+            frappe.call({
+                method: "frappe.client.get",
+                args: {
+                    doctype: "Item",
+                    name: frm.doc.custom_product_from_l1
+                },
+                callback: function(r) {
+                    if (r.message) {
+                        frm.packing_types = r.message.custom_packing_type
+                            .map(d => d.packing_type)
+                            .filter(Boolean);
+                        frm.refresh_field("custom_commercials__logistic");
+                    }
+                }
+            });
+        }
+    },
     onload: function (frm) {
         clear_lead_top_summary(frm);
         set_port_filter(frm);
@@ -619,6 +639,32 @@ frappe.ui.form.on('Lead', {
             };
         });
 
+        frm.set_query("desired_packing", "custom_commercials__logistic", function (doc, cdt, cdn) {
+            let packing_types = frm.packing_types || [];
+            return {
+                filters: {
+                    name: ["in", packing_types.length > 0 ? packing_types : ["__NO_VALUE__"]]
+                }
+            };
+        });
+
+        if (frm.doc.custom_product_from_l1 && !frm.packing_types) {
+            frappe.call({
+                method: "frappe.client.get",
+                args: {
+                    doctype: "Item",
+                    name: frm.doc.custom_product_from_l1
+                },
+                callback: function(r) {
+                    if (r.message && r.message.custom_packing_type) {
+                        frm.packing_types = r.message.custom_packing_type
+                            .map(d => d.packing_type)
+                            .filter(Boolean);
+                    }
+                }
+            });
+        }
+
         setTimeout(() => {
             frm.remove_custom_button(__('Opportunity'), __('Create'));
             frm.remove_custom_button(__('Customer'), __('Create'));
@@ -799,6 +845,7 @@ function lead_summary_value(value) {
 
     return frappe.utils.escape_html(value);
 }
+
 
 function get_lead_level_status(frm) {
 

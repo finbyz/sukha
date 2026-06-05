@@ -53,7 +53,8 @@ doctype_js = {
     "Contact": "public/js/contact.js",
     "Customer": "public/js/customer.js",
     "Item": "public/js/item.js",
-    "Inward Sample": "/public/js/inward_sample.js"
+    "Inward Sample": "/public/js/inward_sample.js",
+    "Outward Sample": "public/js/outward.js"
 }
 doctype_list_js = {
     "Lead": "public/js/lead_list.js",

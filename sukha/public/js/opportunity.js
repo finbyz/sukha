@@ -8,20 +8,48 @@ frappe.ui.form.on('Opportunity', {
 
     refresh: function(frm) {
         contact_details(frm);
+        frm.set_query("custom_pack_type", function() {
+
+            return {
+                filters: {
+                    name: [
+                        "in",
+                        frm.packing_types?.length
+                            ? frm.packing_types
+                            : ["__NO_VALUE__"]
+                    ]
+                }
+            };
+        });
+
+        // Existing document
+        if (frm.doc.custom_product_name && !frm.packing_types) {
+
+            frappe.call({
+                method: "frappe.client.get",
+                args: {
+                    doctype: "Item",
+                    name: frm.doc.custom_product_name
+                },
+                callback(r) {
+
+                    if (r.message) {
+                        frm.packing_types = (r.message.custom_packing_type || [])
+                            .map(row => row.packing_type)
+                            .filter(Boolean);
+                    }
+                }
+            });
+        }
         if (frm.is_new() && (!frm.doc.custom_posting_date || frm.doc.custom_posting_date === "now")) {
             frm.set_value("custom_posting_date", frappe.datetime.get_today());
         }
         
-        // if ( frm.doc.custom_type_of_buyer) {
-        //     frm.add_custom_button(__('L3-Prospect'), function() {
-        //         frm.events.create_prospect_from_opportunity(frm, 'l3');
-        //     }, __('Create'));
-        // }
-        // if ( frm.doc.custom_buyer_type) {
-        //     frm.add_custom_button(__('Qualified Lead'), function() {
-        //         frm.events.create_prospect_from_opportunity(frm, 'qualified_lead');
-        //     }, __('Create'));
-        // }
+        if ( frm.doc.docstatus === 1 ) {
+            frm.add_custom_button(__('Cost Sheet'), function() {
+            }, __('Create'));
+        }
+
         frm.page.remove_inner_button("Supplier Quotation", "Create");
 		frm.page.remove_inner_button("Request For Quotation", "Create");
 		frm.page.remove_inner_button("Customer", "Create");
@@ -40,6 +68,29 @@ frappe.ui.form.on('Opportunity', {
         contact_details(frm);
 
     },
+    custom_product_name(frm) {
+
+        if (!frm.doc.custom_product_name) return;
+
+        frappe.call({
+            method: "frappe.client.get",
+            args: {
+                doctype: "Item",
+                name: frm.doc.custom_product_name
+            },
+            callback(r) {
+
+                if (!r.message) return;
+
+                frm.packing_types = (r.message.custom_packing_type || [])
+                    .map(row => row.packing_type)
+                    .filter(Boolean);
+
+                frm.set_value("custom_pack_type", "");
+            }
+        });
+    },
+
     create_prospect_from_opportunity: async function(frm, prospect_type) {
         let lead = await frappe.db.get_doc("Lead", frm.doc.party_name);
         let d = new frappe.ui.Dialog({

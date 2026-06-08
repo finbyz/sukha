@@ -741,11 +741,19 @@
               <input type="text" class="form-control" id="inp_grade" placeholder="Auto-fetched from item…" readonly
                 style="background:#F8FAFC;color:var(--color-text-muted)">
             </div>
-            <div class="form-group">
+            <div class="form-group" id="wrapper-customer">
               <label>Customer Name</label>
               <select class="form-control" id="inp_customer">
                 <option value="">Select Customer...</option>
               </select>
+            </div>
+            <div class="form-group" id="wrapper-lead" style="display:none">
+              <label>Lead</label>
+              <input type="text" class="form-control" id="inp_lead" readonly style="background:#F8FAFC;color:var(--color-text-muted)">
+            </div>
+            <div class="form-group" id="wrapper-prospect" style="display:none">
+              <label>Prospect (L3/Qualified)</label>
+              <input type="text" class="form-control" id="inp_prospect" readonly style="background:#F8FAFC;color:var(--color-text-muted)">
             </div>
             <div class="form-group">
               <label>Customer Payment Terms</label>
@@ -760,9 +768,6 @@
               <label>Supplier Name</label>
               <select class="form-control" id="inp_supplier" onchange="updateStuffingLoc()">
                 <option value="" selected>Select Supplier...</option>
-                <option value="Direct Sourcing Partner">Direct Sourcing Partner</option>
-                <option value="Local Vendor A">Local Vendor A</option>
-                <option value="Overseas Principal">Overseas Principal</option>
               </select>
             </div>
             <div class="form-group">
@@ -775,30 +780,18 @@
               <label id="lbl-destination-label">Final Country of Destination</label>
               <select class="form-control" id="inp_destination">
                 <option value="" selected>Select Destination...</option>
-                <option value="South Africa">South Africa</option>
-                <option value="United Arab Emirates">United Arab Emirates</option>
-                <option value="United States">United States</option>
-                <option value="Germany">Germany</option>
-                <option value="Singapore">Singapore</option>
               </select>
             </div>
             <div class="form-group domestic-hide exw-hide">
               <label>Port of Discharge</label>
               <select class="form-control" id="inp_pod">
                 <option value="" selected>Select Port...</option>
-                <option value="Durban">Durban Gateway</option>
-                <option value="Jebel Ali">Jebel Ali Terminal</option>
-                <option value="Rotterdam">Rotterdam Hub</option>
-                <option value="Houston">Houston Gateway</option>
               </select>
             </div>
             <div class="form-group domestic-only d-none">
               <label>Delivery Location</label>
               <select class="form-control manual-input" id="inp_dom_delivery_location">
                 <option value="" selected>Select Location...</option>
-                <option value="Panoli">Panoli</option>
-                <option value="Mundra">Mundra</option>
-                <option value="Customer Location">Customer Location</option>
               </select>
             </div>
 
@@ -806,10 +799,6 @@
               <label id="lbl-pol-label">Port of Loading</label>
               <select class="form-control" id="inp_pol">
                 <option value="" selected>Select Port...</option>
-                <option value="Hazira">Hazira Port</option>
-                <option value="Nhava Sheva">Nhava Sheva (JNPT)</option>
-                <option value="Mundra">Mundra Port</option>
-                <option value="Kandla">Kandla Terminal</option>
               </select>
             </div>
             <div class="form-group">
@@ -841,16 +830,8 @@
           <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
               <label>Packing type</label>
-              <select class="form-control" style="font-size:11px">
+              <select class="form-control" style="font-size:11px" id="inp_packing_type">
                 <option value="" selected>Select...</option>
-                <option value="Bags">Bags</option>
-                <option value="Drums">Drums</option>
-                <option value="Cartons">Cartons</option>
-                <option value="Bulk">Bulk</option>
-                <option value="Pallets">Pallets</option>
-                <option value="Jumbo Bags">Jumbo Bags</option>
-                <option value="IBC Composite Pallet">IBC Composite Pallet</option>
-                <option value="HMHDPE Drums">HMHDPE Drums</option>
               </select>
             </div>
             <div class="form-group">
@@ -1269,10 +1250,7 @@
             <span style="font-size:12px; font-weight:600; color:var(--color-primary)">Shipping Line</span>
             <select class="form-control manual-input font-mono" style="width:200px; font-size:12px; padding:2px 8px"
               id="inp_shipping_line">
-              <option value="Maersk" selected>Maersk</option>
-              <option value="MSC">MSC</option>
-              <option value="CMA CGM">CMA CGM</option>
-              <option value="Hapag-Lloyd">Hapag-Lloyd</option>
+              <option value="" selected>Select Shipping Line...</option>
             </select>
 
           </div>
@@ -3553,12 +3531,180 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Clear browser cached form values on refresh
+      document.querySelectorAll('input, select').forEach(el => {
+        if (el.type !== 'hidden' && !el.classList.contains('do-not-clear')) {
+          if (el.tagName === 'SELECT') {
+            el.selectedIndex = 0;
+          } else if (el.type === 'number' || el.type === 'text') {
+            el.value = '';
+          }
+        }
+      });
+
       syncAliasFields();
       updateContainerDefaults();
       deriveMasterVariantFromFields();
+      
       // Sync premium hidden field on load
       if ($('inp_premium') && $('inp_exchange_premium')) {
         $('inp_exchange_premium').value = $('inp_premium').value;
+      }
+
+      // Populate Doctypes for dropdowns
+      const populateDropdown = (id, doctype, fieldname = "name") => {
+        const sel = $(id);
+        if (!sel) return;
+        if (typeof frappe !== 'undefined' && frappe.call) {
+          frappe.call({
+            method: 'frappe.client.get_list',
+            args: {
+              doctype: doctype,
+              fields: [fieldname],
+              limit_page_length: 0
+            },
+            callback: function(r) {
+              if (r.message && Array.isArray(r.message)) {
+                const currentVal = sel.value; 
+                const firstOpt = sel.options.length > 0 ? sel.options[0].cloneNode(true) : null;
+                sel.innerHTML = '';
+                if (firstOpt) sel.appendChild(firstOpt);
+                
+                let foundCurrent = false;
+                r.message.forEach(row => {
+                  const val = row[fieldname];
+                  const opt = document.createElement('option');
+                  opt.value = val;
+                  opt.textContent = val;
+                  sel.appendChild(opt);
+                  if (val === currentVal) foundCurrent = true;
+                });
+                
+                if (currentVal) {
+                  if (!foundCurrent) {
+                    const opt = document.createElement('option');
+                    opt.value = currentVal;
+                    opt.textContent = currentVal;
+                    sel.appendChild(opt);
+                  }
+                  sel.value = currentVal;
+                }
+              }
+            }
+          });
+        }
+      };
+
+      populateDropdown('inp_supplier', 'Supplier');
+      populateDropdown('inp_destination', 'Country');
+      populateDropdown('inp_pod', 'Port of Discharge');
+      populateDropdown('inp_dom_delivery_location', 'Country');
+      populateDropdown('inp_pol', 'Port of Loading');
+      populateDropdown('inp_packing_type', 'Packing Type');
+      populateDropdown('inp_shipping_line', 'Preferred Shipping Line');
+      if ($('inp_premium') && $('inp_exchange_premium')) {
+        $('inp_exchange_premium').value = $('inp_premium').value;
+      }
+
+      // Populate fields from URL parameters
+      if (typeof window !== 'undefined' && window.location && window.location.search) {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        const setDropdownValue = (id, val, triggerChange = false) => {
+          if (!val) return;
+          const sel = $(id);
+          if (!sel) return;
+          let found = false;
+          for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === val || sel.options[i].text === val) {
+              sel.selectedIndex = i;
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.textContent = val;
+            opt.selected = true;
+            sel.appendChild(opt);
+          }
+          if (triggerChange) {
+            if (typeof sel.onchange === 'function') {
+              sel.onchange();
+            } else {
+              sel.dispatchEvent(new Event('change'));
+            }
+          }
+        };
+
+        const oppFrom = urlParams.get('opportunity_from');
+        const partyName = urlParams.get('party_name');
+
+        if (oppFrom === 'Lead') {
+          if ($('wrapper-customer')) $('wrapper-customer').style.display = 'none';
+          if ($('wrapper-lead')) $('wrapper-lead').style.display = 'block';
+          if ($('inp_lead')) $('inp_lead').value = partyName || '';
+        } else if (oppFrom === 'Prospect' || oppFrom === 'Prospect (L3/Qualified)') {
+          if ($('wrapper-customer')) $('wrapper-customer').style.display = 'none';
+          if ($('wrapper-prospect')) $('wrapper-prospect').style.display = 'block';
+          if ($('inp_prospect')) $('inp_prospect').value = partyName || '';
+        } else if (oppFrom === 'Customer') {
+          setDropdownValue('inp_customer', partyName);
+        }
+
+        const prodName = urlParams.get('product_name');
+        const prodGrade = urlParams.get('product_grade');
+        if (prodName) {
+          setDropdownValue('inp_product', prodName);
+          if (prodGrade) {
+            const el = $('inp_grade');
+            if (el) { 
+              el.value = prodGrade; 
+              const statusEl = $('lbl-grade-status');
+              if (statusEl) {
+                statusEl.textContent = '\u2713 from Opportunity';
+                statusEl.style.color = '#10B981';
+              }
+              el.dispatchEvent(new Event('input')); 
+            }
+          } else {
+            if (typeof fetchProductGrade === 'function') fetchProductGrade(prodName);
+          }
+        }
+
+        const incoterm = urlParams.get('incoterm');
+        if (incoterm) setDropdownValue('inp_user_incoterm', incoterm, true);
+
+        const supplier = urlParams.get('supplier');
+        if (supplier) setDropdownValue('inp_supplier', supplier, true);
+
+        const shippingLine = urlParams.get('shipping_line');
+        if (shippingLine) setDropdownValue('inp_shipping_line', shippingLine);
+
+        const containerType = urlParams.get('container_type');
+        if (containerType) setDropdownValue('inp_container', containerType, true);
+
+        const packingType = urlParams.get('packing_type');
+        if (packingType) setDropdownValue('inp_packing_type', packingType);
+
+        const unitSize = urlParams.get('unit_size');
+        if (unitSize) {
+          const el = $('inp_unit_size');
+          if (el) { el.value = unitSize; el.dispatchEvent(new Event('input')); }
+        }
+
+        const unitsPerFcl = urlParams.get('units_per_fcl');
+        if (unitsPerFcl) {
+          const el = $('inp_units_per_fcl');
+          if (el) { el.value = unitsPerFcl; el.dispatchEvent(new Event('input')); }
+        }
+
+        const totalFcl = urlParams.get('total_fcl');
+        if (totalFcl) {
+          const el = $('inp_total_fcl');
+          if (el) { el.value = totalFcl; el.dispatchEvent(new Event('input')); }
+        }
       }
     });
   </script>

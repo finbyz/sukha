@@ -17,6 +17,7 @@ def make_opportunity(source_name, target_doc=None):
 	  * If "Domestic": Set opportunity_type = "Active Enquiry - Domestic"
 	  * If "Merchant": Set opportunity_type = "Active Enquiry - Merchant"
 	- Default: Set opportunity_type = "Active Enquiry"
+	
 	"""
 	def set_missing_values(source, target):
 		target.opportunity_from = "Prospect"
@@ -45,6 +46,19 @@ def make_opportunity(source_name, target_doc=None):
 		
 		if hasattr(source, 'custom_buyer_type') and hasattr(target, 'custom_buyer_type'):
 			target.custom_buyer_type = source.custom_buyer_type
+		
+		# Map custom fields from Prospect to Opportunity
+		# custom_approved_incoterms → custom_incoterm
+		if hasattr(source, 'custom_approved_incoterms') and hasattr(target, 'custom_incoterm'):
+			target.custom_incoterm = source.custom_approved_incoterms
+		
+		# custom_current_supplier → custom_preferred_supplier
+		if hasattr(source, 'custom_current_supplier') and hasattr(target, 'custom_preferred_supplier'):
+			target.custom_preferred_supplier = source.custom_current_supplier
+		
+		# custom_approved_payment_terms → custom_customer_desired_payment_terms
+		if hasattr(source, 'custom_approved_payment_terms') and hasattr(target, 'custom_customer_desired_payment_terms'):
+			target.custom_customer_desired_payment_terms = source.custom_approved_payment_terms
 
 	doclist = get_mapped_doc(
 		"Prospect",

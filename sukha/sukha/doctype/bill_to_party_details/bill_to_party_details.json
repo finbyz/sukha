@@ -27,16 +27,16 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Name",
-   "options": "Customer",
-   "reqd": 1
+   "options": "Customer"
+   
   },
   {
    "fieldname": "address",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Address",
-   "options": "Address",
-   "reqd": 1
+   "options": "Address"
+   
   },
   {
    "fetch_from": "address.country",
@@ -44,15 +44,16 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Country",
-   "options": "Country",
-   "reqd": 1
+   "options": "Country"
+   
   },
   {
    "fieldname": "contact_person_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Contact Person Name",
-   "reqd": 1
+   "options": "Contact"
+   
   },
   {
    "fetch_from": "bill_to_party_name.email_id",
@@ -60,8 +61,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Email ID",
-   "options": "Email",
-   "reqd": 1
+   "options": "Email"
+   
   },
   {
    "fetch_from": "address.city",
@@ -83,6 +84,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "fetch_from": "contact_person_name.mobile_no",
    "fieldname": "contact_no",
    "fieldtype": "Phone",
    "in_list_view": 1,
@@ -125,7 +127,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-30 10:15:16.463019",
+ "modified": "2026-06-08 15:00:27.855254",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Bill to Party Details",

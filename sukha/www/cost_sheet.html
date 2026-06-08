@@ -749,11 +749,13 @@
             </div>
             <div class="form-group" id="wrapper-lead" style="display:none">
               <label>Lead</label>
-              <input type="text" class="form-control" id="inp_lead" readonly style="background:#F8FAFC;color:var(--color-text-muted)">
+              <input type="text" class="form-control" id="inp_lead" readonly
+                style="background:#F8FAFC;color:var(--color-text-muted)">
             </div>
             <div class="form-group" id="wrapper-prospect" style="display:none">
               <label>Prospect (L3/Qualified)</label>
-              <input type="text" class="form-control" id="inp_prospect" readonly style="background:#F8FAFC;color:var(--color-text-muted)">
+              <input type="text" class="form-control" id="inp_prospect" readonly
+                style="background:#F8FAFC;color:var(--color-text-muted)">
             </div>
             <div class="form-group">
               <label>Customer Payment Terms</label>
@@ -934,8 +936,7 @@
                   <td class="text-right font-mono" id="lbl-dom-basic-tot">(136,200)</td>
                   <td style="padding:4px 12px">
                     <input type="number" step="50" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px" id="inp_dom_basic_rs_mt"
-                      oninput="calculateEngine()">
+                      style="font-size:12px;padding:4px" id="inp_dom_basic_rs_mt" oninput="calculateEngine()">
                   </td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td class="text-right font-mono col-usd">—</td>
@@ -983,15 +984,13 @@
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
                       <span style="font-size:10px;color:var(--color-text-muted)">Packing Cost Per Unit</span>
                       <input type="number" class="cell-input cell-manual font-mono text-right"
-                        style="width:70px;font-size:11px;padding:2px" id="inp_pm_unit_cost"
-                        oninput="calculateEngine()">
+                        style="width:70px;font-size:11px;padding:2px" id="inp_pm_unit_cost" oninput="calculateEngine()">
                     </div>
                     <div
                       style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:4px">
                       <span style="font-size:10px;color:var(--color-text-muted)">No. of Units</span>
                       <input type="number" class="cell-input cell-manual font-mono text-right"
-                        style="width:70px;font-size:11px;padding:2px" id="inp_pm_units_fcl"
-                        oninput="calculateEngine()">
+                        style="width:70px;font-size:11px;padding:2px" id="inp_pm_units_fcl" oninput="calculateEngine()">
                     </div>
                   </td>
                 </tr>
@@ -1064,7 +1063,8 @@
                   <td class="text-right font-mono col-usd">—</td>
                   <td style="padding:4px 8px">
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:6px">
-                      <span id="lbl-vanning-helper-name" style="font-size:10px;color:var(--color-text-muted)">Addl. Vanning Requirement
+                      <span id="lbl-vanning-helper-name" style="font-size:10px;color:var(--color-text-muted)">Addl.
+                        Vanning Requirement
                         (chocking/lashing)</span>
                       <input type="number" class="cell-input cell-manual font-mono text-right"
                         style="width:70px;font-size:11px;padding:2px" id="inp_vanning_rs_fcl"
@@ -1077,8 +1077,7 @@
                   <td class="text-right font-mono" id="lbl-dom-freight-out-tot">45,000</td>
                   <td style="padding:4px 12px">
                     <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px" id="inp_dom_freight_out_mt"
-                      oninput="syncFreightOutMt()">
+                      style="font-size:12px;padding:4px" id="inp_dom_freight_out_mt" oninput="syncFreightOutMt()">
                   </td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td class="text-right font-mono col-usd">—</td>
@@ -1096,8 +1095,7 @@
                   <td class="text-right font-mono" id="lbl-dom-handling-tot">9,000</td>
                   <td style="padding:4px 12px">
                     <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px" id="inp_dom_handling_mt"
-                      oninput="syncHandlingMt()">
+                      style="font-size:12px;padding:4px" id="inp_dom_handling_mt" oninput="syncHandlingMt()">
                   </td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td class="text-right font-mono col-usd">—</td>
@@ -1109,7 +1107,8 @@
                           style="width:70px;font-size:11px;padding:2px" id="inp_dom_loading_tot"
                           oninput="syncHandlingTot()">
                       </div>
-                      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:4px">
+                      <div
+                        style="display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:4px">
                         <span style="font-size:10px;color:var(--color-text-muted)">Total Unloading Cost</span>
                         <input type="number" class="cell-input cell-manual font-mono text-right"
                           style="width:70px;font-size:11px;padding:2px" id="inp_dom_unloading_tot"
@@ -1123,8 +1122,7 @@
                   <td class="text-right font-mono" id="lbl-dom-warehouse-tot">17,025</td>
                   <td style="padding:4px 12px">
                     <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px" id="inp_dom_warehouse_rs_mt"
-                      oninput="syncWarehouseMt()">
+                      style="font-size:12px;padding:4px" id="inp_dom_warehouse_rs_mt" oninput="syncWarehouseMt()">
                   </td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td class="text-right font-mono col-usd">—</td>
@@ -1181,9 +1179,8 @@
                           style="width:70px;font-size:11px;padding:2px" id="inp_dom_labels_fcl"
                           oninput="syncLabelsTot()">
                       </div>
-                      <input type="text" class="cell-input cell-manual text-left" id="inp_labels_remarks" 
-                        placeholder="Specify Remarks..." 
-                        style="width:100%;font-size:11px;padding:4px;display:none;">
+                      <input type="text" class="cell-input cell-manual text-left" id="inp_labels_remarks"
+                        placeholder="Specify Remarks..." style="width:100%;font-size:11px;padding:4px;display:none;">
                     </div>
                   </td>
                 </tr>
@@ -1321,8 +1318,8 @@
                 <div style="display:flex; align-items:center; justify-content:space-between">
                   <span style="color:var(--color-text-muted)">Agency</span>
                   <input type="number" class="form-control font-mono text-right"
-                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_agency"
-                    value="" oninput="calculateEngine()">
+                    style="width:75px;padding:2px 4px;font-size:11px;background:#F8FAFC" id="inp_cnf_agency" value=""
+                    oninput="calculateEngine()">
                 </div>
                 <div style="display:flex; align-items:center; justify-content:space-between">
                   <span style="color:var(--color-text-muted)">LOLO</span>
@@ -1374,8 +1371,7 @@
                   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px">
                     <span style="color:var(--color-primary); font-weight:500">Any Other Charges</span>
                     <input type="number" class="form-control manual-input font-mono text-right"
-                      style="width:75px;padding:2px 4px;font-size:11px" id="inp_cnf_other"
-                      oninput="calculateEngine()">
+                      style="width:75px;padding:2px 4px;font-size:11px" id="inp_cnf_other" oninput="calculateEngine()">
                   </div>
                   <span style="font-size:9px;color:var(--color-text-subtle);display:block">Remark: On Wheel: Any
                     additional cost (on wheels/CFS/ICD/EDI) etc.</span>
@@ -1538,8 +1534,8 @@
                       <span>Credit Cost (Customer Payment Terms)</span>
                       <div style="display:flex; align-items:center; gap:4px">
                         <input type="number" step="0.1" class="form-control manual-input font-mono"
-                          style="width:55px; padding:2px 4px; font-size:11px; text-align:center"
-                          id="inp_dom_credit_pct" value="" oninput="calculateEngine()">
+                          style="width:55px; padding:2px 4px; font-size:11px; text-align:center" id="inp_dom_credit_pct"
+                          value="" oninput="calculateEngine()">
                         <strong style="color:var(--color-brand)">%</strong>
                       </div>
                     </div>
@@ -1665,7 +1661,7 @@
                       style="font-size:13px;padding:4px" id="inp_offered_price" value="255.0"
                       oninput="calculateEngine()">
                   </td>
-                  
+
                 </tr>
 
               </tbody>
@@ -1784,7 +1780,7 @@
 
       // Clear the location field first
       locField.innerHTML = '<option value="">Select...</option>';
-      
+
       if (stuffingAt === "Supplier's Place") {
         // Fetch supplier's location
         const supplier = $('inp_supplier')?.value || "";
@@ -2325,7 +2321,7 @@
           // Formula: Rs per FCL ÷ Quantity per FCL (MT)
           vanningRsMt = qtyFcl > 0 ? (vanningFcl / qtyFcl) : 0;
           vanningTotalRs = vanningFcl * totalFcl; // Total Rs
-          
+
           if ($('lbl-vanning-rs-tot')) $('lbl-vanning-rs-tot').textContent = fmt(vanningTotalRs, 0);
           if ($('lbl-vanning-rs-mt')) $('lbl-vanning-rs-mt').textContent = fmt(vanningRsMt, 3);
         }
@@ -2340,11 +2336,11 @@
         if (isDomestic || isRepack) {
           domesticFreightTotalRs = v('inp_dom_freight_dest') * totalFcl;
           domesticFreightRsMt = v('inp_dom_freight_out_mt') ? v('inp_dom_freight_out_mt') : (qtyFcl > 0 ? v('inp_dom_freight_dest') / qtyFcl : 0);
-          
+
           const handlingCostPerFcl = v('inp_dom_loading_tot') + v('inp_dom_unloading_tot');
           domesticHandlingTotalRs = handlingCostPerFcl * totalFcl;
           domesticHandlingRsMt = v('inp_dom_handling_mt') ? v('inp_dom_handling_mt') : (qtyFcl > 0 ? handlingCostPerFcl / qtyFcl : 0);
-          
+
           const warehouseFclRs = v('inp_dom_warehouse_tot_input');
           domesticWarehouseTotalRs = warehouseFclRs * totalFcl;
           domesticWarehouseRsMt = v('inp_dom_warehouse_rs_mt') ? v('inp_dom_warehouse_rs_mt') : (qtyFcl > 0 ? warehouseFclRs / qtyFcl : 0);
@@ -2357,7 +2353,7 @@
           stickersTotalRs = v('inp_repack_stickers_fcl') * totalFcl;
           if ($('lbl-repack-stickers-tot')) setTxt('lbl-repack-stickers-tot', stickersTotalRs);
           if ($('lbl-repack-stickers-mt')) setTxt('lbl-repack-stickers-mt', stickersTotalRs / totalMt);
-          
+
           qcTotalRs = v('inp_repack_qc_fcl') * totalFcl;
           qcRsMt = qcTotalRs / totalMt;
           if ($('lbl-repack-qc-tot')) setTxt('lbl-repack-qc-tot', qcTotalRs);
@@ -2411,13 +2407,13 @@
 
         exwCostRs = rmTotalRs + pmTotalRs + plyTotalRs + repackTotalRs + vanningTotalRs + domesticFreightTotalRs + domesticHandlingTotalRs + domesticWarehouseTotalRs + labelsTotalRs + qcTotalRs + stickersTotalRs;
         exwCostMtRs = rmDisplayRsMt + pmRsMt + plyRsMt + repackRsMt + vanningRsMt + domesticFreightRsMt + domesticHandlingRsMt + domesticWarehouseRsMt + labelsRsMt + qcRsMt + (stickersTotalRs / totalMt || 0);
-        
+
         setTxt('lbl-ind-prod-tot-rs', exwCostRs);
         setTxt('lbl-ind-prod-mt-rs', exwCostMtRs);
-        
+
         exwTotalUsd = rmTotalUsd + pmTotalUsd + plyTotalUsd + repackTotalUsd + (vanningTotalRs / csExr) + (domesticFreightTotalRs / csExr) + (domesticHandlingTotalRs / csExr) + (domesticWarehouseTotalRs / csExr) + labelsTotalUsd + (qcTotalRs / csExr) + (stickersTotalRs / csExr);
         exwUsdMt = rmUsdMt + pmUsdMt + plyUsdMt + repackUsdMt + (vanningRsMt / csExr) + (domesticFreightRsMt / csExr) + (domesticHandlingRsMt / csExr) + (domesticWarehouseRsMt / csExr) + labelsUsdMt + (qcRsMt / csExr) + ((stickersTotalRs / totalMt || 0) / csExr);
-        
+
         setTxt('lbl-ind-prod-tot-usd', exwTotalUsd);
         setTxt('lbl-ind-prod-mt-usd', exwUsdMt, 1);
         primaryBuyTotalRs = exwCostRs;
@@ -2451,19 +2447,19 @@
 
         setTxt('lbl-cnf-std-tot', stdCharges);
         setTxt('lbl-cnf-fcl-tot', totalCostFcl);
-        
+
         setTxt('lbl-cnf-base-rs', cnfBaseRs);
         setTxt('lbl-cnf-base-mt', cnfBaseMtRs);
         setTxt('lbl-cnf-base-usd', cnfBaseUsd);
         setTxt('lbl-cnf-base-umt', cnfBaseUsdMt, 1);
-        
+
         setTxt('lbl-bl-mt', blMtRs);
         setTxt('lbl-bl-usd', blUsdTotal);
         setTxt('lbl-bl-umt', blUsdMt, 1);
-        
+
         setTxt('lbl-cnf-bl-fcl', blCharges / totalFcl);
         setTxt('lbl-cnf-fcl-grand', totalCostFcl + (blCharges / totalFcl));
-        
+
         setTxt('lbl-cnf-tot-rs', cnfTotRs);
         setTxt('lbl-cnf-tot-mt', cnfTotMtRs);
         setTxt('lbl-cnf-tot-usd', cnfTotUsd);
@@ -2473,7 +2469,7 @@
         fobCostMtRs = exwCostMtRs + cnfTotMtRs;
         fobUsdMt = exwUsdMt + cnfTotUsdMt;
         fobUsdTotal = exwTotalUsd + cnfTotUsd;
-        
+
         setTxt('lbl-ind-fob-tot-rs', fobCostRs);
         setTxt('lbl-ind-fob-mt-rs', fobCostMtRs);
         setTxt('lbl-ind-fob-tot-usd', fobUsdTotal);
@@ -2537,7 +2533,7 @@
         intUsdTotal = csExr ? intTotalRs / csExr : 0;
         intUsdMt = intUsdTotal ? intUsdTotal / totalMt : 0;
       }
-      
+
       setTxt('lbl-marg-int-tot', intTotalRs);
       setTxt('lbl-marg-int-mt', intMtRs);
       setTxt('lbl-marg-int-utot', intUsdTotal);
@@ -2566,7 +2562,7 @@
         creditUsdTotal = csExr ? creditTotalRs / csExr : 0;
         creditUsdMt = creditUsdTotal ? creditUsdTotal / totalMt : 0;
       }
-      
+
       setTxt('lbl-marg-cr-tot', creditTotalRs);
       setTxt('lbl-marg-cr-mt', creditMtRs);
       setTxt('lbl-marg-cr-utot', creditUsdTotal);
@@ -2604,7 +2600,7 @@
       if (isIndExport && isRodtepActive && !isAdvLicense) {
         const seaFreightUsdMtVal = seaFreightTotalUsd ? (seaFreightTotalUsd / totalMt) : 0;
         const seaFreightMtRsVal = seaFreightTotalRs ? (seaFreightTotalRs / totalMt) : 0;
-        
+
         dbkUsdMt = (offeredMtUsd - seaFreightUsdMtVal) * (v('cell_dbk_pct') / 100);
         dbkUsdTotal = dbkUsdMt * totalMt;
         dbkMtRs = (offeredMtRs - seaFreightMtRsVal) * (v('cell_dbk_pct') / 100);
@@ -2640,7 +2636,7 @@
       // Strict vertical summation of all columns to guarantee matching UI rows (Rebates excluded per request)
       let netTotalRs, netDisplayMtRs, netTotalUsd, netMtUsd;
       const currentIncoterm = $('inp_incoterm') ? $('inp_incoterm').value : '';
-      
+
       if (currentIncoterm === 'FOB') {
         if (isTC) {
           netTotalRs = baseBuyTotalRs + seaFreightTotalRs + intTotalRs + creditTotalRs + docTotalRs + commTotalRs;
@@ -2674,7 +2670,7 @@
 
       // Rebates are now added directly to Profit Margin since they were removed from Net Cost
       let pftTotalRs, pftMtRs, pftTotalUsd, pftMtUsd;
-      
+
       if (currentIncoterm === 'FOB') {
         pftTotalRs = offeredTotalRs - netTotalRs;
         pftMtRs = offeredMtRs - netDisplayMtRs;
@@ -3545,70 +3541,61 @@
       syncAliasFields();
       updateContainerDefaults();
       deriveMasterVariantFromFields();
-      
+
       // Sync premium hidden field on load
       if ($('inp_premium') && $('inp_exchange_premium')) {
         $('inp_exchange_premium').value = $('inp_premium').value;
       }
 
-      // Populate Doctypes for dropdowns
+      // ─── POPULATE DOCTYPE DROPDOWNS ─────────────────────────────────────
+      // Returns a Promise that resolves after the dropdown is filled.
       const populateDropdown = (id, doctype, fieldname = "name") => {
-        const sel = $(id);
-        if (!sel) return;
-        if (typeof frappe !== 'undefined' && frappe.call) {
+        return new Promise((resolve) => {
+          const sel = $(id);
+          if (!sel) { resolve(); return; }
+          
+          let resolved = false;
+          const done = () => { if (!resolved) { resolved = true; resolve(); } };
+          
+          // Failsafe timeout to prevent hanging if network drops or doctype is missing
+          setTimeout(done, 3000);
+
+          if (typeof frappe === 'undefined' || !frappe.call) { done(); return; }
+
           frappe.call({
             method: 'frappe.client.get_list',
             args: {
               doctype: doctype,
               fields: [fieldname],
-              limit_page_length: 0
+              limit_page_length: 9999,
+              order_by: fieldname + ' asc'
             },
-            callback: function(r) {
+            callback: function (r) {
               if (r.message && Array.isArray(r.message)) {
-                const currentVal = sel.value; 
                 const firstOpt = sel.options.length > 0 ? sel.options[0].cloneNode(true) : null;
                 sel.innerHTML = '';
                 if (firstOpt) sel.appendChild(firstOpt);
-                
-                let foundCurrent = false;
                 r.message.forEach(row => {
                   const val = row[fieldname];
+                  if (!val) return;
                   const opt = document.createElement('option');
                   opt.value = val;
                   opt.textContent = val;
                   sel.appendChild(opt);
-                  if (val === currentVal) foundCurrent = true;
                 });
-                
-                if (currentVal) {
-                  if (!foundCurrent) {
-                    const opt = document.createElement('option');
-                    opt.value = currentVal;
-                    opt.textContent = currentVal;
-                    sel.appendChild(opt);
-                  }
-                  sel.value = currentVal;
-                }
               }
-            }
+              done();
+            },
+            error: done
           });
-        }
+        });
       };
 
-      populateDropdown('inp_supplier', 'Supplier');
-      populateDropdown('inp_destination', 'Country');
-      populateDropdown('inp_pod', 'Port of Discharge');
-      populateDropdown('inp_dom_delivery_location', 'Country');
-      populateDropdown('inp_pol', 'Port of Loading');
-      populateDropdown('inp_packing_type', 'Packing Type');
-      populateDropdown('inp_shipping_line', 'Preferred Shipping Line');
-      if ($('inp_premium') && $('inp_exchange_premium')) {
-        $('inp_exchange_premium').value = $('inp_premium').value;
-      }
-
-      // Populate fields from URL parameters
-      if (typeof window !== 'undefined' && window.location && window.location.search) {
+      // Apply URL parameters AFTER all doctypes are loaded
+      const applyUrlParams = () => {
+        if (!window.location || !window.location.search) return;
         const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.toString()) return;
 
         const setDropdownValue = (id, val, triggerChange = false) => {
           if (!val) return;
@@ -3630,17 +3617,13 @@
             sel.appendChild(opt);
           }
           if (triggerChange) {
-            if (typeof sel.onchange === 'function') {
-              sel.onchange();
-            } else {
-              sel.dispatchEvent(new Event('change'));
-            }
+            if (typeof sel.onchange === 'function') sel.onchange();
+            else sel.dispatchEvent(new Event('change'));
           }
         };
 
         const oppFrom = urlParams.get('opportunity_from');
         const partyName = urlParams.get('party_name');
-
         if (oppFrom === 'Lead') {
           if ($('wrapper-customer')) $('wrapper-customer').style.display = 'none';
           if ($('wrapper-lead')) $('wrapper-lead').style.display = 'block';
@@ -3659,14 +3642,11 @@
           setDropdownValue('inp_product', prodName);
           if (prodGrade) {
             const el = $('inp_grade');
-            if (el) { 
-              el.value = prodGrade; 
+            if (el) {
+              el.value = prodGrade;
               const statusEl = $('lbl-grade-status');
-              if (statusEl) {
-                statusEl.textContent = '\u2713 from Opportunity';
-                statusEl.style.color = '#10B981';
-              }
-              el.dispatchEvent(new Event('input')); 
+              if (statusEl) { statusEl.textContent = '\u2713 from Opportunity'; statusEl.style.color = '#10B981'; }
+              el.dispatchEvent(new Event('input'));
             }
           } else {
             if (typeof fetchProductGrade === 'function') fetchProductGrade(prodName);
@@ -3682,6 +3662,18 @@
         const shippingLine = urlParams.get('shipping_line');
         if (shippingLine) setDropdownValue('inp_shipping_line', shippingLine);
 
+        const destination = urlParams.get('destination');
+        if (destination) setDropdownValue('inp_destination', destination, true);
+
+        const pod = urlParams.get('pod');
+        if (pod) setDropdownValue('inp_pod', pod, true);
+
+        const pol = urlParams.get('pol');
+        if (pol) setDropdownValue('inp_pol', pol, true);
+
+        const deliveryLoc = urlParams.get('delivery_location');
+        if (deliveryLoc) setDropdownValue('inp_dom_delivery_location', deliveryLoc, true);
+
         const containerType = urlParams.get('container_type');
         if (containerType) setDropdownValue('inp_container', containerType, true);
 
@@ -3689,22 +3681,40 @@
         if (packingType) setDropdownValue('inp_packing_type', packingType);
 
         const unitSize = urlParams.get('unit_size');
-        if (unitSize) {
-          const el = $('inp_unit_size');
-          if (el) { el.value = unitSize; el.dispatchEvent(new Event('input')); }
-        }
+        if (unitSize) { const el = $('inp_unit_size'); if (el) { el.value = unitSize; el.dispatchEvent(new Event('input')); } }
 
         const unitsPerFcl = urlParams.get('units_per_fcl');
-        if (unitsPerFcl) {
-          const el = $('inp_units_per_fcl');
-          if (el) { el.value = unitsPerFcl; el.dispatchEvent(new Event('input')); }
-        }
+        if (unitsPerFcl) { const el = $('inp_units_per_fcl'); if (el) { el.value = unitsPerFcl; el.dispatchEvent(new Event('input')); } }
 
         const totalFcl = urlParams.get('total_fcl');
-        if (totalFcl) {
-          const el = $('inp_total_fcl');
-          if (el) { el.value = totalFcl; el.dispatchEvent(new Event('input')); }
-        }
+        if (totalFcl) { const el = $('inp_total_fcl'); if (el) { el.value = totalFcl; el.dispatchEvent(new Event('input')); } }
+      };
+
+      // ─── Execute ──────
+      const runPopulate = () => {
+        Promise.all([
+          populateDropdown('inp_supplier', 'Supplier'),
+          populateDropdown('inp_destination', 'Country'),
+          populateDropdown('inp_pod', 'Port of Discharge'),
+          populateDropdown('inp_dom_delivery_location', 'Country'),
+          populateDropdown('inp_pol', 'Port of Loading'),
+          populateDropdown('inp_packing_type', 'Packing Type'),
+          populateDropdown('inp_shipping_line', 'Preferred Shipping Line')
+        ]).then(() => applyUrlParams());
+      };
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        runPopulate();
+      } else {
+        // Fallback: wait 500ms for frappe to initialize
+        setTimeout(() => {
+          if (typeof frappe !== 'undefined' && frappe.call) {
+            runPopulate();
+          } else {
+            // Even if frappe.call isn't ready, run applyUrlParams to at least populate text fields
+            applyUrlParams();
+          }
+        }, 500);
       }
     });
   </script>

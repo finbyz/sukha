@@ -7,46 +7,50 @@
  "engine": "InnoDB",
  "field_order": [
   "contract_person_name",
+  "email_id",
   "designation_and_role",
-  "phone_number",
-  "email_id"
+  "phone_number"
  ],
  "fields": [
   {
    "fieldname": "contract_person_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Contract Person Name",
-   "reqd": 1
+   "options": "Contact"
+   
   },
   {
+   "fetch_from": "contract_person_name.designation",
    "fieldname": "designation_and_role",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Designation and Role",
-   "options": "Designation",
-   "reqd": 1
+   "options": "Designation"
+   
   },
   {
+   "fetch_from": "contract_person_name.mobile_no",
    "fieldname": "phone_number",
    "fieldtype": "Phone",
    "in_list_view": 1,
-   "label": "Phone Number",
-   "reqd": 1
+   "label": "Phone Number"
+   
   },
   {
+   "fetch_from": "contract_person_name.email_id",
    "fieldname": "email_id",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Email ID",
-   "reqd": 1
+   "label": "Email ID"
+   
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-28 17:30:58.149249",
+ "modified": "2026-06-08 15:16:04.654694",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Key Decision Makers",

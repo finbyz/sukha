@@ -27,8 +27,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Address",
-   "options": "Address",
-   "reqd": 1
+   "options": "Address"
+   
   },
   {
    "fetch_from": "address.country",
@@ -36,8 +36,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Country",
-   "options": "Country",
-   "reqd": 1
+   "options": "Country"
+   
   },
   {
    "fetch_from": "consignee_name.email_id",
@@ -45,23 +45,24 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Email ID",
-   "options": "Email",
-   "reqd": 1
+   "options": "Email"
+   
   },
   {
    "fieldname": "consignee_name",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Name",
-   "options": "Customer",
-   "reqd": 1
+   "options": "Customer"
+   
   },
   {
+   "fetch_from": "contact_person_name.mobile_no",
    "fieldname": "contact_number",
    "fieldtype": "Phone",
    "in_list_view": 1,
-   "label": "Contact Number",
-   "reqd": 1
+   "label": "Contact Number"
+   
   },
   {
    "fetch_from": "address.city",
@@ -84,10 +85,11 @@
   },
   {
    "fieldname": "contact_person_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Contact Person Name",
-   "reqd": 1
+   "options": "Contact"
+   
   },
   {
    "fieldname": "column_break_jpye",
@@ -126,7 +128,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-30 10:31:17.673813",
+ "modified": "2026-06-08 14:53:29.062196",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Ship To Party Details",

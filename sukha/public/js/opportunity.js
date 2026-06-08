@@ -58,13 +58,18 @@ frappe.ui.form.on('Opportunity', {
                 if (frm.doc.custom_contact_person || frm.doc.contact_person) {
                     params.append('contact_person', frm.doc.custom_contact_person || frm.doc.contact_person);
                 }
+                if (frm.doc.custom_country_of__destination__ship_to_destination) params.append('destination', frm.doc.custom_country_of__destination__ship_to_destination);
+                if (frm.doc.custom_port_of_destination) params.append('pod', frm.doc.custom_port_of_destination);
+                if (frm.doc.custom_destination__place_of_delivery) params.append('delivery_location', frm.doc.custom_destination__place_of_delivery);
+                if (frm.doc.custom_port_of_loading) params.append('pol', frm.doc.custom_port_of_loading);
                 if (frm.doc.custom_incoterm) params.append('incoterm', frm.doc.custom_incoterm);
                 if (frm.doc.custom_preferred_supplier) params.append('supplier', frm.doc.custom_preferred_supplier);
                 if (frm.doc.custom_preferred_shipping_line) params.append('shipping_line', frm.doc.custom_preferred_shipping_line);
                 if (frm.doc.custom_container_type) params.append('container_type', frm.doc.custom_container_type);
-                if (frm.doc.custom_pack_type || frm.doc.custom_packing_type) {
-                    params.append('packing_type', frm.doc.custom_pack_type || frm.doc.custom_packing_type);
-                }
+                
+                let packingType = frm.doc.custom_packing_type || frm.doc.custom_pack_type;
+                if (packingType) params.append('packing_type', packingType);
+                
                 if (frm.doc.custom_unit_size_of_packing_kg) params.append('unit_size', frm.doc.custom_unit_size_of_packing_kg);
                 if (frm.doc.custom_total_no_of_packing_units_in_a_container) params.append('units_per_fcl', frm.doc.custom_total_no_of_packing_units_in_a_container);
                 if (frm.doc.custom_total_no_of_ccontainers) params.append('total_fcl', frm.doc.custom_total_no_of_ccontainers);

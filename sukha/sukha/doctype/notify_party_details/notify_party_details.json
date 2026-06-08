@@ -12,8 +12,8 @@
   "street",
   "country",
   "column_break_mrih",
-  "email",
   "contact_person_name",
+  "email",
   "contact_number",
   "column_break_eggy",
   "tax_id",
@@ -28,31 +28,29 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Country",
-   "options": "Country",
-   "reqd": 1
+   "options": "Country"
   },
   {
+   "fetch_from": "contact_person_name.mobile_no",
    "fieldname": "contact_number",
    "fieldtype": "Phone",
    "in_list_view": 1,
-   "label": "Contact Number",
-   "reqd": 1
+   "label": "Contact Number"
   },
   {
-   "fetch_from": "name1.email_id",
+   "fetch_from": "contact_person_name.email_id",
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Email ID",
-   "options": "Email",
-   "reqd": 1
+   "options": "Email"
   },
   {
    "fieldname": "contact_person_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Contact Person Name",
-   "reqd": 1
+   "options": "Contact"
   },
   {
    "fieldname": "name1",
@@ -92,21 +90,21 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "address.tax_id",
+   "fetch_from": "address.custom_tax_id",
    "fieldname": "tax_id",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Tax ID"
   },
   {
-   "fetch_from": "address.ruc_no",
+   "fetch_from": "address.custom_ruc_no",
    "fieldname": "ruc_no",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "RUC No"
   },
   {
-   "fetch_from": "address.vat_no",
+   "fetch_from": "address.custom_vat_no",
    "fieldname": "vat_no",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -124,7 +122,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-30 10:32:17.920177",
+ "modified": "2026-06-08 15:46:13.080632",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Notify Party Details",

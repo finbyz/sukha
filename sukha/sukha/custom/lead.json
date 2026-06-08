@@ -7275,7 +7275,7 @@
    "columns": 0,
    "creation": "2026-04-17 15:38:14.486856",
    "default": null,
-   "depends_on": "eval:doc.custom_industry_type == \"Other\" ",
+   "depends_on": "eval:doc.custom_industry_type == \"Any Other\" ",
    "description": null,
    "docstatus": 0,
    "dt": "Lead",

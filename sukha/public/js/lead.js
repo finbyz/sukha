@@ -933,11 +933,22 @@ function render_lead_top_summary(frm) {
     const $body = $(frm.page.body);
     const variant_products = get_variant_products(frm);
     const other_products = (frm.doc.custom_other_products || []).filter(row => row.product_name);
-    const product_title = frm.doc.custom_product_name_m || frm.doc.custom_product;
-    const product_subtitle = [
-        frm.doc.custom_product_name_m ? frm.doc.custom_product : null,
-        frm.doc.custom_product_category
-    ].filter(Boolean).join(" | ");
+const product_name =
+    frm.doc.custom_l1_product_name ||
+        frm.doc.custom_product_name_m ||
+        "-";
+
+    const product_code =
+        frm.doc.custom_product ||
+        frm.doc.custom_product_name_i ||
+        "-";
+
+    const product_title = product_name;
+
+    const product_subtitle = `
+        Code: ${product_code}
+        ${frm.doc.custom_product_category ? " | " + frm.doc.custom_product_category : ""}
+    `;
     const display_status = get_lead_display_status(frm);
 
     const other_products_html = other_products.map(row => {
@@ -1015,25 +1026,48 @@ function render_lead_top_summary(frm) {
                         ? (frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
                         : (frm.doc.company_name || frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
                 )}
-                ${lead_summary_item("Product", frm.doc.custom_product || frm.doc.custom_product_name_m)}
                 ${lead_summary_item(
-        frm.doc.custom_buyer_type
-            ? "Buyer Type"
-            : (
-                frm.doc.custom_type_of_buyer
-                    ? "Type of Buyer"
-                    : "Buyer Type"
-            ),
+                    "Product",
+                    `
+                    <div>
+                        <div>
+                            <strong>Name:</strong>
+                            ${
+                                frm.doc.custom_l1_product_name ||   
+                                frm.doc.custom_product_name_m ||
+                                "-"
+                            }
+                        </div>
 
-        frm.doc.custom_buyer_type
-        || frm.doc.custom_type_of_buyer
-        || "-"
-    )}
+                        <div style="margin-top:4px;">
+                            <strong>Code:</strong>
+                            ${
+                                frm.doc.custom_product ||
+                                frm.doc.custom_product_name_i ||
+                                "-"
+                            }
+                        </div>
+                    </div>
+                    `
+                )}
+                ${lead_summary_item(
+                    frm.doc.custom_buyer_type
+                        ? "Buyer Type"
+                        : (
+                            frm.doc.custom_type_of_buyer
+                                ? "Type of Buyer"
+                                : "Buyer Type"
+                        ),
+
+                    frm.doc.custom_buyer_type
+                    || frm.doc.custom_type_of_buyer
+                    || "-"
+                )}
                 ${lead_summary_item("Country", frm.doc.custom_country_of_hq)}
-                ${frm.doc.custom_volume_range
-            ? lead_summary_item("Volume Range", frm.doc.custom_volume_range)
-            : ""
-        }
+                ${frm.doc.custom_l1_status === "Saved" && frm.doc.custom_volume_range
+    ? lead_summary_item("Volume Range", frm.doc.custom_volume_range)
+    : ""
+}
             </div>
 
             ${other_products.length ? `
@@ -1064,7 +1098,7 @@ function lead_summary_item(label, value) {
                 ${lead_summary_value(label)}
             </div>
             <div style="font-size:15px;font-weight:600;color:#111827;">
-                ${lead_summary_value(value)}
+                ${value || "-"}
             </div>
         </div>
     `;

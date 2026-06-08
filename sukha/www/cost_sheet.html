@@ -821,10 +821,9 @@
               <label id="lbl-container-label">Container type</label>
               <select class="form-control" id="inp_container" onchange="updateContainerDefaults()">
                 <option value="" selected>Select...</option>
-                <option value="20 FT">20 FT Container</option>
-                <option value="40 FT">40 FT Container</option>
-                <option value="40 HC">40 HC Container</option>
-                <option value="ISO Tank Container">ISO Tank Container</option>
+                <option value="20'FT">20'FT</option>
+                <option value="20'FT">40'FT</option>
+                <option value="20'HC">20'HC</option>
               </select>
             </div>
           </div>
@@ -2745,7 +2744,7 @@
         supplier_payment_terms: $('inp_supp_terms')?.value || '',
         stuffing_at: $('inp_stuffing_at')?.value || '',
         stuffing_location: $('inp_stuffing_loc')?.value || '',
-        container_type: $('inp_container')?.value || '20 FT',
+        container_type: $('inp_container')?.value || '',
         packing_type: $('inp_packing_type')?.value || '',
         packing_unit_size: parseFloat($('inp_unit_size')?.value || 0),
         units_per_fcl: parseFloat($('inp_units_per_fcl')?.value || 0),
@@ -3113,7 +3112,7 @@
           freight_amount: sfTotalUsd,
           freight_per_mt: sfUsdMt,
           currency: 'USD',
-          container_type: $('inp_container')?.value || '20 FT'
+          container_type: $('inp_container')?.value || ''
         });
       }
 
@@ -3222,10 +3221,9 @@
     }
 
     // Initialize Frappe if not already initialized
+    // Silent check - no warnings needed since Dashboard handles initialization
     if (typeof frappe !== 'undefined' && frappe.call) {
-      console.log('Frappe is available');
-    } else {
-      console.warn('Frappe not fully loaded, some features may not work');
+      // Frappe is available - used by Dashboard
     }
 
     /* ─── PRODUCT GRADE AUTO-FETCH ─── */
@@ -3552,15 +3550,25 @@
       const populateDropdown = (id, doctype, fieldname = "name") => {
         return new Promise((resolve) => {
           const sel = $(id);
-          if (!sel) { resolve(); return; }
-          
+          if (!sel) {
+            console.warn(`populateDropdown: Element with id '${id}' not found`);
+            resolve();
+            return;
+          }
+
           let resolved = false;
           const done = () => { if (!resolved) { resolved = true; resolve(); } };
-          
+
           // Failsafe timeout to prevent hanging if network drops or doctype is missing
           setTimeout(done, 3000);
 
-          if (typeof frappe === 'undefined' || !frappe.call) { done(); return; }
+          if (typeof frappe === 'undefined' || !frappe.call) {
+            console.error(`populateDropdown: Frappe not available for ${id} (${doctype})`);
+            done();
+            return;
+          }
+
+          console.log(`populateDropdown: Fetching ${doctype} for ${id}...`);
 
           frappe.call({
             method: 'frappe.client.get_list',
@@ -3572,6 +3580,7 @@
             },
             callback: function (r) {
               if (r.message && Array.isArray(r.message)) {
+                console.log(`populateDropdown: Got ${r.message.length} ${doctype} records for ${id}`);
                 const firstOpt = sel.options.length > 0 ? sel.options[0].cloneNode(true) : null;
                 sel.innerHTML = '';
                 if (firstOpt) sel.appendChild(firstOpt);
@@ -3583,10 +3592,16 @@
                   opt.textContent = val;
                   sel.appendChild(opt);
                 });
+                console.log(`populateDropdown: Successfully populated ${id} with ${sel.options.length} options`);
+              } else {
+                console.warn(`populateDropdown: No data received for ${doctype}`);
               }
               done();
             },
-            error: done
+            error: function (err) {
+              console.error(`populateDropdown: Error fetching ${doctype}:`, err);
+              done();
+            }
           });
         });
       };
@@ -3596,6 +3611,9 @@
         if (!window.location || !window.location.search) return;
         const urlParams = new URLSearchParams(window.location.search);
         if (!urlParams.toString()) return;
+
+        // Store URL params in window for dashboard to access
+        window._costSheetUrlParams = urlParams;
 
         const setDropdownValue = (id, val, triggerChange = false) => {
           if (!val) return;
@@ -3688,33 +3706,76 @@
 
         const totalFcl = urlParams.get('total_fcl');
         if (totalFcl) { const el = $('inp_total_fcl'); if (el) { el.value = totalFcl; el.dispatchEvent(new Event('input')); } }
+
+        // Mark that URL params have been applied
+        window._urlParamsApplied = true;
+      };
+
+      // Expose function to re-apply URL params (called by dashboard after populating dropdowns)
+      window.reapplyUrlParams = () => {
+        if (window._costSheetUrlParams) {
+          applyUrlParams();
+        }
       };
 
       // ─── Execute ──────
       const runPopulate = () => {
         Promise.all([
           populateDropdown('inp_supplier', 'Supplier'),
+          populateDropdown('inp_customer', 'Customer'),
+          populateDropdown('inp_product', 'Item'),
           populateDropdown('inp_destination', 'Country'),
           populateDropdown('inp_pod', 'Port of Discharge'),
           populateDropdown('inp_dom_delivery_location', 'Country'),
           populateDropdown('inp_pol', 'Port of Loading'),
           populateDropdown('inp_packing_type', 'Packing Type'),
-          populateDropdown('inp_shipping_line', 'Preferred Shipping Line')
+          populateDropdown('inp_shipping_line', 'Preferred Shipping Line'),
+          populateDropdown('inp_cs_currency', 'Currency'),
+          populateDropdown('inp_cust_terms', 'Payment Terms Template'),
+          populateDropdown('inp_supp_terms', 'Payment Terms Template')
         ]).then(() => applyUrlParams());
       };
 
-      if (typeof frappe !== 'undefined' && frappe.call) {
+      // Use Frappe.ready() if available, otherwise use retry mechanism
+      const initializeDropdowns = () => {
+        if (typeof frappe !== 'undefined' && frappe.call) {
+          console.log('Frappe is ready, populating dropdowns');
+          runPopulate();
+        } else {
+          console.warn('Frappe not available in ready callback');
+          // Fallback to URL params only
+          applyUrlParams();
+        }
+      };
+
+      if (typeof frappe !== 'undefined' && typeof frappe.ready === 'function') {
+        // Best approach: use Frappe's ready event
+        frappe.ready(() => {
+          initializeDropdowns();
+        });
+      } else if (typeof frappe !== 'undefined' && frappe.call) {
+        // Frappe is already loaded
         runPopulate();
       } else {
-        // Fallback: wait 500ms for frappe to initialize
-        setTimeout(() => {
+        // Fallback: wait for frappe to initialize with retry mechanism
+        let retryCount = 0;
+        const maxRetries = 10; // Try for up to 5 seconds (10 * 500ms)
+
+        const tryRunPopulate = () => {
+          retryCount++;
           if (typeof frappe !== 'undefined' && frappe.call) {
+            // Frappe loaded - run populate
             runPopulate();
+          } else if (retryCount < maxRetries) {
+            // Still waiting - retry silently (Dashboard handles this)
+            setTimeout(tryRunPopulate, 500);
           } else {
-            // Even if frappe.call isn't ready, run applyUrlParams to at least populate text fields
+            // Timeout - Dashboard handles dropdown population, no error needed
             applyUrlParams();
           }
-        }, 500);
+        };
+
+        setTimeout(tryRunPopulate, 500);
       }
     });
   </script>

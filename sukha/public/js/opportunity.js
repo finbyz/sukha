@@ -22,6 +22,20 @@ frappe.ui.form.on('Opportunity', {
             };
         });
 
+        frm.set_query("custom_packing_type", function () {
+
+            return {
+                filters: {
+                    name: [
+                        "in",
+                        frm.packing_types?.length
+                            ? frm.packing_types
+                            : ["__NO_VALUE__"]
+                    ]
+                }
+            };
+        });
+
         // Existing document
         if (frm.doc.custom_product_name && !frm.packing_types) {
 
@@ -47,35 +61,55 @@ frappe.ui.form.on('Opportunity', {
 
         if (frm.doc.docstatus === 0) {
             frm.add_custom_button(__('Cost Sheet'), function () {
-                let url = '/cost_sheet';
-                let params = new URLSearchParams();
-
-                params.append('opportunity', frm.doc.name);
-                if (frm.doc.opportunity_from) params.append('opportunity_from', frm.doc.opportunity_from);
-                if (frm.doc.party_name) params.append('party_name', frm.doc.party_name);
-                if (frm.doc.customer_name) params.append('customer_name', frm.doc.customer_name);
-                if (frm.doc.custom_product_name) params.append('product_name', frm.doc.custom_product_name);
-                if (frm.doc.custom_contact_person || frm.doc.contact_person) {
-                    params.append('contact_person', frm.doc.custom_contact_person || frm.doc.contact_person);
-                }
-                if (frm.doc.custom_country_of__destination__ship_to_destination) params.append('destination', frm.doc.custom_country_of__destination__ship_to_destination);
-                if (frm.doc.custom_port_of_destination) params.append('pod', frm.doc.custom_port_of_destination);
-                if (frm.doc.custom_destination__place_of_delivery) params.append('delivery_location', frm.doc.custom_destination__place_of_delivery);
-                if (frm.doc.custom_port_of_loading) params.append('pol', frm.doc.custom_port_of_loading);
-                if (frm.doc.custom_incoterm) params.append('incoterm', frm.doc.custom_incoterm);
-                if (frm.doc.custom_preferred_supplier) params.append('supplier', frm.doc.custom_preferred_supplier);
-                if (frm.doc.custom_preferred_shipping_line) params.append('shipping_line', frm.doc.custom_preferred_shipping_line);
-                if (frm.doc.custom_container_type) params.append('container_type', frm.doc.custom_container_type);
+                // Prepare data object to pass to Cost Sheet Dashboard
+                const costSheetData = {
+                    opportunity: frm.doc.name,
+                    opportunity_from: frm.doc.opportunity_from,
+                    party_name: frm.doc.party_name,
+                    customer_name: frm.doc.customer_name,
+                    
+                    // Product details
+                    product: frm.doc.custom_product_name,
+                    product_grade: frm.doc.custom_product_grade,
+                    
+                    // Parties
+                    customer: frm.doc.opportunity_from === 'Customer' ? frm.doc.party_name : '',
+                    supplier: frm.doc.custom_preferred_supplier,
+                    
+                    // Logistics
+                    country_of_destination: frm.doc.custom_country_of__destination__ship_to_destination,
+                    port_of_discharge: frm.doc.custom_port_of_destination,
+                    port_of_loading: frm.doc.custom_port_of_loading,
+                    delivery_location: frm.doc.custom_destination__place_of_delivery,
+                    shipping_line: frm.doc.custom_preferred_shipping_line,
+                    
+                    // Incoterm and type
+                    incoterm: frm.doc.custom_incoterm,
+                    
+                    // Container and packing
+                    container_type: frm.doc.custom_container_type,
+                    packing_type: frm.doc.custom_packing_type || frm.doc.custom_pack_type,
+                    packing_unit_size: frm.doc.custom_unit_size_of_packing_kg,
+                    units_per_fcl: frm.doc.custom_total_no_of_packing_units_in_a_container,
+                    total_fcl: frm.doc.custom_total_no_of_ccontainers,
+                    
+                    // Lead/Prospect handling
+                    lead: frm.doc.opportunity_from === 'Lead' ? frm.doc.party_name : '',
+                    prospect: (frm.doc.opportunity_from === 'Prospect' || 
+                              frm.doc.opportunity_from === 'Prospect (L3/Qualified)') ? frm.doc.party_name : ''
+                };
                 
-                let packingType = frm.doc.custom_packing_type || frm.doc.custom_pack_type;
-                if (packingType) params.append('packing_type', packingType);
+                // Store data in localStorage for Dashboard to pick up
+                localStorage.setItem('cost_sheet_load_data', JSON.stringify(costSheetData));
                 
-                if (frm.doc.custom_unit_size_of_packing_kg) params.append('unit_size', frm.doc.custom_unit_size_of_packing_kg);
-                if (frm.doc.custom_total_no_of_packing_units_in_a_container) params.append('units_per_fcl', frm.doc.custom_total_no_of_packing_units_in_a_container);
-                if (frm.doc.custom_total_no_of_ccontainers) params.append('total_fcl', frm.doc.custom_total_no_of_ccontainers);
-                if (frm.doc.custom_product_grade) params.append('product_grade', frm.doc.custom_product_grade);
-
-                window.open(url + '?' + params.toString(), '_blank');
+                // Navigate to Cost Sheet Dashboard
+                frappe.set_route('cost-sheet-dashboard');
+                
+                // Show notification
+                frappe.show_alert({
+                    message: __('Opening Cost Sheet Dashboard with Opportunity data...'),
+                    indicator: 'blue'
+                }, 3);
             }, __('Create'));
         }
 
@@ -116,6 +150,8 @@ frappe.ui.form.on('Opportunity', {
                     .filter(Boolean);
 
                 frm.set_value("custom_pack_type", "");
+                frm.set_value("custom_packing_type", "");
+
             }
         });
     },

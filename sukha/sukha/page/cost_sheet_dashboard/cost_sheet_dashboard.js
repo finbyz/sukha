@@ -103,7 +103,15 @@ class CostSheetDashboard {
 
 	render_html() {
 		this.page_content.html(`
-			<div style="width: 100%; height: calc(100vh - 100px); overflow: hidden;">
+			<div style="width: 100%; height: calc(100vh - 100px); overflow: hidden; position: relative;">
+				<div id="loading-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+					<div style="text-align: center;">
+						<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+							<span class="sr-only">Loading...</span>
+						</div>
+						<p style="margin-top: 15px; color: #6c757d;">Loading Cost Sheet...</p>
+					</div>
+				</div>
 				<iframe
 					src="/cost_sheet"
 					style="width: 100%; height: 100%; border: none;"
@@ -118,12 +126,55 @@ class CostSheetDashboard {
 		if (iframe) {
 			iframe.onload = () => {
 				this.iframe_loaded = true;
-				this.setup_dynamic_link_fields(iframe);
-				this.setup_dynamic_required_fields(iframe);
 				
-				// Check if there's data to load from localStorage
-				this.load_cost_sheet_data(iframe);
+				// Check if URL has parameters (coming from Opportunity)
+				const hasUrlParams = window.location.search || 
+					(iframe.contentWindow && iframe.contentWindow.location.search);
+				
+				// If URL parameters exist, delay dynamic link field setup to let iframe populate first
+				if (hasUrlParams) {
+					// Give iframe time to populate from URL params, then supplement missing options
+					setTimeout(() => {
+						this.setup_dynamic_link_fields(iframe);
+						this.setup_dynamic_required_fields(iframe);
+						
+						// Re-apply URL params after dropdown population to ensure values are set
+						if (iframe.contentWindow && typeof iframe.contentWindow.reapplyUrlParams === 'function') {
+							setTimeout(() => {
+								iframe.contentWindow.reapplyUrlParams();
+							}, 500);
+						}
+						
+						// Hide loading overlay
+						this.hide_loading_overlay();
+					}, 1500);
+				} else {
+					// No URL params - setup immediately and load from localStorage
+					this.setup_dynamic_link_fields(iframe);
+					this.setup_dynamic_required_fields(iframe);
+					
+					// Wait a bit for dropdowns to populate, then load data
+					setTimeout(() => {
+						this.load_cost_sheet_data(iframe);
+						
+						// Hide loading overlay after data is loaded
+						setTimeout(() => {
+							this.hide_loading_overlay();
+						}, 500);
+					}, 1000);
+				}
 			};
+		}
+	}
+	
+	hide_loading_overlay() {
+		const overlay = document.getElementById('loading-overlay');
+		if (overlay) {
+			overlay.style.transition = 'opacity 0.3s';
+			overlay.style.opacity = '0';
+			setTimeout(() => {
+				overlay.remove();
+			}, 300);
 		}
 	}
 
@@ -388,14 +439,24 @@ class CostSheetDashboard {
 					const element = doc.getElementById(inputId);
 					
 					if (element) {
+						// Set the value
 						element.value = data[docField];
-						// Trigger change event to update dependent fields
-						const event = new Event('change', { bubbles: true });
-						element.dispatchEvent(event);
-						const inputEvent = new Event('input', { bubbles: true });
-						element.dispatchEvent(inputEvent);
+						
+						// For numeric/manual input fields, trigger both change and input events
+						if (element.type === 'number' || element.classList.contains('manual-input')) {
+							const changeEvent = new Event('change', { bubbles: true });
+							element.dispatchEvent(changeEvent);
+							const inputEvent = new Event('input', { bubbles: true });
+							element.dispatchEvent(inputEvent);
+						} else {
+							// For dropdowns and text fields, just trigger change
+							const changeEvent = new Event('change', { bubbles: true });
+							element.dispatchEvent(changeEvent);
+						}
+						
+						console.log(`Loaded ${docField}: ${data[docField]} into ${inputId}, value now: ${element.value}`);
 					} else {
-						console.log(`Element not found: ${inputId}`);
+						console.log(`Element not found: ${inputId} for ${docField}`);
 					}
 				}
 			});
@@ -414,12 +475,28 @@ class CostSheetDashboard {
 				console.log('Loading sea freight details:', data.sea_freight_details);
 			}
 
-			// Trigger calculation after a delay to ensure all fields are populated
+			// Trigger calculation after a delay to ensure all fields are populated and events processed
 			setTimeout(() => {
+				// Force re-set numeric fields that might not have stuck
+				const numericFields = ['packing_unit_size', 'units_per_fcl', 'total_fcl'];
+				numericFields.forEach(field => {
+					if (data[field]) {
+						const inputId = fieldMapping[field];
+						const element = doc.getElementById(inputId);
+						if (element && !element.value) {
+							console.log(`Re-setting ${field} to ${data[field]}`);
+							element.value = data[field];
+							const inputEvent = new Event('input', { bubbles: true });
+							element.dispatchEvent(inputEvent);
+						}
+					}
+				});
+				
 				if (iframe.contentWindow && typeof iframe.contentWindow.calculateEngine === 'function') {
+					console.log('Triggering calculateEngine after data load');
 					iframe.contentWindow.calculateEngine();
 				}
-			}, 1000);
+			}, 1500);
 
 			// Clear localStorage after loading
 			localStorage.removeItem('cost_sheet_load_data');
@@ -455,10 +532,9 @@ class CostSheetDashboard {
 		if (!val) return "";
 		const mapping = {
 			// Container type: old HTML values → doctype values
-			"20 FCL": "20 FT",
-			"40 FCL": "40 FT",
-			"40 HC": "40 HC",
-			"ISO Tank": "ISO Tank Container",
+			"20' FCL": "20' FT",
+			"40' FCL": "40' FT",
+			"20' ISO": "20' ISO",
 			// Stuffing at: old warehouse names → doctype values
 			"Sukha- Panoli Warehouse": "Own Warehouse \u2014 Panoli",
 			"Sukha- Mundra Warehouse": "Own Warehouse \u2014 Mundra",
@@ -494,6 +570,10 @@ class CostSheetDashboard {
 
 			const current_val = $sel.val();
 			const normalized_current = this.normalize_default_value(current_val);
+			
+			// Check if current value is already in the list
+			const current_in_list = records.some(r => r.name === current_val || r.name === normalized_current);
+			
 			const first_opt = $sel.find('option').first();
 			const placeholder = (first_opt.val() === '' || !first_opt.val())
 				? first_opt.text()
@@ -510,8 +590,19 @@ class CostSheetDashboard {
 			selEl.appendChild(optPlaceholder);
 
 			let has_selection = false;
+			
+			// If current value exists but not in list, add it first
+			if (current_val && !current_in_list) {
+				const opt = doc.createElement('option');
+				opt.value = current_val;
+				opt.textContent = current_val;
+				opt.selected = true;
+				selEl.appendChild(opt);
+				has_selection = true;
+			}
+			
 			records.forEach(row => {
-				const is_selected = (row.name === current_val || row.name === normalized_current);
+				const is_selected = !has_selection && (row.name === current_val || row.name === normalized_current);
 				if (is_selected) has_selection = true;
 				
 				const opt = doc.createElement('option');
@@ -523,7 +614,8 @@ class CostSheetDashboard {
 				selEl.appendChild(opt);
 			});
 
-			if (has_selection) {
+			// Trigger change only if there was a selection to maintain
+			if (has_selection && current_val) {
 				$sel.trigger('change');
 			}
 		}).catch(console.error);

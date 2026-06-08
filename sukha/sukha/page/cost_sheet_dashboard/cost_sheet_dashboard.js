@@ -387,6 +387,52 @@ class CostSheetDashboard {
 			
 			console.log('Loading Cost Sheet data:', data);
 
+			// Handle Lead/Prospect/Customer conditional display
+			const oppFrom = data.opportunity_from;
+			const partyName = data.party_name;
+			
+			// Get the wrapper elements
+			const customerWrapper = doc.getElementById('wrapper-customer');
+			const leadWrapper = doc.getElementById('wrapper-lead');
+			const prospectWrapper = doc.getElementById('wrapper-prospect');
+			const leadInput = doc.getElementById('inp_lead');
+			const prospectInput = doc.getElementById('inp_prospect');
+			
+			// Hide all by default
+			if (customerWrapper) customerWrapper.style.display = 'none';
+			if (leadWrapper) leadWrapper.style.display = 'none';
+			if (prospectWrapper) prospectWrapper.style.display = 'none';
+			
+			// Show the appropriate one based on opportunity_from
+			if (oppFrom === 'Lead' && partyName) {
+				console.log('Showing Lead field with:', partyName);
+				if (leadWrapper) leadWrapper.style.display = 'block';
+				if (leadInput) {
+					leadInput.value = partyName;
+					leadInput.readOnly = true;
+				}
+				// Clear customer from data to prevent it being set
+				delete data.customer;
+			} else if (oppFrom === 'Prospect' || oppFrom === 'Prospect (L3/Qualified)') {
+				console.log('Showing Prospect field with:', partyName);
+				if (prospectWrapper) prospectWrapper.style.display = 'block';
+				if (prospectInput) {
+					prospectInput.value = partyName;
+					prospectInput.readOnly = true;
+				}
+				// Clear customer from data to prevent it being set
+				delete data.customer;
+			} else if (oppFrom === 'Customer' && partyName) {
+				console.log('Showing Customer field with:', partyName);
+				if (customerWrapper) customerWrapper.style.display = 'block';
+				// Set customer in data so it gets populated by field mapping
+				data.customer = partyName;
+			} else {
+				// Default: show customer dropdown
+				console.log('Showing default Customer field');
+				if (customerWrapper) customerWrapper.style.display = 'block';
+			}
+
 			// Map Cost Sheet doctype fields to iframe input IDs
 			const fieldMapping = {
 				// Basic Info

@@ -646,7 +646,7 @@
                 id="inp_user_origin" onchange="deriveMasterVariantFromFields()">
                 <option value="" selected>Select Origin...</option>
                 <option value="India">India (Local Sourcing)</option>
-                <option value="TC">TC (Third Country Sourcing)</option>
+                <option value="TC (Third Country)">TC (Third Country Sourcing)</option>
               </select>
             </div>
 
@@ -790,12 +790,7 @@
                 <option value="" selected>Select Port...</option>
               </select>
             </div>
-            <div class="form-group domestic-only d-none">
-              <label>Delivery Location</label>
-              <select class="form-control manual-input" id="inp_dom_delivery_location">
-                <option value="" selected>Select Location...</option>
-              </select>
-            </div>
+
 
             <div class="form-group">
               <label id="lbl-pol-label">Port of Loading</label>
@@ -1954,7 +1949,10 @@
 
       if ($('inp_master_cs_type')) $('inp_master_cs_type').value = masterVal;
       if ($('inp_incoterm')) $('inp_incoterm').value = inc;
-      if ($('inp_type_of_sale')) $('inp_type_of_sale').value = saleType;
+      if ($('inp_type_of_sale')) {
+        $('inp_type_of_sale').value = saleType;
+        $('inp_type_of_sale').dispatchEvent(new Event('change'));
+      }
 
       onMasterVariantChange();
     }
@@ -2739,7 +2737,7 @@
         customer: $('inp_customer')?.value || '',
         customer_payment_terms: convertPaymentTerms($('inp_cust_terms')?.value || '30'),
         country_of_destination: $('inp_destination')?.value || '',
-        delivery_location: $('inp_dom_delivery_location')?.value || '',
+        delivery_location: $('inp_destination')?.value || '',
         supplier: $('inp_supplier')?.value || '',
         supplier_payment_terms: $('inp_supp_terms')?.value || '',
         stuffing_at: $('inp_stuffing_at')?.value || '',
@@ -3690,7 +3688,7 @@
         if (pol) setDropdownValue('inp_pol', pol, true);
 
         const deliveryLoc = urlParams.get('delivery_location');
-        if (deliveryLoc) setDropdownValue('inp_dom_delivery_location', deliveryLoc, true);
+        // deliveryLoc is mapped to destination, so nothing to do here as destination handles it
 
         const containerType = urlParams.get('container_type');
         if (containerType) setDropdownValue('inp_container', containerType, true);
@@ -3726,7 +3724,7 @@
           populateDropdown('inp_product', 'Item'),
           populateDropdown('inp_destination', 'Country'),
           populateDropdown('inp_pod', 'Port of Discharge'),
-          populateDropdown('inp_dom_delivery_location', 'Country'),
+
           populateDropdown('inp_pol', 'Port of Loading'),
           populateDropdown('inp_packing_type', 'Packing Type'),
           populateDropdown('inp_shipping_line', 'Preferred Shipping Line'),

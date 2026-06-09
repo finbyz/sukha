@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2026-05-25 13:26:37.587290",
+ "creation": "2026-06-02 14:25:52.965086",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -160,8 +160,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Cost Sheet Type",
-   "options": "\nIndia CIF\nIndia FOB\nIndia EXW\nDomestic\nMerchant Export\nTC CIF\nTC FOB",
-   "reqd": 1
+   "options": "\nIndia CIF\nIndia FOB\nIndia EXW\nDomestic\nMerchant Export\nTC CIF\nTC FOB"
   },
   {
    "fieldname": "incoterm",
@@ -227,8 +226,7 @@
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
-   "options": "Currency",
-   "reqd": 1
+   "options": "Currency"
   },
   {
    "fieldname": "exchange_rate",
@@ -493,7 +491,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-01 14:46:47.377938",
+ "modified": "2026-06-09 10:35:22.857278",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

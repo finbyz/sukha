@@ -450,7 +450,7 @@ class CostSheetDashboard {
 				'country_of_destination': 'inp_destination',
 				'port_of_discharge': 'inp_pod',
 				'port_of_loading': 'inp_pol',
-				'delivery_location': 'inp_dom_delivery_location',
+				'delivery_location': 'inp_destination',
 				'stuffing_at': 'inp_stuffing_at',
 				'stuffing_location': 'inp_stuffing_loc',
 				
@@ -1002,21 +1002,21 @@ class CostSheetDashboard {
 
 			this.required_rules = {
 				"Domestic": [
-					"product_name", "customer_name", "delivery_location",
+					"product", "customer", "destination",
 					"packing_type", "packing_unit_size", "total_fcl"
 				],
 				"Export": [
-					"product_name", "customer_name", "loading_location",
-					"supplier_name", "packing_type", "packing_unit_size", "total_fcl"
+					"product", "customer", "pol",
+					"supplier", "packing_type", "packing_unit_size", "total_fcl"
 				],
 				"Direct Export": [
-					"product_name", "customer_name", "loading_location",
-					"supplier_name", "packing_type", "packing_unit_size", "total_fcl"
+					"product", "customer", "pol",
+					"supplier", "packing_type", "packing_unit_size", "total_fcl"
 				]
 			};
 
 			const $sale_type = this.get_iframe_select(doc, [
-				'#type-of-sale', '[name="type_of_sale"]', 'select[id*="sale"]'
+				'#type-of-sale', '[name="type_of_sale"]', '#inp_type_of_sale', 'select[id*="sale"]'
 			]);
 
 			this.apply_required_fields(doc, $sale_type.val() || "Domestic");

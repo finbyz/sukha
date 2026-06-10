@@ -716,7 +716,7 @@ frappe.ui.form.on('Lead', {
                 if (!r.exc && r.message) {
 
                     frappe.show_alert({
-                        message: __('Prospect Created Successfully'),
+                        message: __('L3/Qualified Created Successfully'),
                         indicator: 'green'
                     });
 

@@ -6,18 +6,19 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_yzjt"
+  "weight"
  ],
  "fields": [
   {
-   "fieldname": "section_break_yzjt",
-   "fieldtype": "Section Break"
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "Weight"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-03 13:00:41.316748",
+ "modified": "2026-06-10 15:43:40.610585",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Standard Packing",

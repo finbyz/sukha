@@ -113,7 +113,7 @@ class CostSheetDashboard {
 					</div>
 				</div>
 				<iframe
-					src="/cost_sheet"
+					src="/cost_sheet?v=${Date.now()}"
 					style="width: 100%; height: 100%; border: none;"
 					id="cost-sheet-iframe"
 				></iframe>
@@ -183,43 +183,72 @@ class CostSheetDashboard {
 			if (event.data.type === 'save_cost_sheet') {
 				this.save_cost_sheet_from_iframe(event.data.data);
 			}
+
+			// Std Packing weight fetch request from iframe
+			if (event.data.type === 'fetch_std_packing_weight') {
+				const iframe = document.getElementById('cost-sheet-iframe');
+				if (!iframe || !iframe.contentWindow) return;
+				
+				frappe.call({
+					method: 'frappe.client.get_value',
+					args: {
+						doctype: 'Standard Packing',
+						filters: { name: event.data.std_packing },
+						fieldname: ['weight']
+					},
+					callback: (r) => {
+						let weight = '';
+						if (r.message && typeof r.message === 'object') {
+							weight = r.message.weight || '';
+						} else if (r.message) {
+							weight = r.message;
+						}
+						iframe.contentWindow.postMessage({ type: 'std_packing_weight_response', weight: weight }, '*');
+					}
+				});
+			}
+
 			// Product grade fetch request from iframe
 			if (event.data.type === 'fetch_product_grade') {
 				const iframe = document.getElementById('cost-sheet-iframe');
 				if (!iframe || !iframe.contentWindow) return;
 				// First try direct fetch using custom_item_grade
 				frappe.call({
-					method: 'frappe.client.get_value',
+					method: 'frappe.client.get',
 					args: {
 						doctype: 'Item',
-						filters: { name: event.data.item },
-						fieldname: ['custom_item_grade', 'variant_of']
+						name: event.data.item
 					},
 					callback: (r) => {
-						const grade = (r.message || {}).custom_item_grade || '';
-						const parentItem = (r.message || {}).variant_of || '';
+						const doc = r.message || {};
+						const grade = doc.custom_item_grade || '';
+						const parentItem = doc.variant_of || '';
+						const packings = doc.custom_packing_type || [];
+						const stdPackings = doc.custom_standard_packing || [];
 
-						if (grade) {
-							iframe.contentWindow.postMessage({ type: 'product_grade_response', grade }, '*');
+						if (grade || packings.length || stdPackings.length) {
+							iframe.contentWindow.postMessage({ type: 'product_grade_response', grade, packings, stdPackings }, '*');
 						} else if (parentItem) {
 							// Variant — check parent template
 							frappe.call({
-								method: 'frappe.client.get_value',
+								method: 'frappe.client.get',
 								args: {
 									doctype: 'Item',
-									filters: { name: parentItem },
-									fieldname: ['custom_item_grade']
+									name: parentItem
 								},
 								callback: (rp) => {
-									const parentGrade = (rp.message || {}).custom_item_grade || '';
+									const pDoc = rp.message || {};
+									const parentGrade = pDoc.custom_item_grade || '';
+									const pPackings = pDoc.custom_packing_type || [];
+									const pStdPackings = pDoc.custom_standard_packing || [];
 									iframe.contentWindow.postMessage(
-										{ type: 'product_grade_response', grade: parentGrade },
+										{ type: 'product_grade_response', grade: parentGrade, packings: pPackings, stdPackings: pStdPackings },
 										'*'
 									);
 								}
 							});
 						} else {
-							iframe.contentWindow.postMessage({ type: 'product_grade_response', grade: '' }, '*');
+							iframe.contentWindow.postMessage({ type: 'product_grade_response', grade: '', packings: [], stdPackings: [] }, '*');
 						}
 					}
 				});
@@ -799,14 +828,13 @@ class CostSheetDashboard {
 				this.fetch_exchange_rate(doc, e.target.value);
 			});
 
-			// // Packing Type - now using select options instead of DocType link
-			// this.populate_select_from_field(doc,
-			// 	['#inp_packing_type', 'select[id*="packing_type"]'],
-			// 	'packing_type'
-			// );
+			// Packing Type is populated dynamically by the iframe based on the selected Item
+			// and its custom_packing_type child table. We do NOT populate it here to avoid overwriting the filtered options.
+
+			// Std. Packing should load all Standard Packing options
 			this.populate_select(doc,
-				['#inp_packing_type', 'select[id*="packing_type"]'],
-				'Packing Type'
+				['#inp_std_packing', 'select[id*="std_packing"]'],
+				'Standard Packing'
 			);
 
 			// Port of Discharge is a Data field — no doctype link, no population needed

@@ -161,8 +161,12 @@ override_whitelisted_methods = {
     "erpnext.crm.doctype.lead.lead.make_opportunity": "sukha.override.lead_override.make_opportunity",
     "erpnext.crm.doctype.prospect.prospect.make_customer": "sukha.override.prospect_override.make_customer",
     "erpnext.crm.doctype.prospect.prospect.make_opportunity": "sukha.override.prospect_override.make_opportunity",
-    "erpnext.selling.doctype.customer.customer.make_opportunity": "sukha.override.customer_override.make_opportunity"
+    "erpnext.selling.doctype.customer.customer.make_opportunity": "sukha.override.customer_override.make_opportunity",
+    "erpnext.controllers.item_variant.create_variant": "sukha.override.item_varient.create_variant",
+    "erpnext.controllers.item_variant.create_multiple_variants": "sukha.override.item_varient.create_multiple_variants",
+    "erpnext.controllers.item_variant.enqueue_multiple_variant_creation": "sukha.override.item_varient.enqueue_multiple_variant_creation",
 }
+
 
 
 # Scheduled Tasks

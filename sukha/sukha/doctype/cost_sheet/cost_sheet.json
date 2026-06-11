@@ -13,6 +13,8 @@
   "col_break_header",
   "company",
   "customer",
+  "lead",
+  "prospect",
   "supplier",
   "section_break_product",
   "product",
@@ -41,6 +43,7 @@
   "delivery_location",
   "shipping_line",
   "stuffing_location",
+  "stuffing_warehouse",
   "section_break_stuffing",
   "stuffing_at",
   "col_break_stuffing",
@@ -280,7 +283,7 @@
   },
   {
    "fieldname": "stuffing_location",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Stuffing Location",
    "options": "Warehouse"
   },
@@ -486,12 +489,30 @@
    "fieldtype": "Link",
    "label": "Shipping Line",
    "options": "Preferred Shipping Line"
+  },
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead"
+  },
+  {
+   "fieldname": "prospect",
+   "fieldtype": "Link",
+   "label": "Prospect",
+   "options": "Prospect"
+  },
+  {
+   "fieldname": "stuffing_warehouse",
+   "fieldtype": "Link",
+   "label": "Stuffing Warehouse",
+   "options": "Warehouse"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-09 10:35:22.857278",
+ "modified": "2026-06-11 16:14:47.039788",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

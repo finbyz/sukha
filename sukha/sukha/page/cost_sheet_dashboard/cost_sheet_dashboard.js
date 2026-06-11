@@ -1,14 +1,14 @@
 frappe.pages['cost-sheet-dashboard'].on_page_load = function (wrapper) {
-	frappe.cost_sheet_dashboard_instance = new CostSheetDashboard(wrapper);
+	wrapper.cost_sheet_dashboard = new CostSheetDashboard(wrapper);
 };
 
 frappe.pages['cost-sheet-dashboard'].on_page_show = function (wrapper) {
-	if (frappe.cost_sheet_dashboard_instance) {
+	if (wrapper.cost_sheet_dashboard) {
 		const iframe = document.getElementById('cost-sheet-iframe');
-		if (iframe && frappe.cost_sheet_dashboard_instance.iframe_loaded) {
+		if (iframe && wrapper.cost_sheet_dashboard.iframe_loaded) {
 			// Small delay to ensure DOM is ready
 			setTimeout(() => {
-				frappe.cost_sheet_dashboard_instance.load_cost_sheet_data(iframe);
+				wrapper.cost_sheet_dashboard.load_cost_sheet_data(iframe);
 			}, 100);
 		}
 	}
@@ -464,30 +464,33 @@ class CostSheetDashboard {
 			if (leadWrapper) leadWrapper.style.display = 'none';
 			if (prospectWrapper) prospectWrapper.style.display = 'none';
 			
-			// Show the appropriate one based on opportunity_from
-			if (oppFrom === 'Lead' && partyName) {
-				console.log('Showing Lead field with:', partyName);
+			// Show the appropriate one based on opportunity_from or direct cost sheet data
+			if ((oppFrom === 'Lead' && partyName) || data.lead) {
+				const val = (oppFrom === 'Lead' ? partyName : data.lead);
+				console.log('Showing Lead field with:', val);
 				if (leadWrapper) leadWrapper.style.display = 'block';
 				if (leadInput) {
-					leadInput.value = partyName;
+					leadInput.value = val;
 					leadInput.readOnly = true;
 				}
 				// Clear customer from data to prevent it being set
 				delete data.customer;
-			} else if (oppFrom === 'Prospect' || oppFrom === 'Prospect (L3/Qualified)') {
-				console.log('Showing Prospect field with:', partyName);
+			} else if ((((oppFrom === 'Prospect' || oppFrom === 'Prospect (L3/Qualified)') && partyName)) || data.prospect) {
+				const val = ((oppFrom === 'Prospect' || oppFrom === 'Prospect (L3/Qualified)') && partyName ? partyName : data.prospect);
+				console.log('Showing Prospect field with:', val);
 				if (prospectWrapper) prospectWrapper.style.display = 'block';
 				if (prospectInput) {
-					prospectInput.value = partyName;
+					prospectInput.value = val;
 					prospectInput.readOnly = true;
 				}
 				// Clear customer from data to prevent it being set
 				delete data.customer;
-			} else if (oppFrom === 'Customer' && partyName) {
-				console.log('Showing Customer field with:', partyName);
+			} else if ((oppFrom === 'Customer' && partyName) || data.customer) {
+				const val = (oppFrom === 'Customer' ? partyName : data.customer);
+				console.log('Showing Customer field with:', val);
 				if (customerWrapper) customerWrapper.style.display = 'block';
 				// Set customer in data so it gets populated by field mapping
-				data.customer = partyName;
+				data.customer = val;
 			} else {
 				// Default: show customer dropdown
 				console.log('Showing default Customer field');
@@ -505,6 +508,7 @@ class CostSheetDashboard {
 				
 				// Payment Terms
 				'customer_payment_terms': 'inp_cust_terms',
+				'customer_payment_term': 'inp_cust_terms',
 				'supplier_payment_terms': 'inp_supp_terms',
 				
 				// Locations & Logistics
@@ -718,10 +722,10 @@ class CostSheetDashboard {
 			"250 Kg HMHDPE Drums": "HMHDPE Drums",
 			"50 Kg Bags on Pallets": "Bags",
 			// Payment terms: numeric → keep as-is (matched by Payment Terms Template name)
-			"30": "30 Days Credit",
-			"60": "60 Days Credit",
-			"90": "90 Days Credit",
-			"0": "LC at Sight"
+			// "30": "30 Days Credit",
+			// "60": "60 Days Credit",
+			// "90": "90 Days Credit",
+			// "0": "LC at Sight"
 		};
 		return mapping[val] || val;
 	}
@@ -1163,7 +1167,14 @@ class CostSheetDashboard {
 		$(doc).find(".required-star").remove();
 		$(doc).find("[required]").removeAttr("required");
 
-		const fields = this.required_rules[rule_name] || [];
+		let fields = this.required_rules[rule_name] || [];
+
+		// If lead or prospect is populated, customer is not mandatory
+		const hasLead = !!$(doc).find("#inp_lead").val();
+		const hasProspect = !!$(doc).find("#inp_prospect").val();
+		if (hasLead || hasProspect) {
+			fields = fields.filter(f => f !== "customer");
+		}
 
 		fields.forEach(field => {
 			const $field = this.get_iframe_select(doc, [

@@ -1921,9 +1921,9 @@
       const inc = $('inp_user_incoterm')?.value || '';
       const originEl = $('inp_user_origin');
       const originWrapper = $('wrapper-origin-scope');
-      const tcOption = originEl?.querySelector('option[value="TC"]');
+      const tcOption = originEl?.querySelector('option[value="TC (Third Country)"]');
       if (tcOption) tcOption.disabled = inc === 'EXW';
-      if (inc === 'EXW' && originEl?.value === 'TC') originEl.value = 'India';
+      if (inc === 'EXW' && originEl?.value === 'TC (Third Country)') originEl.value = 'India';
       if (originWrapper) originWrapper.style.display = inc === 'EXW' ? 'none' : 'block';
       const orig = originEl?.value || 'India';
       const exwWrapper = $('wrapper-exw-subscope');
@@ -1935,7 +1935,7 @@
       let masterVal = '';
       let saleType = '';
 
-      if (orig === 'TC') {
+      if (orig === 'TC (Third Country)') {
         masterVal = inc === 'CIF' ? 'TC-CIF' : (inc === 'FOB' ? 'TC-FOB' : 'TC-CIF');
         saleType = 'Third Country';
       } else {
@@ -2556,8 +2556,8 @@
       if ($('lbl-credit-cost-name')) {
         const termsEl = $('inp_cust_terms');
         const termsText = termsEl && termsEl.selectedIndex >= 0
-          ? termsEl.options[termsEl.selectedIndex]?.text || 'LC at Sight'
-          : 'LC at Sight';
+          ? termsEl.options[termsEl.selectedIndex]?.text || ''
+          : '';
         $('lbl-credit-cost-name').textContent = `Credit Cost : ${termsText}`;
       }
       const creditPctVal = parseFloat($('inp_dom_credit_pct')?.value) || 0;
@@ -2751,7 +2751,9 @@
         product: $('inp_product')?.value || '',
         product_grade: $('inp_grade')?.value || '',
         customer: $('inp_customer')?.value || '',
-        customer_payment_terms: convertPaymentTerms($('inp_cust_terms')?.value || '30'),
+        lead: $('inp_lead')?.value || '',
+        prospect: $('inp_prospect')?.value || '',
+        customer_payment_terms: $('inp_cust_terms')?.value || '',
         country_of_destination: $('inp_destination')?.value || '',
         delivery_location: $('inp_destination')?.value || '',
         supplier: $('inp_supplier')?.value || '',
@@ -3177,7 +3179,7 @@
       // Collect margin analysis data - typically one row
       const row = {
         analysis_type: 'Margin Analysis',
-        credit_days: $('inp_cust_terms')?.value || 'LC at Sight',
+        credit_days: $('inp_cust_terms')?.value || '',
         internal_cost_percentage: parseFloat($('inp_internal_cost_pct')?.value || 0),
         document_charges_usd: parseFloat($('inp_doc_charges_usd')?.value || 0),
         commission_value: parseFloat($('inp_commission_val')?.value || 0),
@@ -3218,21 +3220,7 @@
     }
 
     // Helper function to convert payment terms from days to text
-    function convertPaymentTerms(days) {
-      if (typeof days === 'string' && days.includes('Credit')) {
-        return days;
-      }
-      if (typeof days === 'string' && days.includes('Sight')) {
-        return days;
-      }
-      const termsMap = {
-        '0': 'LC at Sight',
-        '30': '30 Days Credit',
-        '60': '60 Days Credit',
-        '90': '90 Days Credit'
-      };
-      return termsMap[days] || 'LC at Sight';
-    }
+    // Function convertPaymentTerms removed
 
     // Initialize Frappe if not already initialized
     // Silent check - no warnings needed since Dashboard handles initialization
@@ -3820,7 +3808,13 @@
           populateDropdown('inp_cust_terms', 'Payment Terms Template'),
           populateDropdown('inp_supp_terms', 'Payment Terms Template'),
           populateDropdown('inp_std_packing', 'Standard Packing')
-        ]).then(() => applyUrlParams());
+        ]).then(() => {
+          const currencyField = document.getElementById('inp_cs_currency');
+          if (currencyField && !currencyField.value) {
+            currencyField.value = 'USD';
+          }
+          applyUrlParams();
+        });
       };
 
       // Use Frappe.ready() if available, otherwise use retry mechanism

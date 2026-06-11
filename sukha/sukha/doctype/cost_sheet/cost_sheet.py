@@ -760,23 +760,10 @@ def create_from_dashboard(data):
         data["stuffing_at"] = ""
 
     # ── Normalize Supplier Payment Terms ──────────────────────
-    PAYMENT_TERMS_MAP = {
-        "advance": "Advance Payment",
-        "advance payment": "Advance Payment",
-        "30 days": "30 Days against B/L",
-        "30 days against b/l": "30 Days against B/L",
-        "lc": "LC at Sight",
-        "lc at sight": "LC at Sight"
-    }
-
-    supplier_payment = (
-        data.get("supplier_payment_terms") or ""
-    ).strip().lower()
-
-    data["supplier_payment_terms"] = PAYMENT_TERMS_MAP.get(
-        supplier_payment,
-        ""
-    )
+    # We no longer normalize this since it's a Link field and the dashboard
+    # passes the exact value selected from the Payment Terms Template dropdown.
+    supplier_payment = data.get("supplier_payment_terms") or ""
+    data["supplier_payment_terms"] = supplier_payment
     
     # ── Clean child tables ───────────────────────────────────
     if data.get("margin_analysis"):

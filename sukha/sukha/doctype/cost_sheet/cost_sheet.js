@@ -16,7 +16,7 @@ frappe.ui.form.on("Cost Sheet", {
 					message: __('Loading cost sheet in dashboard...'),
 					indicator: 'green'
 				}, 3);
-			}, __('Actions'));
+			});
 		}
 	}
 });

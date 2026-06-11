@@ -166,27 +166,12 @@ def make_customer(source_name, target_doc=None):
 				})
 		
 		# Log missing fields for reference
-		if missing_fields:
-			frappe.msgprint(
-				_("The following fields from Prospect are not available in Customer and were not mapped:<br><br>") +
-				"<br>".join([f"• <b>{f['label']}</b> ({f['fieldname']}) - {f['fieldtype']}" for f in missing_fields]),
-				title=_("Fields Not Mapped"),
-				indicator="orange"
-			)
-			
+		if missing_fields:			
 			# Also log to error log for admin reference
 			frappe.log_error(
 				f"Prospect: {source.name}\n\nMissing Fields in Customer:\n" +
 				"\n".join([f"{f['fieldname']} ({f['fieldtype']}) - {f['label']}: {f['value']}" for f in missing_fields]),
 				"Prospect to Customer - Missing Fields"
-			)
-		
-		# Log successfully mapped fields
-		if mapped_fields:
-			frappe.msgprint(
-				_("Successfully mapped {0} custom fields from Prospect to Customer").format(len(mapped_fields)),
-				title=_("Fields Mapped"),
-				indicator="green"
 			)
 
 	doclist = get_mapped_doc(

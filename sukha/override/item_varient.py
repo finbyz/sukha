@@ -6,27 +6,19 @@ from erpnext.controllers.item_variant import (
     copy_attributes_to_variant,
     get_variant,
     generate_keyed_value_combinations,
+    make_variant_item_code
 )
 
-
 def get_grade_value(variant):
-    """Get Grade attribute value from variant"""
-
     for row in variant.attributes:
         if row.attribute == "Grade":
             return row.attribute_value
-
     return None
 
-
 def create_or_get_product_grade(grade):
-    """Create Product Grade if not exists"""
-
     if not grade:
         return None
-
-    existing = frappe.db.exists("Product Grades", grade)
-
+    existing = frappe.db.exists("Product Grades", {"grade_name": grade})
     if existing:
         return existing
 
@@ -34,38 +26,42 @@ def create_or_get_product_grade(grade):
         "doctype": "Product Grades",
         "grade_name": grade
     })
-
     doc.insert(ignore_permissions=True)
-
     return doc.name
 
-
 def set_variant_name_from_grade(template, variant):
-    """Naming only based on Grade"""
-
     grade = get_grade_value(variant)
 
     if not grade:
+        make_variant_item_code(template.item_code, template.item_name, variant)
         return
 
-    variant.item_code = f"{template.item_code}-{grade}"
-    variant.item_name = f"{template.item_name}-{grade}"
+    base_code = f"{template.item_code}-{grade}"
+    base_name = f"{template.item_name}-{grade}"
 
+    proposed_code = base_code
+    proposed_name = base_name
+    counter = 1
+
+    while frappe.db.exists("Item", proposed_code):
+        proposed_code = f"{base_code}-{counter}"
+        proposed_name = f"{base_name} {counter}"
+        counter += 1
+
+    variant.item_code = proposed_code
+    variant.item_name = proposed_name
 
 @frappe.whitelist()
 def create_variant(item, args, use_template_image=False):
-
-    if isinstance(args, str):
-        args = json.loads(args)
+    args = frappe.parse_json(args)
 
     template = frappe.get_doc("Item", item)
-
     variant = frappe.new_doc("Item")
     variant.variant_based_on = "Item Attribute"
 
     variant_attributes = []
-
     for d in template.attributes:
+        # If the frontend didn't pass this attribute, it will safely be None
         val = args.get(d.attribute) or args.get(_(d.attribute))
         variant_attributes.append({
             "attribute": d.attribute,
@@ -73,80 +69,79 @@ def create_variant(item, args, use_template_image=False):
         })
 
     variant.set("attributes", variant_attributes)
-
     copy_attributes_to_variant(template, variant)
 
     if use_template_image and template.image:
         variant.image = template.image
 
-    # custom naming
     set_variant_name_from_grade(template, variant)
 
-    # create product grade
     grade = get_grade_value(variant)
-
     if grade:
         grade_doc = create_or_get_product_grade(grade)
         variant.custom_item_grade = grade_doc
 
     variant.insert(ignore_permissions=True)
-
     return variant
-
 
 @frappe.whitelist()
 def create_multiple_variants(item, args, use_template_image=False):
+    created_count = 0
+    skipped_count = 0
+    failed_count = 0
+    log = []
 
-    count = 0
+    parsed_args = frappe.parse_json(args)
+    
+    # CRITICAL FIX: Strip out any keys that have empty lists so they don't break the math!
+    clean_args = {k: v for k, v in parsed_args.items() if v and len(v) > 0}
 
-    if isinstance(args, str):
-        args = json.loads(args)
-
-    template = frappe.get_doc("Item", item)
-
-    args_set = generate_keyed_value_combinations(args)
+    args_set = generate_keyed_value_combinations(clean_args)
 
     for attribute_values in args_set:
-
-        if not get_variant(item, args=attribute_values):
+        existing_variant = get_variant(item, args=attribute_values)
+        
+        if existing_variant:
+            skipped_count += 1
+            log.append(f"<b>Skipped:</b> {attribute_values.get('Grade', 'Unknown')} (Already exists as {existing_variant})")
+        else:
             try:
                 create_variant(item, attribute_values, use_template_image)
-                count += 1
+                created_count += 1
+                log.append(f"<b>Success:</b> Created variant for {attribute_values.get('Grade', 'Unknown')}")
             except Exception as e:
-                frappe.log_error(message=frappe.get_traceback(), title="Variant Creation Failed")
+                frappe.db.rollback()
+                failed_count += 1
+                log.append(f"<span style='color:red'><b>Failed:</b> {attribute_values.get('Grade', 'Unknown')} -> Error: {str(e)}</span>")
 
-    return count
-
+    return f"{created_count} variants created."
 
 @frappe.whitelist()
 def enqueue_multiple_variant_creation(item, args, use_template_image=False):
-
     use_template_image = frappe.parse_json(use_template_image)
+    parsed_args = frappe.parse_json(args)
 
-    if isinstance(args, str):
-        variants = json.loads(args)
-    else:
-        variants = args
+    # Clean the args for the length check
+    clean_args = {k: v for k, v in parsed_args.items() if v and len(v) > 0}
+
+    if not clean_args:
+        frappe.throw(_("Please select at least one attribute value to create variants."))
 
     total_variants = 1
-
-    for key in variants:
-        total_variants *= len(variants[key])
+    for key in clean_args:
+        total_variants *= len(clean_args[key])
 
     if total_variants >= 600:
-        frappe.throw("Please do not create more than 500 items at a time")
+        frappe.throw(_("Please do not create more than 500 items at a time"))
 
     if total_variants < 10:
-        return create_multiple_variants(
-            item,
-            args,
-            use_template_image
-        )
+        # Pass the original parsed_args, create_multiple_variants will clean them
+        return create_multiple_variants(item, parsed_args, use_template_image)
 
     frappe.enqueue(
         "sukha.override.item_varient.create_multiple_variants",
         item=item,
-        args=args,
+        args=parsed_args,
         use_template_image=use_template_image,
         now=frappe.in_test,
     )

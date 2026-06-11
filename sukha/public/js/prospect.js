@@ -406,14 +406,22 @@ async function render_prospect_top_summary(frm) {
 
                     <div style="font-size:13px;">
                         <a href="${lead.custom_1.startsWith('http') ? lead.custom_1 : 'https://' + lead.custom_1}"
-                        target="_blank"
-                        style="color:var(--primary);text-decoration:none;font-weight:600;">
+                            target="_blank"
+                            style="
+                                color:var(--primary);
+                                text-decoration:none;
+                                font-weight:600;
+                                display:block;
+                                overflow:hidden;
+                                text-overflow:ellipsis;
+                                white-space:nowrap;
+                            ">
                             ${lead.custom_1}
                         </a>
                     </div>
                 </div>
                 ` : ""}
-                            ${lead.custom_2 ? `
+            ${lead.custom_2 ? `
                 <div style="
                     padding:12px;
                     border:1px solid var(--border-color);
@@ -433,8 +441,16 @@ async function render_prospect_top_summary(frm) {
 
                     <div style="font-size:13px;">
                         <a href="${lead.custom_2.startsWith('http') ? lead.custom_2 : 'https://' + lead.custom_2}"
-                        target="_blank"
-                        style="color:var(--primary);text-decoration:none;font-weight:600;">
+                            target="_blank"
+                            style="
+                                color:var(--primary);
+                                text-decoration:none;
+                                font-weight:600;
+                                display:block;
+                                overflow:hidden;
+                                text-overflow:ellipsis;
+                                white-space:nowrap;
+                            ">
                             ${lead.custom_2}
                         </a>
                     </div>

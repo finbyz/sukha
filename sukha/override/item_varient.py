@@ -9,9 +9,38 @@ from erpnext.controllers.item_variant import (
     make_variant_item_code
 )
 
+def get_grade_attribute_name():
+    """
+    Get the dynamic grade attribute name based on custom_product_grade_attribute flag
+    Returns the attribute name (e.g., 'Grade') or None if not configured
+    """
+    try:
+        # Look for any Item Attribute with custom_product_grade_attribute flag enabled
+        grade_attr = frappe.db.get_value(
+            "Item Attribute",
+            {"custom_product_grade_attribute": 1},
+            "attribute_name"
+        )
+        
+        if grade_attr:
+            frappe.logger().debug(f"Dynamic grade attribute found: {grade_attr}")
+            return grade_attr
+        
+        frappe.logger().warn("No Item Attribute with custom_product_grade_attribute flag found, falling back to 'Grade'")
+        return "Grade"  # Fallback to default
+    except Exception as e:
+        frappe.logger().error(f"Error getting grade attribute: {str(e)}")
+        return "Grade"  # Fallback to default on error
+
 def get_grade_value(variant):
+    """
+    Get the grade value from variant attributes
+    Dynamically determines which attribute to look for based on custom_product_grade_attribute flag
+    """
+    grade_attribute = get_grade_attribute_name()
+    
     for row in variant.attributes:
-        if row.attribute == "Grade":
+        if row.attribute == grade_attribute:
             return row.attribute_value
     return None
 
@@ -30,6 +59,10 @@ def create_or_get_product_grade(grade):
     return doc.name
 
 def set_variant_name_from_grade(template, variant):
+    """
+    Set variant item code and name based on the dynamic grade attribute
+    Uses custom_product_grade_attribute to determine which attribute is the grade
+    """
     grade = get_grade_value(variant)
 
     if not grade:
@@ -86,12 +119,17 @@ def create_variant(item, args, use_template_image=False):
 
 @frappe.whitelist()
 def create_multiple_variants(item, args, use_template_image=False):
+    """
+    Create multiple item variants with dynamic grade attribute support
+    Uses custom_product_grade_attribute flag to determine the grade attribute
+    """
     created_count = 0
     skipped_count = 0
     failed_count = 0
     log = []
 
     parsed_args = frappe.parse_json(args)
+    grade_attribute = get_grade_attribute_name()
     
     # CRITICAL FIX: Strip out any keys that have empty lists so they don't break the math!
     clean_args = {k: v for k, v in parsed_args.items() if v and len(v) > 0}
@@ -101,18 +139,21 @@ def create_multiple_variants(item, args, use_template_image=False):
     for attribute_values in args_set:
         existing_variant = get_variant(item, args=attribute_values)
         
+        # Get grade value dynamically
+        grade_value = attribute_values.get(grade_attribute, 'Unknown')
+        
         if existing_variant:
             skipped_count += 1
-            log.append(f"<b>Skipped:</b> {attribute_values.get('Grade', 'Unknown')} (Already exists as {existing_variant})")
+            log.append(f"<b>Skipped:</b> {grade_value} (Already exists as {existing_variant})")
         else:
             try:
                 create_variant(item, attribute_values, use_template_image)
                 created_count += 1
-                log.append(f"<b>Success:</b> Created variant for {attribute_values.get('Grade', 'Unknown')}")
+                log.append(f"<b>Success:</b> Created variant for {grade_value}")
             except Exception as e:
                 frappe.db.rollback()
                 failed_count += 1
-                log.append(f"<span style='color:red'><b>Failed:</b> {attribute_values.get('Grade', 'Unknown')} -> Error: {str(e)}</span>")
+                log.append(f"<span style='color:red'><b>Failed:</b> {grade_value} -> Error: {str(e)}</span>")
 
     return f"{created_count} variants created."
 

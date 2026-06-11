@@ -1,5 +1,17 @@
 frappe.pages['cost-sheet-dashboard'].on_page_load = function (wrapper) {
-	new CostSheetDashboard(wrapper);
+	frappe.cost_sheet_dashboard_instance = new CostSheetDashboard(wrapper);
+};
+
+frappe.pages['cost-sheet-dashboard'].on_page_show = function (wrapper) {
+	if (frappe.cost_sheet_dashboard_instance) {
+		const iframe = document.getElementById('cost-sheet-iframe');
+		if (iframe && frappe.cost_sheet_dashboard_instance.iframe_loaded) {
+			// Small delay to ensure DOM is ready
+			setTimeout(() => {
+				frappe.cost_sheet_dashboard_instance.load_cost_sheet_data(iframe);
+			}, 100);
+		}
+	}
 };
 
 class CostSheetDashboard {
@@ -387,6 +399,7 @@ class CostSheetDashboard {
 	}
 
 	show_cost_sheet_selector() {
+		const me = this;
 		new frappe.ui.form.MultiSelectDialog({
 			doctype: 'Cost Sheet',
 			target: this,
@@ -396,7 +409,26 @@ class CostSheetDashboard {
 			},
 			action(selections) {
 				if (selections && selections.length > 0) {
-					frappe.set_route('Form', 'Cost Sheet', selections[0]);
+					frappe.call({
+						method: 'frappe.client.get',
+						args: {
+							doctype: 'Cost Sheet',
+							name: selections[0]
+						},
+						callback: function(r) {
+							if (r.message) {
+								const iframe = document.getElementById('cost-sheet-iframe');
+								// Call load_cost_sheet_data directly with the fetched doc
+								localStorage.setItem('cost_sheet_load_data', JSON.stringify(r.message));
+								me.load_cost_sheet_data(iframe);
+								cur_dialog.hide();
+								frappe.show_alert({
+									message: __('Loaded Cost Sheet data into dashboard.'),
+									indicator: 'green'
+								}, 3);
+							}
+						}
+					});
 				}
 			}
 		});
@@ -536,18 +568,86 @@ class CostSheetDashboard {
 				}
 			});
 
+			const setInput = (id, val) => {
+				const el = doc.getElementById(id);
+				if (el && val !== undefined && val !== null) {
+					el.value = val;
+					el.dispatchEvent(new Event('input', { bubbles: true }));
+					el.dispatchEvent(new Event('change', { bubbles: true }));
+				}
+			};
+
+			// Checkboxes
+			if (data.apply_rodtep) {
+				const el = doc.getElementById('chk_scheme_rodtep');
+				if (el) { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); }
+			}
+			if (data.apply_advance_license) {
+				const el = doc.getElementById('chk_scheme_advance');
+				if (el) { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); }
+			}
+			if (data.final_offered_price) {
+				setInput('inp_offered_price_exw', data.final_offered_price);
+			}
+			if (data.name) {
+				setInput('inp_doc_name', data.name);
+			}
+
 			// Populate child table data if available
 			if (data.product_cost_details && data.product_cost_details.length > 0) {
 				console.log('Loading product cost details:', data.product_cost_details);
-				// You can populate child tables here if needed
+				data.product_cost_details.forEach(row => {
+					switch (row.cost_element) {
+						case 'Basic Price': setInput('inp_dom_basic_rs_mt', row.rate); break;
+						case 'Freight Inward': setInput('inp_dom_freight_inward', row.amount); break;
+						case 'RM Delivered Cost': setInput('inp_rm_rs_mt', row.rate); break;
+						case 'Primary Packing Delivered Cost': 
+							setInput('inp_pm_unit_cost', row.rate); 
+							if (data.total_fcl > 0) setInput('inp_pm_units_fcl', row.quantity / data.total_fcl);
+							break;
+						case 'Ply Sheet/Airbags/Pallets':
+							setInput('inp_dom_ply_price', row.rate);
+							if (data.total_fcl > 0) setInput('inp_dom_ply_units', row.quantity / data.total_fcl);
+							break;
+						case 'Repacking Cost': setInput('inp_repack_rs_mt', row.rate); break;
+						case 'Repacking Labour Cost': setInput('inp_repack_labour_fcl', row.rate); break;
+						case 'Stickers/Labels': setInput('inp_repack_stickers_fcl', row.rate); break;
+						case 'Addl. Vanning Requirement': setInput('inp_vanning_rs_fcl', row.rate); break;
+						case 'Freight Charges': setInput('inp_dom_freight_dest', row.amount); break;
+						case 'Handling Cost': setInput('inp_dom_handling_cost', row.amount); break;
+					}
+				});
 			}
 
 			if (data.cnf_charges && data.cnf_charges.length > 0) {
 				console.log('Loading CNF charges:', data.cnf_charges);
+				data.cnf_charges.forEach(row => {
+					switch (row.charge_type) {
+						case 'Transportation': setInput('inp_cnf_trans', row.amount); break;
+						case 'Total B/L charges': setInput('inp_bl_charges', row.amount); break;
+						case 'Any Other Charges': setInput('inp_cnf_other', row.amount); break;
+					}
+				});
 			}
 
 			if (data.sea_freight_details && data.sea_freight_details.length > 0) {
 				console.log('Loading sea freight details:', data.sea_freight_details);
+				data.sea_freight_details.forEach(row => {
+					switch (row.freight_type) {
+						case 'Sea Freight': setInput('inp_tc_sf_fcl', row.freight_rate); break;
+						case 'Other Surcharge': setInput('inp_tc_sf_haz', row.freight_rate); break;
+						case 'Vanning': setInput('inp_vanning_rs_fcl', row.freight_rate); break;
+					}
+				});
+			}
+
+			if (data.margin_analysis && data.margin_analysis.length > 0) {
+				const margin = data.margin_analysis[0];
+				setInput('inp_internal_cost_pct', margin.internal_cost_percentage);
+				setInput('inp_doc_charges_usd', margin.document_charges_usd);
+				setInput('inp_commission_val', margin.commission_value);
+				setInput('inp_dbk_pct', margin.duty_drawback_percentage);
+				setInput('inp_rodtep_pct', margin.rodtep_percentage);
 			}
 
 			// Trigger calculation after a delay to ensure all fields are populated and events processed

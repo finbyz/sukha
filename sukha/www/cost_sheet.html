@@ -577,6 +577,7 @@
   <input type="hidden" id="inp_naming_series" value="CS-.YYYY.-">
   <input type="hidden" id="inp_company" value="">
   <input type="hidden" id="inp_currency" value="INR">
+  <input type="hidden" id="inp_doc_name" value="">
   <!-- Aliases for saveCostSheet compatibility -->
   <input type="hidden" id="inp_exr_base" value="">
   <input type="hidden" id="inp_exr_premium" value="">
@@ -2726,6 +2727,7 @@
       // Collect all form data from the Cost Sheet Engine
       const data = {
         // Required fields — from doctype
+        name: $('inp_doc_name')?.value || '',
         naming_series: $('inp_naming_series')?.value || 'CS-.YYYY.-',
         cost_sheet_name: $('inp_cost_sheet_name')?.value ||
           `Cost Sheet - ${$('inp_product')?.value || 'Product'} - ${new Date().toLocaleDateString()}`,

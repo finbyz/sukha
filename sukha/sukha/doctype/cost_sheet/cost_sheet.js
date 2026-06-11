@@ -5,7 +5,7 @@ frappe.ui.form.on("Cost Sheet", {
 	refresh(frm) {
 		// Add custom button to open Cost Sheet Dashboard with current values
 		if (frm.doc.name) {
-			frm.add_custom_button(__('Open in Dashboard'), function() {
+			var btn = frm.add_custom_button(__('Open in Dashboard'), function() {
 				// Store current form data in localStorage
 				localStorage.setItem('cost_sheet_load_data', JSON.stringify(frm.doc));
 				
@@ -17,6 +17,7 @@ frappe.ui.form.on("Cost Sheet", {
 					indicator: 'green'
 				}, 3);
 			});
+			btn.addClass("btn-primary");
 		}
 	}
 });

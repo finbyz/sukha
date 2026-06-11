@@ -795,12 +795,21 @@ def create_from_dashboard(data):
                 )
             ]
 
-    doc = frappe.new_doc("Cost Sheet")
-    doc.update(data)
-    doc.insert(
-        ignore_permissions=True,
-        ignore_links=True
-    )
+    if data.get("name"):
+        # Update existing
+        doc = frappe.get_doc("Cost Sheet", data.get("name"))
+        # Clear child tables to replace them
+        doc.set("product_cost_details", [])
+        doc.set("cnf_charges", [])
+        doc.set("sea_freight_details", [])
+        doc.set("margin_analysis", [])
+        doc.update(data)
+        doc.save(ignore_permissions=True)
+    else:
+        # Create new
+        doc = frappe.new_doc("Cost Sheet")
+        doc.update(data)
+        doc.insert(ignore_permissions=True)
 
     frappe.db.commit()
     return doc.name

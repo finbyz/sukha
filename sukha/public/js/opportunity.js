@@ -8,19 +8,6 @@ frappe.ui.form.on('Opportunity', {
 
     refresh: function (frm) {
         contact_details(frm);
-        frm.set_query("custom_pack_type", function () {
-
-            return {
-                filters: {
-                    name: [
-                        "in",
-                        frm.packing_types?.length
-                            ? frm.packing_types
-                            : ["__NO_VALUE__"]
-                    ]
-                }
-            };
-        });
 
         frm.set_query("custom_packing_type", function () {
 
@@ -75,6 +62,8 @@ frappe.ui.form.on('Opportunity', {
                     // Parties
                     customer: frm.doc.opportunity_from === 'Customer' ? frm.doc.party_name : '',
                     supplier: frm.doc.custom_preferred_supplier,
+                    customer_payment_term: frm.doc.custom_customer_desired_payment_terms,
+
                     
                     // Logistics
                     country_of_destination: frm.doc.custom_country_of__destination__ship_to_destination,
@@ -88,7 +77,7 @@ frappe.ui.form.on('Opportunity', {
                     
                     // Container and packing
                     container_type: frm.doc.custom_container_type,
-                    packing_type: frm.doc.custom_packing_type || frm.doc.custom_pack_type,
+                    packing_type: frm.doc.custom_packing_type ,
                     packing_unit_size: frm.doc.custom_unit_size_of_packing_kg,
                     units_per_fcl: frm.doc.custom_total_no_of_packing_units_in_a_container,
                     total_fcl: frm.doc.custom_total_no_of_ccontainers,
@@ -149,7 +138,6 @@ frappe.ui.form.on('Opportunity', {
                     .map(row => row.packing_type)
                     .filter(Boolean);
 
-                frm.set_value("custom_pack_type", "");
                 frm.set_value("custom_packing_type", "");
 
             }

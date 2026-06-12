@@ -1,4 +1,15 @@
 frappe.ui.form.on("Customer", {
+	refresh(frm) {
+        clear_hidden_dependent_fields(frm);
+    },
+
+    custom_customer_profile_type(frm) {
+        clear_hidden_dependent_fields(frm);
+    },
+
+    custom_is_msme(frm) {
+        clear_hidden_dependent_fields(frm);
+    },
 	custom_same_as_bill_to_party(frm) {
 
 		if (!frm.doc.custom_same_as_bill_to_party) return;
@@ -87,22 +98,41 @@ frappe.ui.form.on("Ship To Party Details", {
 });
 
 
-// Helper function to create summary items
-function customer_summary_item(label, value) {
-    if (value === null || value === undefined || value === "" || value === 0 || value === false) return "";
-    return `
-        <div style="
-            padding:12px;
-            border:1px solid var(--border-color);
-            border-radius:10px;
-            background:var(--bg-white);
-        ">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.4px;">
-                ${label}
-            </div>
-            <div style="font-size:13px;color:var(--text-on-surface);word-break:break-word;">
-                ${value}
-            </div>
-        </div>
-    `;
+function clear_hidden_dependent_fields(frm) {
+
+    frm.meta.fields.forEach(df => {
+
+        // Skip layout fields
+        if (
+            ["Section Break", "Column Break", "Tab Break", "HTML"].includes(df.fieldtype)
+        ) {
+            return;
+        }
+
+        let field = frm.get_field(df.fieldname);
+
+        if (!field) {
+            return;
+        }
+
+        // Field is hidden because depends_on condition failed
+        if (field.disp_status === "None") {
+
+            // Child Table
+            if (df.fieldtype === "Table") {
+                frm.clear_table(df.fieldname);
+                frm.refresh_field(df.fieldname);
+            }
+
+            // Checkboxes
+            else if (df.fieldtype === "Check") {
+                frm.set_value(df.fieldname, 0);
+            }
+
+            // Everything else
+            else {
+                frm.set_value(df.fieldname, null);
+            }
+        }
+    });
 }

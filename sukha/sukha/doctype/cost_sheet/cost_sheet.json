@@ -77,7 +77,45 @@
   "section_break_margin",
   "margin_analysis",
   "section_break_remarks",
-  "remarks"
+  "remarks",
+  "section_break_dashboard_raw",
+  "rm_delivered_cost",
+  "pm_unit_cost",
+  "pm_units_fcl",
+  "repacking_cost_rs_mt",
+  "repack_labour_fcl",
+  "repack_qc_fcl",
+  "repack_stickers_fcl",
+  "vanning_rs_fcl",
+  "labels_rs_mt",
+  "labels_remarks",
+  "col_break_cnf_tc",
+  "cnf_transportation",
+  "cnf_thc",
+  "cnf_bl_charges",
+  "cnf_seal_charges",
+  "cnf_port_handling",
+  "cnf_agency_charges",
+  "cnf_haz_surcharge",
+  "cnf_lolo_charges",
+  "cnf_other_charges",
+  "tc_rm_usd_mt",
+  "tc_vanning_usd",
+  "tc_ocean_freight_fcl",
+  "tc_haz_surcharge_fcl",
+  "col_break_dom_calc",
+  "dom_basic_price",
+  "dom_freight_inward",
+  "dom_freight_dest",
+  "dom_handling_cost",
+  "dom_loading_cost",
+  "dom_unloading_cost",
+  "dom_ply_price",
+  "dom_ply_units",
+  "internal_cost_percentage",
+  "domestic_credit_percentage",
+  "document_charges_usd",
+  "merchant_document_charges"
  ],
  "fields": [
   {
@@ -507,12 +545,201 @@
    "fieldtype": "Link",
    "label": "Stuffing Warehouse",
    "options": "Warehouse"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_dashboard_raw",
+   "fieldtype": "Section Break",
+   "label": "Dashboard Raw Inputs"
+  },
+  {
+   "fieldname": "rm_delivered_cost",
+   "fieldtype": "Float",
+   "label": "RM Delivered Cost (Rs/MT)"
+  },
+  {
+   "fieldname": "pm_unit_cost",
+   "fieldtype": "Float",
+   "label": "Primary Packing Unit Cost"
+  },
+  {
+   "fieldname": "pm_units_fcl",
+   "fieldtype": "Float",
+   "label": "No of Units in 1 FCL"
+  },
+  {
+   "fieldname": "repacking_cost_rs_mt",
+   "fieldtype": "Float",
+   "label": "Repacking Cost (Rs/MT)"
+  },
+  {
+   "fieldname": "repack_labour_fcl",
+   "fieldtype": "Float",
+   "label": "Repacking Labour per FCL"
+  },
+  {
+   "fieldname": "repack_qc_fcl",
+   "fieldtype": "Float",
+   "label": "Quality Control per FCL"
+  },
+  {
+   "fieldname": "repack_stickers_fcl",
+   "fieldtype": "Float",
+   "label": "Stickers / Labels per FCL"
+  },
+  {
+   "fieldname": "vanning_rs_fcl",
+   "fieldtype": "Float",
+   "label": "Vanning Cost per FCL"
+  },
+  {
+   "fieldname": "labels_rs_mt",
+   "fieldtype": "Float",
+   "label": "Labels Cost (Rs/MT)"
+  },
+  {
+   "fieldname": "labels_remarks",
+   "fieldtype": "Data",
+   "label": "Labels Remarks"
+  },
+  {
+   "fieldname": "col_break_cnf_tc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cnf_transportation",
+   "fieldtype": "Float",
+   "label": "CNF Transportation"
+  },
+  {
+   "fieldname": "cnf_thc",
+   "fieldtype": "Float",
+   "label": "CNF THC"
+  },
+  {
+   "fieldname": "cnf_bl_charges",
+   "fieldtype": "Float",
+   "label": "CNF BL / Surrender"
+  },
+  {
+   "fieldname": "cnf_seal_charges",
+   "fieldtype": "Float",
+   "label": "CNF Seal Charges"
+  },
+  {
+   "fieldname": "cnf_port_handling",
+   "fieldtype": "Float",
+   "label": "CNF Port Handling / CFS"
+  },
+  {
+   "fieldname": "cnf_agency_charges",
+   "fieldtype": "Float",
+   "label": "CNF Agency / Custom"
+  },
+  {
+   "fieldname": "cnf_haz_surcharge",
+   "fieldtype": "Float",
+   "label": "CNF HAZ Surcharge"
+  },
+  {
+   "fieldname": "cnf_lolo_charges",
+   "fieldtype": "Float",
+   "label": "CNF LOLO Charges"
+  },
+  {
+   "fieldname": "cnf_other_charges",
+   "fieldtype": "Float",
+   "label": "CNF Any Other Charges"
+  },
+  {
+   "fieldname": "tc_rm_usd_mt",
+   "fieldtype": "Float",
+   "label": "TC RM Delivered USD/MT"
+  },
+  {
+   "fieldname": "tc_vanning_usd",
+   "fieldtype": "Float",
+   "label": "TC Vanning USD"
+  },
+  {
+   "fieldname": "tc_ocean_freight_fcl",
+   "fieldtype": "Float",
+   "label": "TC Ocean Freight per FCL"
+  },
+  {
+   "fieldname": "tc_haz_surcharge_fcl",
+   "fieldtype": "Float",
+   "label": "TC HAZ Surcharge per FCL USD"
+  },
+  {
+   "fieldname": "col_break_dom_calc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dom_basic_price",
+   "fieldtype": "Float",
+   "label": "Domestic Basic Price (Rs/MT)"
+  },
+  {
+   "fieldname": "dom_freight_inward",
+   "fieldtype": "Float",
+   "label": "Domestic Freight Inward"
+  },
+  {
+   "fieldname": "dom_freight_dest",
+   "fieldtype": "Float",
+   "label": "Domestic Freight Dest"
+  },
+  {
+   "fieldname": "dom_handling_cost",
+   "fieldtype": "Float",
+   "label": "Domestic Handling Cost"
+  },
+  {
+   "fieldname": "dom_loading_cost",
+   "fieldtype": "Float",
+   "label": "Domestic Loading Cost"
+  },
+  {
+   "fieldname": "dom_unloading_cost",
+   "fieldtype": "Float",
+   "label": "Domestic Unloading Cost"
+  },
+  {
+   "fieldname": "dom_ply_price",
+   "fieldtype": "Float",
+   "label": "Domestic Ply/Airbags Price"
+  },
+  {
+   "fieldname": "dom_ply_units",
+   "fieldtype": "Float",
+   "label": "Domestic Ply/Airbags Units"
+  },
+  {
+   "fieldname": "internal_cost_percentage",
+   "fieldtype": "Float",
+   "label": "Internal Cost %"
+  },
+  {
+   "fieldname": "domestic_credit_percentage",
+   "fieldtype": "Float",
+   "label": "Domestic Credit %"
+  },
+  {
+   "fieldname": "document_charges_usd",
+   "fieldtype": "Float",
+   "label": "Document Charges USD"
+  },
+  {
+   "fieldname": "merchant_document_charges",
+   "fieldtype": "Float",
+   "label": "Document Charges USD (Merchant)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-11 16:14:47.039788",
+ "modified": "2026-06-11 18:39:43.837389",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

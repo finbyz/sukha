@@ -2791,6 +2791,47 @@
         // Margin Analysis (Child Table)
         margin_analysis: collectMarginAnalysis(),
 
+        // Dashboard Raw Inputs
+        rm_delivered_cost: parseFloat($('inp_rm_rs_mt')?.value || 0),
+        pm_unit_cost: parseFloat($('inp_pm_unit_cost')?.value || 0),
+        pm_units_fcl: parseFloat($('inp_pm_units_fcl')?.value || 0),
+        repacking_cost_rs_mt: parseFloat($('inp_repack_rs_mt')?.value || 0),
+        repack_labour_fcl: parseFloat($('inp_repack_labour_fcl')?.value || 0),
+        repack_qc_fcl: parseFloat($('inp_repack_qc_fcl')?.value || 0),
+        repack_stickers_fcl: parseFloat($('inp_repack_stickers_fcl')?.value || 0),
+        vanning_rs_fcl: parseFloat($('inp_vanning_rs_fcl')?.value || 0),
+        labels_rs_mt: parseFloat($('inp_labels_rs_mt')?.value || 0),
+        labels_remarks: $('inp_labels_remarks')?.value || '',
+
+        cnf_transportation: parseFloat($('inp_cnf_trans')?.value || 0),
+        cnf_thc: parseFloat($('inp_cnf_thc')?.value || 0),
+        cnf_bl_charges: parseFloat($('inp_bl_charges')?.value || 0),
+        cnf_seal_charges: parseFloat($('inp_cnf_seal')?.value || 0),
+        cnf_port_handling: parseFloat($('inp_cnf_port')?.value || 0),
+        cnf_agency_charges: parseFloat($('inp_cnf_agency')?.value || 0),
+        cnf_haz_surcharge: parseFloat($('inp_cnf_haz')?.value || 0),
+        cnf_lolo_charges: parseFloat($('inp_cnf_lolo')?.value || 0),
+        cnf_other_charges: parseFloat($('inp_cnf_other')?.value || 0),
+
+        tc_rm_usd_mt: parseFloat($('inp_tc_usd_mt')?.value || 0),
+        tc_vanning_usd: parseFloat($('inp_tc_van_usd')?.value || 0),
+        tc_ocean_freight_fcl: parseFloat($('inp_tc_sf_fcl')?.value || 0),
+        tc_haz_surcharge_fcl: parseFloat($('inp_tc_sf_haz')?.value || 0),
+
+        dom_basic_price: parseFloat($('inp_dom_basic_rs_mt')?.value || 0),
+        dom_freight_inward: parseFloat($('inp_dom_freight_inward')?.value || 0),
+        dom_freight_dest: parseFloat($('inp_dom_freight_dest')?.value || 0),
+        dom_handling_cost: parseFloat($('inp_dom_handling_mt')?.value || 0),
+        dom_loading_cost: parseFloat($('inp_dom_loading_tot')?.value || 0),
+        dom_unloading_cost: parseFloat($('inp_dom_unloading_tot')?.value || 0),
+        dom_ply_price: parseFloat($('inp_dom_ply_price')?.value || 0),
+        dom_ply_units: parseFloat($('inp_dom_ply_units')?.value || 0),
+
+        internal_cost_percentage: parseFloat($('inp_internal_cost_pct')?.value || 0),
+        domestic_credit_percentage: parseFloat($('inp_dom_credit_pct')?.value || 0),
+        document_charges_usd: parseFloat($('inp_doc_charges_usd')?.value || 0),
+        merchant_document_charges: parseFloat($('inp_mer_doc_usd_tot')?.value || 0),
+
         // Summary Totals
         total_product_cost: parseFloat($('lbl-prod-tot-rs')?.textContent?.replace(/,/g, '') || 0),
         total_cnf_cost: parseFloat($('lbl-cnf-tot-rs')?.textContent?.replace(/,/g, '') || 0),

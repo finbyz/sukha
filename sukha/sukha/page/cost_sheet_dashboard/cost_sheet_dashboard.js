@@ -540,7 +540,48 @@ class CostSheetDashboard {
 				
 				// Additional
 				'shipping_line': 'inp_shipping_line',
-				'final_offered_price': 'inp_offered_price'
+				'final_offered_price': 'inp_offered_price',
+
+				// Dashboard Raw Inputs
+				'rm_delivered_cost': 'inp_rm_rs_mt',
+				'pm_unit_cost': 'inp_pm_unit_cost',
+				'pm_units_fcl': 'inp_pm_units_fcl',
+				'repacking_cost_rs_mt': 'inp_repack_rs_mt',
+				'repack_labour_fcl': 'inp_repack_labour_fcl',
+				'repack_qc_fcl': 'inp_repack_qc_fcl',
+				'repack_stickers_fcl': 'inp_repack_stickers_fcl',
+				'vanning_rs_fcl': 'inp_vanning_rs_fcl',
+				'labels_rs_mt': 'inp_labels_rs_mt',
+				'labels_remarks': 'inp_labels_remarks',
+
+				'cnf_transportation': 'inp_cnf_trans',
+				'cnf_thc': 'inp_cnf_thc',
+				'cnf_bl_charges': 'inp_bl_charges',
+				'cnf_seal_charges': 'inp_cnf_seal',
+				'cnf_port_handling': 'inp_cnf_port',
+				'cnf_agency_charges': 'inp_cnf_agency',
+				'cnf_haz_surcharge': 'inp_cnf_haz',
+				'cnf_lolo_charges': 'inp_cnf_lolo',
+				'cnf_other_charges': 'inp_cnf_other',
+
+				'tc_rm_usd_mt': 'inp_tc_usd_mt',
+				'tc_vanning_usd': 'inp_tc_van_usd',
+				'tc_ocean_freight_fcl': 'inp_tc_sf_fcl',
+				'tc_haz_surcharge_fcl': 'inp_tc_sf_haz',
+
+				'dom_basic_price': 'inp_dom_basic_rs_mt',
+				'dom_freight_inward': 'inp_dom_freight_inward',
+				'dom_freight_dest': 'inp_dom_freight_dest',
+				'dom_handling_cost': 'inp_dom_handling_mt',
+				'dom_loading_cost': 'inp_dom_loading_tot',
+				'dom_unloading_cost': 'inp_dom_unloading_tot',
+				'dom_ply_price': 'inp_dom_ply_price',
+				'dom_ply_units': 'inp_dom_ply_units',
+
+				'internal_cost_percentage': 'inp_internal_cost_pct',
+				'domestic_credit_percentage': 'inp_dom_credit_pct',
+				'document_charges_usd': 'inp_doc_charges_usd',
+				'merchant_document_charges': 'inp_mer_doc_usd_tot'
 			};
 
 			// Populate main fields

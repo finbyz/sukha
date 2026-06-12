@@ -1,15 +1,11 @@
 frappe.ui.form.on("Customer", {
-	refresh(frm) {
-        clear_hidden_dependent_fields(frm);
-    },
-
     custom_customer_profile_type(frm) {
-        clear_hidden_dependent_fields(frm);
-    },
+        if (frm.doc.custom_customer_profile_type ==" "|| frm.doc.custom_customer_profile_type == "Export")
+		{
+			frm.set_value("custom_specific_customer_category","")
+		}
 
-    custom_is_msme(frm) {
-        clear_hidden_dependent_fields(frm);
-    },
+		},
 	custom_same_as_bill_to_party(frm) {
 
 		if (!frm.doc.custom_same_as_bill_to_party) return;
@@ -96,43 +92,3 @@ frappe.ui.form.on("Ship To Party Details", {
 		}
 	}
 });
-
-
-function clear_hidden_dependent_fields(frm) {
-
-    frm.meta.fields.forEach(df => {
-
-        // Skip layout fields
-        if (
-            ["Section Break", "Column Break", "Tab Break", "HTML"].includes(df.fieldtype)
-        ) {
-            return;
-        }
-
-        let field = frm.get_field(df.fieldname);
-
-        if (!field) {
-            return;
-        }
-
-        // Field is hidden because depends_on condition failed
-        if (field.disp_status === "None") {
-
-            // Child Table
-            if (df.fieldtype === "Table") {
-                frm.clear_table(df.fieldname);
-                frm.refresh_field(df.fieldname);
-            }
-
-            // Checkboxes
-            else if (df.fieldtype === "Check") {
-                frm.set_value(df.fieldname, 0);
-            }
-
-            // Everything else
-            else {
-                frm.set_value(df.fieldname, null);
-            }
-        }
-    });
-}

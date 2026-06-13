@@ -21,7 +21,10 @@ frappe.ui.form.on('Opportunity', {
             frm.set_value("custom_posting_date", frappe.datetime.get_today());
         }
     },
-
+    custom_packing_type(frm) {
+        frm.set_value("custom_std_pakcing", "");
+        apply_std_packing_filter(frm);
+    },
     refresh: function (frm) {
         contact_details(frm);
 
@@ -58,6 +61,11 @@ frappe.ui.form.on('Opportunity', {
                 }
             });
         }
+
+        if (frm.doc.custom_product_name && frm.doc.custom_packing_type) {
+            apply_std_packing_filter(frm);
+        }
+
         if (frm.is_new() && (!frm.doc.custom_posting_date || frm.doc.custom_posting_date === "now")) {
             frm.set_value("custom_posting_date", frappe.datetime.get_today());
         }
@@ -272,6 +280,31 @@ frappe.ui.form.on('Opportunity', {
     }
 });
 
+function apply_std_packing_filter(frm) {
+    if (!frm.doc.custom_product_name || !frm.doc.custom_packing_type) return;
+
+    frappe.call({
+        method: "frappe.client.get",
+        args: { doctype: "Item", name: frm.doc.custom_product_name },
+        callback(r) {
+            if (!r.message) return;
+
+            // Step 1: Match packing_type in item's custom_standard_packing
+            let matched = (r.message.custom_standard_packing || [])
+                .filter(row => row.packing_type === frm.doc.custom_packing_type)
+                .map(row => row.std_packing);  // e.g. ["190 KG", "1195 KG"]
+
+            // Step 2: Filter the link field to show only those
+            frm.set_query("custom_std_pakcing", function () {
+                return {
+                    filters: {
+                        name: ["in", matched.length ? matched : ["__no_value__"]]
+                    }
+                };
+            });
+        }
+    });
+}
 function calculate_total_qty(frm) {
     let unit_size = frm.doc.custom_unit_size_of_packing_kg || 0;
     let total_units = frm.doc.custom_total_no_of_packing_units_in_a_container || 0;

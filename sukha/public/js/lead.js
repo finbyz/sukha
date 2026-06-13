@@ -426,6 +426,12 @@ frappe.ui.form.on('Lead', {
         if (!frm.doc.custom_contact_person) {
             return;
         }
+        if (contact.country) {
+            frm.set_value(
+                "custom_bill_to_party_country",
+                contact.country
+            );
+        }
 
         try {
 
@@ -494,10 +500,10 @@ frappe.ui.form.on('Lead', {
     custom_contact_person_designation__department(frm) {
         frm.set_value('custom_designation', frm.doc.custom_contact_person_designation__department)
     },
-    custom_contact_person_whatsapp_number(frm){
-        if(frm.doc.custom_same_as_phone){
+    custom_contact_person_whatsapp_number(frm) {
+        if (frm.doc.custom_same_as_phone) {
             frm.set_value('whatsapp_no', frm.doc.custom_contact_person_whatsapp_number)
-        }else{
+        } else {
 
             frm.set_value('whatsapp_no', "")
         }

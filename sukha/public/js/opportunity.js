@@ -1,20 +1,20 @@
 frappe.ui.form.on('Opportunity', {
-    setup(frm) {
+    // setup(frm) {
 
-        frm.fields_dict.custom_std_pakcing.grid
-            .get_field("packing_type")
-            .get_query = function (doc, cdt, cdn) {
+    //     frm.fields_dict.custom_std_pakcing.grid
+    //         .get_field("packing_type")
+    //         .get_query = function (doc, cdt, cdn) {
 
-                let selected_packing_types = (frm.doc.custom_packing_type || [])
-                    .map(row => row.packing_type)
-                    .filter(Boolean);
-                return {
-                    filters: {
-                        name: ["in", selected_packing_types]
-                    }
-                };
-            };
-    },
+    //             let selected_packing_types = (frm.doc.custom_packing_type || [])
+    //                 .map(row => row.packing_type)
+    //                 .filter(Boolean);
+    //             return {
+    //                 filters: {
+    //                     name: ["in", selected_packing_types]
+    //                 }
+    //             };
+    //         };
+    // },
 
     onload: function (frm) {
         if (frm.doc.custom_posting_date === "now") {

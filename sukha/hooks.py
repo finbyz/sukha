@@ -146,11 +146,15 @@ doctype_list_js = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-#     "Prospect": {
-#         "before_save": "sukha.doc_events.prospect.on_submit"
-#     }
-# }
+doc_events = {
+
+    "Lead": {
+        "on_update": "sukha.doc_events.lead.on_update"
+    },
+    "Contact": {
+        "on_update": "sukha.doc_events.contact.on_update"
+    }
+}
 # Override standard ERPNext methods
 override_doctype_class = {
     "Lead": "sukha.override.lead_override.CustomLead"

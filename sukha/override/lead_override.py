@@ -6,7 +6,6 @@ from sukha.override.opportunity_override import create_contact_from_lead
 class CustomLead(Lead):
     pass
 
-
 @frappe.whitelist()
 def create_prospect_from_lead(lead_name, prospect_name, create_contact=False, prospect_type=None):
     """Create a Prospect from a Lead and link only the Lead."""
@@ -177,6 +176,7 @@ def make_opportunity(source_name, target_doc=None):
                     "mobile_no": "contact_mobile",
                     "lead_owner": "opportunity_owner",
                     "notes": "notes",
+                    "custom_contact_person":"custom_contact_person_for_soft_inquiry",
                 },
             }
         },
@@ -186,7 +186,7 @@ def make_opportunity(source_name, target_doc=None):
     
     # Get the source lead document
     lead = frappe.get_doc("Lead", source_name)
-    
+    target_doc.custom_contact_person  = lead.custom_contact_person_for_soft_inquiry
     # Map all custom fields from Lead to Opportunity
     custom_fields_to_map = [
         "custom_country_of_destination",

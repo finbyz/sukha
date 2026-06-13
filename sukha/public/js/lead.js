@@ -2,6 +2,10 @@ frappe.ui.form.on('Lead', {
     before_load: function (frm) {
         clear_lead_top_summary(frm);
     },
+    custom_board__number(frm) {
+        frm.set_value("phone", frm.doc.custom_board__number)
+        frm.set_value("mobile_no", frm.doc.custom_board__number)
+    },
     custom_product_from_l1(frm) {
         frm.clear_table("custom_commercials__logistic");
         if (frm.doc.custom_product_from_l1) {
@@ -11,7 +15,7 @@ frappe.ui.form.on('Lead', {
                     doctype: "Item",
                     name: frm.doc.custom_product_from_l1
                 },
-                callback: function(r) {
+                callback: function (r) {
                     if (r.message) {
                         frm.packing_types = r.message.custom_packing_type
                             .map(d => d.packing_type)
@@ -23,9 +27,44 @@ frappe.ui.form.on('Lead', {
         }
     },
     onload: function (frm) {
+        // Only show Items having Has Variants = 1
+        if (frm.doc.custom_sales_type == "Direct Export Sales") {
+            frm.set_query("custom_product", function () {
+                return {
+                    filters: {
+                        has_variants: 1
+                    }
+                };
+            });
+
+            frm.set_query("custom_product_name", function () {
+                return {
+                    filters: {
+                        has_variants: 1
+                    }
+                };
+            });
+
+            // Show only variants of selected Product Name
+            frm.set_query("custom_product_from_l1", function () {
+                if (!frm.doc.custom_product_name) {
+                    return {
+                        filters: {
+                            name: ["=", ""]
+                        }
+                    };
+                }
+
+                return {
+                    filters: {
+                        variant_of: frm.doc.custom_product_name
+                    }
+                };
+            });
+        }
         clear_lead_top_summary(frm);
         set_port_filter(frm);
-        
+
         // Set default tab for saved documents
         if (!frm.is_new()) {
             setTimeout(() => {
@@ -39,7 +78,7 @@ frappe.ui.form.on('Lead', {
                 }
             }, 300);
         }
-        
+
         if (frm.is_new()) {
             let d = new frappe.ui.Dialog({
                 title: "Select Sales Type",
@@ -58,28 +97,28 @@ frappe.ui.form.on('Lead', {
                 primary_action_label: "Set",
                 primary_action(values) {
                     const set_value_result = frm.set_value("custom_sales_type", values.sales_type);
-    
+
                     const after_sales_type = () => {
                         if (values.sales_type === "Domestic / Merchant") {
                             // Add any specific logic for Domestic/Merchant here
                         }
                         frm.trigger("custom_sales_type");
-    
+
                         if (values.sales_type === "Direct Export Sales") {
                             // Add any specific logic for Direct Export here
                         }
                     };
-    
+
                     if (set_value_result && typeof set_value_result.then === "function") {
                         set_value_result.then(after_sales_type);
                     } else {
                         after_sales_type();
                     }
-    
+
                     d.hide();
                 }
             });
-    
+
             d.show();
         }
     },
@@ -199,82 +238,6 @@ frappe.ui.form.on('Lead', {
 
         await proceed_l1_save(frm, variants);
     },
-
-    custom_create_contact(frm) {
-        const dialog = new frappe.ui.Dialog({
-            title: __('Create Contact'),
-            fields: [
-                {
-                    label: __('First Name'),
-                    fieldname: 'first_name',
-                    fieldtype: 'Data',
-                    reqd: 1,
-                },
-                {
-                    label: __('Last Name'),
-                    fieldname: 'last_name',
-                    fieldtype: 'Data',
-                },
-                {
-                    label: __('Designation'),
-                    fieldname: 'designation',
-                    fieldtype: 'Data',
-                },
-                {
-                    label: __('Gender'),
-                    fieldname: 'gender',
-                    fieldtype: 'Link',
-                    options: 'Gender'
-                },
-                {
-                    label: __('Email ID'),
-                    fieldname: 'email_id',
-                    fieldtype: 'Data',
-                    options: 'email',
-                },
-                {
-                    label: __('Phone'),
-                    fieldname: 'phone',
-                    fieldtype: 'Phone',
-                    length: '10',
-                    options: 'phone'
-                }
-            ],
-            primary_action_label: __('Save'),
-            primary_action: async (values) => {
-                if (!values.first_name) {
-                    frappe.msgprint({
-                        title: __('Validation'),
-                        message: __('First Name is required'),
-                        indicator: 'red'
-                    });
-                    return;
-                }
-
-                const response = await frappe.call({
-                    method: 'sukha.doc_events.prospect.create_contact_from_dialog',
-                    args: values,
-                    freeze: true,
-                });
-
-                if (!response.exc && response.message) {
-                    frm.set_value('custom_contact_person', response.message);
-                    frm.refresh_field('custom_contact_person');
-                    dialog.hide();
-                    frappe.show_alert({
-                        message: __('Contact created: {0}', [response.message]),
-                        indicator: 'green'
-                    });
-                }
-            },
-            secondary_action_label: __('Cancel'),
-            secondary_action: function () {
-                dialog.hide();
-            }
-        });
-
-        dialog.show();
-    },
     custom_product(frm) {
         frm.set_value("custom_product_name", frm.doc.custom_product)
         render_lead_top_summary(frm);
@@ -320,22 +283,22 @@ frappe.ui.form.on('Lead', {
     custom_sales_type(frm) {
         frm.refresh_fields();
         frm.refresh();
-        
+
         // Expand tabs for BOTH sales types, not just Direct Export Sales
         setTimeout(() => {
             if (frm.layout && frm.layout.refresh) {
                 frm.layout.refresh();
             }
-            
+
             // Expand all collapsed sections
             $(".form-section .section-head.collapsed").each(function () {
                 $(this).trigger("click");
             });
-    
+
             $(".form-dashboard-section .collapsed").each(function () {
                 $(this).trigger("click");
             });
-    
+
             // Select appropriate tab based on sales type
             if (frm.layout && frm.layout.select_tab) {
                 if (frm.doc.custom_sales_type === "Direct Export Sales") {
@@ -363,7 +326,6 @@ frappe.ui.form.on('Lead', {
         frm.set_value("type", frm.doc.custom_lead_type_s)
     },
     custom_product_name(frm) {
-        frm.set_value("custom_product_from_l1", frm.doc.custom_product_name)
         render_lead_top_summary(frm);
     },
     make_opportunity_direct: function (frm) {
@@ -431,6 +393,16 @@ frappe.ui.form.on('Lead', {
     },
     custom_contact_person: async function (frm) {
         if (!frm.doc.custom_contact_person) return;
+
+        if (!frm.is_new()) {
+            frappe.call({
+                method: "sukha.doc_events.lead.link_contact_to_lead",
+                args: {
+                    contact_name: frm.doc.custom_contact_person,
+                    lead_name: frm.doc.name
+                }
+            });
+        }
 
         try {
             let contact = await frappe.db.get_doc('Contact', frm.doc.custom_contact_person);
@@ -522,11 +494,17 @@ frappe.ui.form.on('Lead', {
     custom_contact_person_designation__department(frm) {
         frm.set_value('custom_designation', frm.doc.custom_contact_person_designation__department)
     },
+    custom_contact_person_whatsapp_number(frm){
+        if(frm.doc.custom_same_as_phone){
+            frm.set_value('whatsapp_no', frm.doc.custom_contact_person_whatsapp_number)
+        }else{
 
+            frm.set_value('whatsapp_no', "")
+        }
+    },
 
-    // Keep your existing functions below
     custom_same_as_phone: function (frm) {
-        if (frm.doc.custom_same_as_phone) {
+        if (frm.doc.custom_same_as_phone == 1) {
             if (frm.doc.custom_contact_person_phone_number) {
                 frm.set_value(
                     "custom_contact_person_whatsapp_number",
@@ -538,8 +516,10 @@ frappe.ui.form.on('Lead', {
                     message: "Please enter Phone Number first to fetch it.",
                     indicator: "red"
                 });
-                frm.set_value("custom_same_as_phone", 0);
             }
+        }
+        if (frm.doc.custom_same_as_phone == 0) {
+            frm.set_value("custom_contact_person_whatsapp_number", "");
         }
     },
 
@@ -586,13 +566,48 @@ frappe.ui.form.on('Lead', {
 
 
     refresh: function (frm) {
+        // Only show Items having Has Variants = 1
+        if (frm.doc.custom_sales_type == "Direct Export Sales") {
+            frm.set_query("custom_product", function () {
+                return {
+                    filters: {
+                        has_variants: 1
+                    }
+                };
+            });
+
+            frm.set_query("custom_product_name", function () {
+                return {
+                    filters: {
+                        has_variants: 1
+                    }
+                };
+            });
+
+            // Show only variants of selected Product Name
+            frm.set_query("custom_product_from_l1", function () {
+                if (!frm.doc.custom_product_name) {
+                    return {
+                        filters: {
+                            name: ["=", ""]
+                        }
+                    };
+                }
+
+                return {
+                    filters: {
+                        variant_of: frm.doc.custom_product_name
+                    }
+                };
+            });
+        }
         // L0 hidden after L0/L1/L2
         frm.set_df_property(
             "custom_save_l0",
             "hidden",
             frm.doc.custom_l0_status === "Saved"
-                || frm.doc.custom_l1_status === "Saved"
-                || frm.doc.custom_l2_status === "Saved"
+            || frm.doc.custom_l1_status === "Saved"
+            || frm.doc.custom_l2_status === "Saved"
         );
 
         // L1 hidden after L1/L2
@@ -600,7 +615,7 @@ frappe.ui.form.on('Lead', {
             "custom_save_l1",
             "hidden",
             frm.doc.custom_l1_status === "Saved"
-                || frm.doc.custom_l2_status === "Saved"
+            || frm.doc.custom_l2_status === "Saved"
         );
 
         // L2 hidden after L2
@@ -655,7 +670,7 @@ frappe.ui.form.on('Lead', {
                     doctype: "Item",
                     name: frm.doc.custom_product_from_l1
                 },
-                callback: function(r) {
+                callback: function (r) {
                     if (r.message && r.message.custom_packing_type) {
                         frm.packing_types = r.message.custom_packing_type
                             .map(d => d.packing_type)
@@ -675,7 +690,7 @@ frappe.ui.form.on('Lead', {
             frm.remove_custom_button(__('Soft Inquiry'), __('Create'));
             frm.remove_custom_button(__('Make Variants'), __('Action'));
 
-       
+
 
             frm.add_custom_button(__('Soft Inquiry'), () => {
                 frm.events.make_opportunity_direct(frm);
@@ -933,8 +948,8 @@ function render_lead_top_summary(frm) {
     const $body = $(frm.page.body);
     const variant_products = get_variant_products(frm);
     const other_products = (frm.doc.custom_other_products || []).filter(row => row.product_name);
-const product_name =
-    frm.doc.custom_l1_product_name ||
+    const product_name =
+        frm.doc.custom_l1_product_name ||
         frm.doc.custom_product_name_m ||
         "-";
 
@@ -1021,53 +1036,80 @@ const product_name =
                 gap:14px;
             ">
                ${lead_summary_item(
-                    frm.doc.custom_sales_type === "Domestic / Merchant" ? "First Name" : "Company",
-                    frm.doc.custom_sales_type === "Domestic / Merchant" 
-                        ? (frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
-                        : (frm.doc.company_name || frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
-                )}
+        frm.doc.custom_sales_type === "Domestic / Merchant" ? "First Name" : "Company",
+        frm.doc.custom_sales_type === "Domestic / Merchant"
+            ? (frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
+            : (frm.doc.company_name || frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
+    )}
                 ${lead_summary_item(
-                    "Product",
-                    `
+        "Product",
+        `
                     <div>
                         <div>
                             <strong>Name:</strong>
-                            ${
-                                frm.doc.custom_l1_product_name ||   
-                                frm.doc.custom_product_name_m ||
-                                "-"
-                            }
+                            ${frm.doc.custom_l1_product_name ||
+        frm.doc.custom_product_name_m ||
+        "-"
+        }
                         </div>
 
                         <div style="margin-top:4px;">
                             <strong>Code:</strong>
-                            ${
-                                frm.doc.custom_product ||
-                                frm.doc.custom_product_name_i ||
-                                "-"
-                            }
+                            ${frm.doc.custom_product ||
+        frm.doc.custom_product_name_i ||
+        "-"
+        }
                         </div>
                     </div>
                     `
-                )}
+    )}
                 ${lead_summary_item(
-                    frm.doc.custom_buyer_type
-                        ? "Buyer Type"
-                        : (
-                            frm.doc.custom_type_of_buyer
-                                ? "Type of Buyer"
-                                : "Buyer Type"
-                        ),
+        frm.doc.custom_buyer_type
+            ? "Buyer Type"
+            : (
+                frm.doc.custom_type_of_buyer
+                    ? "Type of Buyer"
+                    : "Buyer Type"
+            ),
 
-                    frm.doc.custom_buyer_type
-                    || frm.doc.custom_type_of_buyer
-                    || "-"
-                )}
+        frm.doc.custom_buyer_type
+        || frm.doc.custom_type_of_buyer
+        || "-"
+    )}
                 ${lead_summary_item("Country", frm.doc.custom_country_of_hq)}
-                ${frm.doc.custom_l1_status === "Saved" && frm.doc.custom_volume_range
-    ? lead_summary_item("Volume Range", frm.doc.custom_volume_range)
-    : ""
-}
+                ${(() => {
+
+            let volume_html = "-";
+
+            if (
+                frm.doc.custom_commercials__logistic &&
+                frm.doc.custom_commercials__logistic.length
+            ) {
+
+                volume_html = frm.doc.custom_commercials__logistic
+                    .filter(row => row.quantity_mtpa)
+                    .map(row => `
+                    <div style="margin-bottom:2px;">
+                         ${flt(row.quantity_mtpa || 0)} MTPA
+                    </div>
+                `)
+                    .join("");
+
+                if (!volume_html) {
+                    volume_html = "-";
+                }
+
+            } else if (frm.doc.custom_volume_range) {
+
+                volume_html = frm.doc.custom_volume_range;
+            }
+
+            return lead_summary_item(
+                "Volume Range",
+                volume_html
+            );
+
+        })()}
             </div>
 
             ${other_products.length ? `
@@ -1236,5 +1278,14 @@ async function proceed_l1_save(frm, variants) {
     });
 }
 
-
-
+frappe.ui.form.on("Commercials & Logistic", {
+    quantity_mtpa(frm) {
+        render_lead_top_summary(frm);
+    },
+    custom_commercials__logistic_add(frm) {
+        render_lead_top_summary(frm);
+    },
+    custom_commercials__logistic_remove(frm) {
+        render_lead_top_summary(frm);
+    }
+});

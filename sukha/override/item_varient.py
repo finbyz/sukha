@@ -9,59 +9,40 @@ from erpnext.controllers.item_variant import (
     make_variant_item_code
 )
 
-def get_grade_attribute_name():
+def get_grade_attribute_name(template=None):
     """
-    Get the dynamic grade attribute name based on custom_product_grade_attribute flag.
-    Returns the attribute name (e.g., 'Grade') or None if not configured.
-
-    Raises a validation error if more than one attribute has the flag enabled.
+    Returns the grade attribute name if present in the template.
+    Otherwise returns the first attribute from the template.
     """
-    try:
-        # Look for ALL Item Attributes with custom_product_grade_attribute flag enabled
-        grade_attrs = frappe.db.get_all(
-            "Item Attribute",
-            filters={"custom_product_grade_attribute": 1},
-            fields=["attribute_name"],
-            limit=2  # Only need to detect if there are more than 1
-        )
 
-        if len(grade_attrs) > 1:
-            attr_names = ", ".join([a.attribute_name for a in grade_attrs])
-            frappe.throw(
-                _(
-                    "Only one Item Attribute can be marked as 'Product Grade Attribute'. "
-                    "Currently marked: {0}. Please unmark all but one."
-                ).format(attr_names)
-            )
+    grade_attribute = frappe.db.get_value(
+        "Item Attribute",
+        {"custom_product_grade_attribute": 1},
+        "attribute_name"
+    )
 
-        if grade_attrs:
-            grade_attr = grade_attrs[0].attribute_name
-            frappe.logger().debug(f"Dynamic grade attribute found: {grade_attr}")
-            return grade_attr
+    if not template:
+        return grade_attribute
 
-        # No grade attribute configured — grade functionality is disabled
-        return None
+    template_attributes = [d.attribute for d in template.attributes]
 
-    except frappe.ValidationError:
-        raise
-    except Exception as e:
-        frappe.logger().error(f"Error getting grade attribute: {str(e)}")
-        return None
+    # If configured grade attribute exists in template, use it
+    if grade_attribute and grade_attribute in template_attributes:
+        return grade_attribute
 
+    # Otherwise use first available attribute
+    return template_attributes[0] if template_attributes else None
 
-def get_grade_value(variant):
-    """
-    Get the grade value from variant attributes.
-    Dynamically determines which attribute to look for based on custom_product_grade_attribute flag.
-    Returns None if no grade attribute is configured.
-    """
-    grade_attribute = get_grade_attribute_name()
+def get_grade_value(variant, template=None):
+    grade_attribute = get_grade_attribute_name(template)
+
     if not grade_attribute:
         return None
 
     for row in variant.attributes:
         if row.attribute == grade_attribute:
             return row.attribute_value
+
     return None
 
 
@@ -81,20 +62,28 @@ def create_or_get_product_grade(grade):
 
 
 def set_variant_name_from_grade(template, variant):
-    """
-    Set variant item code and name based on the dynamic grade attribute.
-    If no grade attribute is configured, falls back to the standard naming logic.
-    Uses custom_product_grade_attribute to determine which attribute is the grade.
-    """
-    grade = get_grade_value(variant)
+    grade = get_grade_value(variant, template)
+    grade_attribute = get_grade_attribute_name(template)
 
     if not grade:
-        # No grade configured — use standard ERPNext naming
         make_variant_item_code(template.item_code, template.item_name, variant)
         return
 
+    # Collect non-grade attribute values to ensure uniqueness
+    # when multiple attributes are present (e.g. Colour + Grade)
+    non_grade_parts = [
+        row.attribute_value
+        for row in variant.attributes
+        if row.attribute != grade_attribute and row.attribute_value
+    ]
+
     base_code = f"{template.item_code}-{grade}"
     base_name = f"{template.item_name}-{grade}"
+
+    if non_grade_parts:
+        suffix = "-".join(non_grade_parts)
+        base_code = f"{base_code}-{suffix}"
+        base_name = f"{base_name} {suffix}"
 
     proposed_code = base_code
     proposed_name = base_name
@@ -108,9 +97,9 @@ def set_variant_name_from_grade(template, variant):
     variant.item_code = proposed_code
     variant.item_name = proposed_name
 
-
 @frappe.whitelist()
 def create_variant(item, args, use_template_image=False):
+    
     """
     Create a single item variant.
 
@@ -134,12 +123,12 @@ def create_variant(item, args, use_template_image=False):
     # --- Standard flow: set ALL template attributes ---
     variant_attributes = []
     for d in template.attributes:
-        # If the frontend didn't pass this attribute, it will safely be None
         val = args.get(d.attribute) or args.get(_(d.attribute))
-        variant_attributes.append({
-            "attribute": d.attribute,
-            "attribute_value": val
-        })
+        if val:  # Only add if a value exists
+            variant_attributes.append({
+                "attribute": d.attribute,
+                "attribute_value": val
+            })
 
     variant.set("attributes", variant_attributes)
     copy_attributes_to_variant(template, variant)
@@ -153,7 +142,7 @@ def create_variant(item, args, use_template_image=False):
     set_variant_name_from_grade(template, variant)
 
     # Grade field: only set custom_item_grade when a grade attribute is configured.
-    grade = get_grade_value(variant)
+    grade = get_grade_value(variant, template)
     if grade:
         grade_doc = create_or_get_product_grade(grade)
         variant.custom_item_grade = grade_doc
@@ -184,7 +173,8 @@ def create_multiple_variants(item, args, use_template_image=False):
       variants are created.
     """
     # Validate grade attribute configuration upfront (throws if >1 marked)
-    grade_attribute = get_grade_attribute_name()
+    template = frappe.get_doc("Item", item)
+    grade_attribute = get_grade_attribute_name(template)
 
     created_count = 0
     skipped_count = 0
@@ -221,6 +211,8 @@ def create_multiple_variants(item, args, use_template_image=False):
             except Exception as e:
                 frappe.db.rollback()
                 failed_count += 1
+                error_msg = frappe.get_traceback()
+                frappe.log_error(title=f"Variant Creation Failed: {display_value}", message=error_msg)
                 log.append(
                     f"<span style='color:red'><b>Failed:</b> {display_value} -> Error: {str(e)}</span>"
                 )
@@ -234,7 +226,8 @@ def enqueue_multiple_variant_creation(item, args, use_template_image=False):
     parsed_args = frappe.parse_json(args)
 
     # Validate grade attribute configuration upfront before doing any work
-    get_grade_attribute_name()
+    template = frappe.get_doc("Item", item)
+    get_grade_attribute_name(template)
 
     # Clean the args for the length check
     clean_args = {k: v for k, v in parsed_args.items() if v and len(v) > 0}

@@ -6,6 +6,9 @@ frappe.ui.form.on('Lead', {
         frm.set_value("phone", frm.doc.custom_board__number)
         frm.set_value("mobile_no", frm.doc.custom_board__number)
     },
+    custom_central_email_id(frm) {
+        frm.set_value("email_id", frm.doc.custom_central_email_id)
+    },
     custom_product_from_l1(frm) {
         frm.clear_table("custom_commercials__logistic");
         if (frm.doc.custom_product_from_l1) {
@@ -41,6 +44,14 @@ frappe.ui.form.on('Lead', {
                 return {
                     filters: {
                         has_variants: 1
+                    }
+                };
+            });
+
+            frm.set_query("product_name", "custom_other_products", function () {
+                return {
+                    filters: {
+                        has_variants: 1,
                     }
                 };
             });
@@ -1092,20 +1103,30 @@ function render_lead_top_summary(frm) {
                 frm.doc.custom_commercials__logistic.length
             ) {
 
-                volume_html = frm.doc.custom_commercials__logistic
-                    .filter(row => row.quantity_mtpa)
-                    .map(row => `
-                    <div style="margin-bottom:2px;">
-                         ${flt(row.quantity_mtpa || 0)} MTPA
-                    </div>
-                `)
-                    .join("");
+                // volume_html = frm.doc.custom_commercials__logistic
+                //     .filter(row => row.quantity_mtpa)
+                //     .map(row => `
+                //     <div style="margin-bottom:2px;">
+                //          ${flt(row.quantity_mtpa || 0)} MTPA
+                //     </div>
+                // `)
+                //     .join("");
+
+                const total_mtpa = (frm.doc.custom_commercials__logistic || [])
+                .reduce((sum, row) => {
+                    return sum + flt(row.quantity_mtpa || 0);
+                }, 0);
+            
+            volume_html = total_mtpa
+                ? `${total_mtpa} MTPA`
+                : "-";
 
                 if (!volume_html) {
                     volume_html = "-";
                 }
 
-            } else if (frm.doc.custom_volume_range) {
+            } 
+            else if (frm.doc.custom_volume_range) {
 
                 volume_html = frm.doc.custom_volume_range;
             }
@@ -1241,6 +1262,10 @@ function set_port_filter(frm) {
 
 
 async function proceed_l1_save(frm, variants) {
+
+    if (!frm.doc.custom_volume_range) {
+        frappe.throw(__("Volume Range is mandatory before saving L1"));
+    }
 
     frm.set_value("custom_l1_status", "Saved");
     frm.set_value("custom_export_lead_status", "L1");

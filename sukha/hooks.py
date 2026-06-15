@@ -157,7 +157,8 @@ doc_events = {
 }
 # Override standard ERPNext methods
 override_doctype_class = {
-    "Lead": "sukha.override.lead_override.CustomLead"
+    "Lead": "sukha.override.lead_override.CustomLead",
+    "Item":"sukha.override.item.Item"
 }
 
 # Override whitelisted methods

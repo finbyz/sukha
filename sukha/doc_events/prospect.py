@@ -57,13 +57,15 @@ def create_contact(self):
 		if self.email_id:
 			contact.append("email_ids", {"email_id": self.email_id, "is_primary": 1})
 
-		if self.phone:
-			contact.append("phone_nos", {"phone": self.phone, "is_primary_phone": 1})
+		if self.phone == self.mobile_no:
+			contact.append("phone_nos", {"custom_contact_number": self.phone, "phone": self.custom_board__number, "is_primary_phone": 1, "is_primary_mobile_no": 1})
+		else:
+			if self.phone:
+				contact.append("phone_nos", {"custom_contact_number": self.phone, "phone":self.custom_board__number, "is_primary_phone": 1})
+			if self.mobile_no:
+				contact.append("phone_nos", {"custom_contact_number": self.mobile_no, "phone":self.custom_mobile__number, "is_primary_mobile_no": 1})
 
-		if self.mobile_no:
-			contact.append("phone_nos", {"phone": self.mobile_no, "is_primary_mobile_no": 1})
-
-		contact.insert(ignore_permissions=True)
+		contact.save(ignore_permissions=True)
 		contact.reload()  # load changes by hooks on contact
 
 		return contact

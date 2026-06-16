@@ -40,6 +40,8 @@ frappe.ui.form.on('Lead', {
                 };
             });
 
+           
+
             frm.set_query("custom_product_name", function () {
                 return {
                     filters: {
@@ -136,7 +138,6 @@ frappe.ui.form.on('Lead', {
 
     custom_save_l0: async function (frm) {
 
-        // Prevent reverse save
         if (
             frm.doc.custom_l1_status === "Saved" ||
             frm.doc.custom_l2_status === "Saved"
@@ -145,20 +146,26 @@ frappe.ui.form.on('Lead', {
         }
 
         try {
+            frappe.dom.freeze(__("Saving L0..."));
 
-            await frm.set_value(
-                "custom_l0_status",
-                "Saved"
-            );
+            // ✅ Step 1: If doc is new or dirty, save it first so it exists in DB
+            if (frm.is_new() || frm.is_dirty()) {
+                frm.ignore_permission_validation = true;
+                await frm.save();
+            }
 
-            frm.set_value(
-                "custom_export_lead_status",
-                "L0"
-            );
+            // ✅ Step 2: Now call Python — doc exists in DB with real name
+            await frappe.call({
+                method: "sukha.doc_events.lead.save_l0_and_clear_contact",
+                args: {
+                    lead_name: frm.doc.name  // now a real name like CRM-LEAD-2026-00149
+                }
+            });
 
-            frm.ignore_permission_validation = true;
+            // ✅ Step 3: Reload from DB — contact fields are empty, L0 status is Saved
+            await frm.reload_doc();
 
-            await frm.save();
+            frappe.dom.unfreeze();
 
             frappe.show_alert({
                 message: __("L0 Saved Successfully"),
@@ -166,8 +173,13 @@ frappe.ui.form.on('Lead', {
             });
 
         } catch (e) {
-
+            frappe.dom.unfreeze();
             console.error(e);
+            frappe.msgprint({
+                title: __("Error"),
+                message: __("Failed to save L0"),
+                indicator: "red"
+            });
         }
     },
     custom_save_l1: async function (frm) {
@@ -403,6 +415,7 @@ frappe.ui.form.on('Lead', {
         }
     },
     custom_contact_person: async function (frm) {
+        if (frm.__clearing_for_l0_save) return;
         if (!frm.doc.custom_contact_person) return;
 
         if (!frm.is_new()) {

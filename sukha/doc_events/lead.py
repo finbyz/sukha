@@ -53,3 +53,24 @@ def link_contact_to_lead(contact_name, lead_name):
         link.link_title = lead.lead_name or lead.company_name or lead_name
         link.insert(ignore_permissions=True)
         frappe.clear_document_cache("Contact", contact_name)
+        
+        
+@frappe.whitelist()
+def save_l0_and_clear_contact(lead_name):
+    # Set L0 status
+    frappe.db.set_value("Lead", lead_name, {
+        "custom_l0_status": "Saved",
+        "custom_export_lead_status": "L0",
+        "custom_contact_person": None,
+        "custom_contact_person_for_soft_inquiry": None,
+        "custom_contact_person_phone_number": None,
+        "custom_contact_person_phone_email_id": None,
+        "custom_contact_person_designation__department": None,
+        "custom_contact_person_whatsapp_number": None,
+        "custom_contact_number": None,
+        "custom_contact_person_email_id": None,
+        "custom_designation": None,
+        "custom_attachment_": None,
+    })
+    frappe.db.commit()
+    return True

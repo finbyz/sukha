@@ -138,47 +138,29 @@ class CostSheetDashboard {
 		if (iframe) {
 			iframe.onload = () => {
 				this.iframe_loaded = true;
-				
-				// Check if URL has parameters (coming from Opportunity)
-				const hasUrlParams = window.location.search || 
-					(iframe.contentWindow && iframe.contentWindow.location.search);
-				
-				// If URL parameters exist, delay dynamic link field setup to let iframe populate first
-				if (hasUrlParams) {
-					// Give iframe time to populate from URL params, then supplement missing options
-					setTimeout(() => {
-						this.setup_dynamic_link_fields(iframe);
-						this.setup_dynamic_required_fields(iframe);
-						
-						// Re-apply URL params after dropdown population to ensure values are set
-						if (iframe.contentWindow && typeof iframe.contentWindow.reapplyUrlParams === 'function') {
-							setTimeout(() => {
-								iframe.contentWindow.reapplyUrlParams();
-							}, 500);
-						}
-						
-						// Hide loading overlay
-						this.hide_loading_overlay();
-					}, 1500);
-				} else {
-					// No URL params - setup immediately and load from localStorage
-					this.setup_dynamic_link_fields(iframe);
-					this.setup_dynamic_required_fields(iframe);
-					
-					// Wait a bit for dropdowns to populate, then load data
-					setTimeout(() => {
+
+				this.setup_dynamic_link_fields(iframe);
+				this.setup_dynamic_required_fields(iframe);
+
+				// Poll until key dropdowns are populated, then load data from localStorage
+				const waitForDropdowns = () => {
+					const doc = iframe.contentDocument || iframe.contentWindow.document;
+					const productSel = doc.getElementById('inp_product');
+					const customerSel = doc.getElementById('inp_customer');
+
+					if (productSel && productSel.options && productSel.options.length > 1 &&
+						customerSel && customerSel.options && customerSel.options.length > 1) {
 						this.load_cost_sheet_data(iframe);
-						
-						// Hide loading overlay after data is loaded
-						setTimeout(() => {
-							this.hide_loading_overlay();
-						}, 500);
-					}, 1000);
-				}
+						setTimeout(() => this.hide_loading_overlay(), 500);
+					} else {
+						setTimeout(waitForDropdowns, 200);
+					}
+				};
+				setTimeout(waitForDropdowns, 500);
 			};
 		}
 	}
-	
+
 	hide_loading_overlay() {
 		const overlay = document.getElementById('loading-overlay');
 		if (overlay) {
@@ -200,7 +182,7 @@ class CostSheetDashboard {
 			if (event.data.type === 'fetch_std_packing_weight') {
 				const iframe = document.getElementById('cost-sheet-iframe');
 				if (!iframe || !iframe.contentWindow) return;
-				
+
 				frappe.call({
 					method: 'frappe.client.get_value',
 					args: {
@@ -236,7 +218,7 @@ class CostSheetDashboard {
 						const grade = doc.custom_item_grade || '';
 						const parentItem = doc.variant_of || '';
 						const packings = doc.custom_packing_type || [];
-						const stdPackings = doc.custom_standard_packing || [];
+						const stdPackings = doc.custom_std_pakcing || [];
 
 						if (grade || packings.length || stdPackings.length) {
 							iframe.contentWindow.postMessage({ type: 'product_grade_response', grade, packings, stdPackings }, '*');
@@ -252,7 +234,7 @@ class CostSheetDashboard {
 									const pDoc = rp.message || {};
 									const parentGrade = pDoc.custom_item_grade || '';
 									const pPackings = pDoc.custom_packing_type || [];
-									const pStdPackings = pDoc.custom_standard_packing || [];
+									const pStdPackings = pDoc.custom_std_pakcing || [];
 									iframe.contentWindow.postMessage(
 										{ type: 'product_grade_response', grade: parentGrade, packings: pPackings, stdPackings: pStdPackings },
 										'*'
@@ -415,7 +397,7 @@ class CostSheetDashboard {
 							doctype: 'Cost Sheet',
 							name: selections[0]
 						},
-						callback: function(r) {
+						callback: function (r) {
 							if (r.message) {
 								const iframe = document.getElementById('cost-sheet-iframe');
 								// Call load_cost_sheet_data directly with the fetched doc
@@ -445,25 +427,25 @@ class CostSheetDashboard {
 
 			const data = JSON.parse(storedData);
 			const doc = iframe.contentDocument || iframe.contentWindow.document;
-			
+
 			console.log('Loading Cost Sheet data:', data);
 
 			// Handle Lead/Prospect/Customer conditional display
 			const oppFrom = data.opportunity_from;
 			const partyName = data.party_name;
-			
+
 			// Get the wrapper elements
 			const customerWrapper = doc.getElementById('wrapper-customer');
 			const leadWrapper = doc.getElementById('wrapper-lead');
 			const prospectWrapper = doc.getElementById('wrapper-prospect');
 			const leadInput = doc.getElementById('inp_lead');
 			const prospectInput = doc.getElementById('inp_prospect');
-			
+
 			// Hide all by default
 			if (customerWrapper) customerWrapper.style.display = 'none';
 			if (leadWrapper) leadWrapper.style.display = 'none';
 			if (prospectWrapper) prospectWrapper.style.display = 'none';
-			
+
 			// Show the appropriate one based on opportunity_from or direct cost sheet data
 			if ((oppFrom === 'Lead' && partyName) || data.lead) {
 				const val = (oppFrom === 'Lead' ? partyName : data.lead);
@@ -505,12 +487,12 @@ class CostSheetDashboard {
 				'customer': 'inp_customer',
 				'supplier': 'inp_supplier',
 				'company': 'inp_company',
-				
+
 				// Payment Terms
 				'customer_payment_terms': 'inp_cust_terms',
 				'customer_payment_term': 'inp_cust_terms',
 				'supplier_payment_terms': 'inp_supp_terms',
-				
+
 				// Locations & Logistics
 				'country_of_destination': 'inp_destination',
 				'port_of_discharge': 'inp_pod',
@@ -518,26 +500,28 @@ class CostSheetDashboard {
 				'delivery_location': 'inp_destination',
 				'stuffing_at': 'inp_stuffing_at',
 				'stuffing_location': 'inp_stuffing_loc',
-				
+
 				// Container & Packing
 				'container_type': 'inp_container',
 				'packing_type': 'inp_packing_type',
 				'packing_unit_size': 'inp_unit_size',
+				'std_packing': 'inp_std_packing',
+				'custom_std_pakcing': 'inp_std_packing',
 				'units_per_fcl': 'inp_units_per_fcl',
 				'total_fcl': 'inp_total_fcl',
-				
+
 				// Currency & Exchange
 				'currency': 'inp_cs_currency',
 				'exchange_premium': 'inp_exchange_premium',
 				'exchange_rate': 'inp_base_rate',
-				
+
 				// Cost Sheet Type & Incoterm
 				'cost_sheet_type': 'inp_master_cs_type',
 				'incoterm': 'inp_user_incoterm',
 				'origin_scope': 'inp_user_origin',
 				'type_of_sale': 'inp_type_of_sale',
 				'exw_sub_type': 'inp_exw_subtype',
-				
+
 				// Additional
 				'shipping_line': 'inp_shipping_line',
 				'final_offered_price': 'inp_offered_price',
@@ -557,6 +541,7 @@ class CostSheetDashboard {
 				'cnf_transportation': 'inp_cnf_trans',
 				'cnf_thc': 'inp_cnf_thc',
 				'cnf_bl_charges': 'inp_bl_charges',
+				'cnf_sea_way_bl_charges': 'inp_sea_way_bl_charges',
 				'cnf_seal_charges': 'inp_cnf_seal',
 				'cnf_port_handling': 'inp_cnf_port',
 				'cnf_agency_charges': 'inp_cnf_agency',
@@ -584,16 +569,52 @@ class CostSheetDashboard {
 				'merchant_document_charges': 'inp_mer_doc_usd_tot'
 			};
 
+			// Fields that should be set AFTER product change events settle
+			// (because the iframe repopulates these dropdowns when product changes)
+			const deferredFields = ['packing_type', 'std_packing', "custom_std_pakcing"];
+			const deferredValues = {};
+
 			// Populate main fields
 			Object.keys(fieldMapping).forEach(docField => {
 				if (data[docField] !== undefined && data[docField] !== null && data[docField] !== '') {
 					const inputId = fieldMapping[docField];
+
+					// Skip deferred fields for now
+					if (deferredFields.includes(docField)) {
+						deferredValues[docField] = data[docField];
+						return;
+					}
+
 					const element = doc.getElementById(inputId);
-					
+
 					if (element) {
+						let valueToSet = data[docField];
+
+						// For select elements, ensure option exists before setting value
+						if (element.tagName === 'SELECT') {
+							const normalizedVal = this.normalize_default_value(valueToSet);
+							let optionExists = Array.from(element.options).some(
+								opt => opt.value === valueToSet || opt.value === normalizedVal
+							);
+
+							if (!optionExists && normalizedVal !== valueToSet) {
+								valueToSet = normalizedVal;
+								optionExists = Array.from(element.options).some(
+									opt => opt.value === valueToSet
+								);
+							}
+
+							if (!optionExists) {
+								const opt = doc.createElement('option');
+								opt.value = valueToSet;
+								opt.textContent = valueToSet;
+								element.appendChild(opt);
+							}
+						}
+
 						// Set the value
-						element.value = data[docField];
-						
+						element.value = valueToSet;
+
 						// For numeric/manual input fields, trigger both change and input events
 						if (element.type === 'number' || element.classList.contains('manual-input')) {
 							const changeEvent = new Event('change', { bubbles: true });
@@ -605,8 +626,8 @@ class CostSheetDashboard {
 							const changeEvent = new Event('change', { bubbles: true });
 							element.dispatchEvent(changeEvent);
 						}
-						
-						console.log(`Loaded ${docField}: ${data[docField]} into ${inputId}, value now: ${element.value}`);
+
+						console.log(`Loaded ${docField}: ${valueToSet} into ${inputId}, value now: ${element.value}`);
 					} else {
 						console.log(`Element not found: ${inputId} for ${docField}`);
 					}
@@ -622,14 +643,17 @@ class CostSheetDashboard {
 				}
 			};
 
-			// Checkboxes
-			if (data.apply_rodtep) {
-				const el = doc.getElementById('chk_scheme_rodtep');
-				if (el) { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); }
+			// Checkboxes - always set explicitly (both checked and unchecked)
+			const rodtepEl = doc.getElementById('chk_scheme_rodtep');
+			if (rodtepEl) {
+				rodtepEl.checked = !!data.apply_rodtep;
+				rodtepEl.dispatchEvent(new Event('change', { bubbles: true }));
 			}
-			if (data.apply_advance_license) {
-				const el = doc.getElementById('chk_scheme_advance');
-				if (el) { el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); }
+
+			const advanceEl = doc.getElementById('chk_scheme_advance');
+			if (advanceEl) {
+				advanceEl.checked = !!data.apply_advance_license;
+				advanceEl.dispatchEvent(new Event('change', { bubbles: true }));
 			}
 			if (data.final_offered_price) {
 				setInput('inp_offered_price_exw', data.final_offered_price);
@@ -646,8 +670,8 @@ class CostSheetDashboard {
 						case 'Basic Price': setInput('inp_dom_basic_rs_mt', row.rate); break;
 						case 'Freight Inward': setInput('inp_dom_freight_inward', row.amount); break;
 						case 'RM Delivered Cost': setInput('inp_rm_rs_mt', row.rate); break;
-						case 'Primary Packing Delivered Cost': 
-							setInput('inp_pm_unit_cost', row.rate); 
+						case 'Primary Packing Delivered Cost':
+							setInput('inp_pm_unit_cost', row.rate);
 							if (data.total_fcl > 0) setInput('inp_pm_units_fcl', row.quantity / data.total_fcl);
 							break;
 						case 'Ply Sheet/Airbags/Pallets':
@@ -668,9 +692,10 @@ class CostSheetDashboard {
 				console.log('Loading CNF charges:', data.cnf_charges);
 				data.cnf_charges.forEach(row => {
 					switch (row.charge_type) {
-						case 'Transportation': setInput('inp_cnf_trans', row.amount); break;
-						case 'Total B/L charges': setInput('inp_bl_charges', row.amount); break;
-						case 'Any Other Charges': setInput('inp_cnf_other', row.amount); break;
+						case 'Transportation': setInput('inp_cnf_trans', row.rate); break;
+						case 'Total B/L charges': setInput('inp_bl_charges', row.rate); break;
+						case 'Sea Way BL Charges': setInput('inp_sea_way_bl_charges', row.rate); break;
+						case 'Any Other Charges': setInput('inp_cnf_other', row.rate); break;
 					}
 				});
 			}
@@ -711,10 +736,101 @@ class CostSheetDashboard {
 						}
 					}
 				});
-				
-				if (iframe.contentWindow && typeof iframe.contentWindow.calculateEngine === 'function') {
-					console.log('Triggering calculateEngine after data load');
-					iframe.contentWindow.calculateEngine();
+
+				// Re-apply product grade after fetch_product_grade() may have overwritten it
+				if (data.product_grade) {
+					const gradeEl = doc.getElementById('inp_grade');
+					if (gradeEl) {
+						gradeEl.value = data.product_grade;
+						gradeEl.dispatchEvent(new Event('change', { bubbles: true }));
+						console.log('Re-applied product grade:', data.product_grade);
+					}
+				}
+
+				// Apply deferred fields AFTER product change events have settled
+				// (packing_type and std_packing get repopulated by iframe when product changes)
+				// Apply deferred fields AFTER product change events have settled
+				// ─── AFTER ───────────────────────────────────────────────────────────────
+				// Step 1 @ 1500ms: apply packing_type first (NOT std_packing yet)
+				const STD_PACKING_KEYS = ['std_packing', 'custom_std_pakcing'];
+
+				Object.keys(deferredValues)
+					.filter(docField => !STD_PACKING_KEYS.includes(docField))
+					.forEach(docField => {
+						const inputId = fieldMapping[docField];
+						const element = doc.getElementById(inputId);
+						if (!element) return;
+
+						let valueToSet = deferredValues[docField];
+
+						if (element.tagName === 'SELECT') {
+							const normalizedVal = this.normalize_default_value(valueToSet);
+							let optionExists = Array.from(element.options).some(
+								opt => opt.value === valueToSet || opt.value === normalizedVal
+							);
+							if (!optionExists && normalizedVal !== valueToSet) {
+								valueToSet = normalizedVal;
+								optionExists = Array.from(element.options).some(opt => opt.value === valueToSet);
+							}
+							if (!optionExists) {
+								const opt = doc.createElement('option');
+								opt.value = valueToSet;
+								opt.textContent = valueToSet;
+								element.appendChild(opt);
+							}
+						}
+
+						element.value = valueToSet;
+						element.dispatchEvent(new Event('change', { bubbles: true }));
+						console.log(`Applied deferred ${docField}: ${valueToSet} into ${inputId}`);
+					});
+
+				// Step 2 @ 1500+1000ms: apply std_packing AFTER packing_type's async
+				// handlers (iframe option repopulation) have had time to settle
+				const stdPackingDocField = STD_PACKING_KEYS.find(k => deferredValues[k] !== undefined);
+
+				const applyStdPackingAndCalculate = () => {
+					if (stdPackingDocField) {
+						const inputId = fieldMapping[stdPackingDocField];
+						const element = doc.getElementById(inputId);
+						if (element) {
+							let valueToSet = deferredValues[stdPackingDocField];
+
+							if (element.tagName === 'SELECT') {
+								const normalizedVal = this.normalize_default_value(valueToSet);
+								let optionExists = Array.from(element.options).some(
+									opt => opt.value === valueToSet || opt.value === normalizedVal
+								);
+								if (!optionExists && normalizedVal !== valueToSet) {
+									valueToSet = normalizedVal;
+									optionExists = Array.from(element.options).some(opt => opt.value === valueToSet);
+								}
+								if (!optionExists) {
+									const opt = doc.createElement('option');
+									opt.value = valueToSet;
+									opt.textContent = valueToSet;
+									element.appendChild(opt);
+								}
+							}
+
+							element.value = valueToSet;
+							element.dispatchEvent(new Event('change', { bubbles: true }));
+							if (element.onchange) element.onchange();   // triggers fetchStdPackingWeight
+							console.log(`Applied deferred std_packing (${stdPackingDocField}): ${valueToSet} into ${inputId}`);
+						}
+					}
+
+					if (iframe.contentWindow && typeof iframe.contentWindow.calculateEngine === 'function') {
+						console.log('Triggering calculateEngine after data load');
+						iframe.contentWindow.calculateEngine();
+					}
+				};
+
+				// Give packing_type's iframe handlers 1 second to finish async repopulation
+				if (stdPackingDocField) {
+					setTimeout(applyStdPackingAndCalculate, 1000);
+				} else {
+					applyStdPackingAndCalculate();
 				}
 			}, 1500);
 
@@ -751,22 +867,18 @@ class CostSheetDashboard {
 	normalize_default_value(val) {
 		if (!val) return "";
 		const mapping = {
-			// Container type: old HTML values → doctype values
-			"20' FCL": "20' FT",
-			"40' FCL": "40' FT",
-			"20' ISO": "20' ISO",
-			// Stuffing at: old warehouse names → doctype values
-			"Sukha- Panoli Warehouse": "Own Warehouse \u2014 Panoli",
-			"Sukha- Mundra Warehouse": "Own Warehouse \u2014 Mundra",
-			// Packing type: old descriptive → doctype short names
+			"20' FCL": "20 FT",
+			"40' FCL": "40 FT",
+			"20' ISO": "20 ISO",
+			"Supplier's Place": "Supplier's Premises",
+			"Supplier Premises": "Supplier's Premises",
+			"Own Warehouse - Panoli": "Own Warehouse — Panoli",
+			"Own Warehouse - Mundra": "Own Warehouse — Mundra",
+			"IBC": "IBC Composite Pallet",
+			"IBC Pallet": "IBC Composite Pallet",
 			"1135 Kg New IBC Composite Pallet": "IBC Composite Pallet",
 			"250 Kg HMHDPE Drums": "HMHDPE Drums",
 			"50 Kg Bags on Pallets": "Bags",
-			// Payment terms: numeric → keep as-is (matched by Payment Terms Template name)
-			// "30": "30 Days Credit",
-			// "60": "60 Days Credit",
-			// "90": "90 Days Credit",
-			// "0": "LC at Sight"
 		};
 		return mapping[val] || val;
 	}
@@ -790,10 +902,10 @@ class CostSheetDashboard {
 
 			const current_val = $sel.val();
 			const normalized_current = this.normalize_default_value(current_val);
-			
+
 			// Check if current value is already in the list
 			const current_in_list = records.some(r => r.name === current_val || r.name === normalized_current);
-			
+
 			const first_opt = $sel.find('option').first();
 			const placeholder = (first_opt.val() === '' || !first_opt.val())
 				? first_opt.text()
@@ -810,7 +922,7 @@ class CostSheetDashboard {
 			selEl.appendChild(optPlaceholder);
 
 			let has_selection = false;
-			
+
 			// If current value exists but not in list, add it first
 			if (current_val && !current_in_list) {
 				const opt = doc.createElement('option');
@@ -820,11 +932,11 @@ class CostSheetDashboard {
 				selEl.appendChild(opt);
 				has_selection = true;
 			}
-			
+
 			records.forEach(row => {
 				const is_selected = !has_selection && (row.name === current_val || row.name === normalized_current);
 				if (is_selected) has_selection = true;
-				
+
 				const opt = doc.createElement('option');
 				opt.value = row.name;
 				opt.textContent = row.name;
@@ -892,7 +1004,7 @@ class CostSheetDashboard {
 		options.forEach(opt => {
 			const is_selected = (opt === current_val || opt === normalized_current);
 			if (is_selected) has_selection = true;
-			
+
 			const optEl = doc.createElement('option');
 			optEl.value = opt;
 			optEl.textContent = opt;

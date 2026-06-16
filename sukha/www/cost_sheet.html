@@ -567,6 +567,7 @@
       display: none !important;
     }
   </style>
+<base target="_blank">
 </head>
 
 <body>
@@ -1293,10 +1294,11 @@
                   </tr>
                   <tr>
                     <td>Sea Way BL Charges</td>
-                    <td class="text-right font-mono">—</td>
-                    <td class="text-right font-mono">—</td>
-                    <td class="text-right font-mono">—</td>
-                    <td class="text-right font-mono">—</td>
+                    <td class="text-right font-mono"><input type="number" step="100" class="cell-input cell-manual font-mono text-right"
+                        style="font-size:12px;padding:4px" id="inp_sea_way_bl_charges" oninput="calculateEngine()"></td>
+                    <td class="text-right font-mono" id="lbl-seaway-mt">—</td>
+                    <td class="text-right font-mono" id="lbl-seaway-usd">—</td>
+                    <td class="text-right font-mono" id="lbl-seaway-umt">—</td>
                   </tr>
                   <tr class="bg-subtle" style="border-top:1px solid var(--color-border-dark)">
                     <td><strong>Total C&amp;F Charges</strong></td>
@@ -2443,6 +2445,7 @@
         const otherCharges = v('inp_cnf_other');
         const totalCostFcl = stdCharges + otherCharges;
         const blCharges = v('inp_bl_charges');
+        const seaWayBl = v('inp_sea_way_bl_charges');
         const cnfBaseRs = totalCostFcl * totalFcl;
         const cnfBaseMtRs = cnfBaseRs / totalMt;
         const cnfBaseUsd = totalCostFcl / csExr;
@@ -2452,10 +2455,14 @@
         const blUsdTotal = blCharges / csExr;
         const blUsdMt = blMtRs / csExr;
 
-        const cnfTotRs = cnfBaseRs + blCharges;
-        const cnfTotMtRs = cnfBaseMtRs + blMtRs;
-        const cnfTotUsdMt = cnfBaseUsdMt + blUsdMt;
-        const cnfTotUsd = cnfBaseUsd + blUsdTotal;
+        const seaWayMtRs = seaWayBl / totalMt;
+        const seaWayUsdTotal = seaWayBl / csExr;
+        const seaWayUsdMt = seaWayMtRs / csExr;
+
+        const cnfTotRs = cnfBaseRs + blCharges + seaWayBl;
+        const cnfTotMtRs = cnfBaseMtRs + blMtRs + seaWayMtRs;
+        const cnfTotUsdMt = cnfBaseUsdMt + blUsdMt + seaWayUsdMt;
+        const cnfTotUsd = cnfBaseUsd + blUsdTotal + seaWayUsdTotal;
 
         setTxt('lbl-cnf-std-tot', stdCharges);
         setTxt('lbl-cnf-fcl-tot', totalCostFcl);
@@ -2469,8 +2476,12 @@
         setTxt('lbl-bl-usd', blUsdTotal);
         setTxt('lbl-bl-umt', blUsdMt, 1);
 
-        setTxt('lbl-cnf-bl-fcl', blCharges / totalFcl);
-        setTxt('lbl-cnf-fcl-grand', totalCostFcl + (blCharges / totalFcl));
+        setTxt('lbl-seaway-mt', seaWayMtRs);
+        setTxt('lbl-seaway-usd', seaWayUsdTotal);
+        setTxt('lbl-seaway-umt', seaWayUsdMt, 1);
+
+        setTxt('lbl-cnf-bl-fcl', (blCharges + seaWayBl) / totalFcl);
+        setTxt('lbl-cnf-fcl-grand', totalCostFcl + ((blCharges + seaWayBl) / totalFcl));
 
         setTxt('lbl-cnf-tot-rs', cnfTotRs);
         setTxt('lbl-cnf-tot-mt', cnfTotMtRs);
@@ -2806,6 +2817,7 @@
         cnf_transportation: parseFloat($('inp_cnf_trans')?.value || 0),
         cnf_thc: parseFloat($('inp_cnf_thc')?.value || 0),
         cnf_bl_charges: parseFloat($('inp_bl_charges')?.value || 0),
+        cnf_sea_way_bl_charges: parseFloat($('inp_sea_way_bl_charges')?.value || 0),
         cnf_seal_charges: parseFloat($('inp_cnf_seal')?.value || 0),
         cnf_port_handling: parseFloat($('inp_cnf_port')?.value || 0),
         cnf_agency_charges: parseFloat($('inp_cnf_agency')?.value || 0),
@@ -3125,6 +3137,22 @@
           amount_per_mt: blRsMt,
           currency: 'INR',
           bl_charges_total: blCharges
+        });
+      }
+
+      // Collect Sea Way BL Charges
+      const seaWayBlCharges = parseFloat($('inp_sea_way_bl_charges')?.value || 0);
+      console.log('Sea Way BL Charges:', seaWayBlCharges);
+
+      if (seaWayBlCharges !== 0) {
+        const seaWayRsMt = totalMt > 0 ? seaWayBlCharges / totalMt : 0;
+        rows.push({
+          charge_type: 'Sea Way BL Charges',
+          quantity: 1,
+          rate: seaWayBlCharges,
+          amount: seaWayBlCharges,
+          amount_per_mt: seaWayRsMt,
+          currency: 'INR'
         });
       }
 

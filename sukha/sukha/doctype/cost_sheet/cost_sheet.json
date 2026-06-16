@@ -50,6 +50,7 @@
   "section_break_container",
   "container_type",
   "packing_type",
+  "custom_std_pakcing",
   "packing_unit_size",
   "col_break_container",
   "units_per_fcl",
@@ -734,12 +735,18 @@
    "fieldname": "merchant_document_charges",
    "fieldtype": "Float",
    "label": "Document Charges USD (Merchant)"
+  },
+  {
+   "fieldname": "custom_std_pakcing",
+   "fieldtype": "Link",
+   "label": "Standard Packing",
+   "options": "Standard Packing"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-11 18:39:43.837389",
+ "modified": "2026-06-16 16:53:50.812051",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

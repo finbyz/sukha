@@ -3,8 +3,8 @@ import re
 
 def validate(self, method):
     for row in self.phone_nos:
-        if row.custom_contact_number:
-            row.phone = row.custom_contact_number
+        if row.phone:
+            row.custom_contact_number = row.phone
 
 def on_update(doc, method):
     # doc is a Contact

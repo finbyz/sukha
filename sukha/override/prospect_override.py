@@ -23,42 +23,90 @@ def make_opportunity(source_name, target_doc=None):
 		target.opportunity_from = "Prospect"
 		target.customer_name = source.company_name
 		target.customer_group = source.customer_group or frappe.db.get_default("Customer Group")
-		
-		# Set opportunity_type based on buyer type
+
+		# Opportunity Type Logic
 		opportunity_type = "Active Enquiry"
-		
-		if hasattr(source, 'custom_type_of_buyer') and source.custom_type_of_buyer:
-			# Export buyer
+
+		if source.get("custom_type_of_buyer"):
 			opportunity_type = "Active Enquiry - Export"
-		elif hasattr(source, 'custom_buyer_type') and source.custom_buyer_type:
-			# Domestic or Merchant buyer
+		elif source.get("custom_buyer_type"):
 			if source.custom_buyer_type == "Domestic":
 				opportunity_type = "Active Enquiry - Domestic"
 			elif source.custom_buyer_type == "Merchant":
 				opportunity_type = "Active Enquiry - Merchant"
-		
-		if hasattr(target, 'opportunity_type'):
-			target.opportunity_type = opportunity_type
-		
-		# Copy buyer type fields to opportunity
-		if hasattr(source, 'custom_type_of_buyer') and hasattr(target, 'custom_type_of_buyer'):
-			target.custom_type_of_buyer = source.custom_type_of_buyer
-		
-		if hasattr(source, 'custom_buyer_type') and hasattr(target, 'custom_buyer_type'):
-			target.custom_buyer_type = source.custom_buyer_type
-		
-		# Map custom fields from Prospect to Opportunity
-		# custom_approved_incoterms → custom_incoterm
-		if hasattr(source, 'custom_approved_incoterms') and hasattr(target, 'custom_incoterm'):
-			target.custom_incoterm = source.custom_approved_incoterms
-		
-		# custom_current_supplier → custom_preferred_supplier
-		if hasattr(source, 'custom_current_supplier') and hasattr(target, 'custom_preferred_supplier'):
-			target.custom_preferred_supplier = source.custom_current_supplier
-		
-		# custom_approved_payment_terms → custom_customer_desired_payment_terms
-		if hasattr(source, 'custom_approved_payment_terms') and hasattr(target, 'custom_customer_desired_payment_terms'):
-			target.custom_customer_desired_payment_terms = source.custom_approved_payment_terms
+
+		target.opportunity_type = opportunity_type
+
+		# -----------------------------------------
+		# Auto Map All Matching Custom Fields
+		# -----------------------------------------
+
+		prospect_meta = frappe.get_meta("Prospect")
+		opportunity_meta = frappe.get_meta("Opportunity")
+
+		opportunity_fields = {
+			f.fieldname for f in opportunity_meta.fields
+		}
+
+		for field in prospect_meta.fields:
+
+			if not field.fieldname.startswith("custom_"):
+				continue
+
+			if field.fieldtype in (
+				"Section Break",
+				"Column Break",
+				"Tab Break",
+				"Table",
+			):
+				continue
+
+			if field.fieldname not in opportunity_fields:
+				continue
+
+			value = source.get(field.fieldname)
+
+			if value in (None, "", []):
+				continue
+
+			target.set(field.fieldname, value)
+		# -----------------------------------------
+		# Explicit Different Name Mapping
+		# -----------------------------------------
+
+		field_map = {
+			"custom_current_supplier": "custom_preferred_supplier",
+			"custom_approved_incoterms": "custom_incoterm",
+			"custom_approved_payment_terms": "custom_customer_desired_payment_terms",
+			"custom_prroduct_p": "custom_item_name",
+			"custom_bill_to_party_name": "customer_name",
+			"custom_contact_person_for_active_inquery": "custom_contact_person",
+			"custom_contact_person_email_id": "custom_contact_person_email_id",
+			"custom_contact_number": "custom_contact_number",
+			"custom_industry_segment": "custom_industry_segment",
+			"custom_preferred_communication": "custom_preferred_communication",
+		}
+
+		for source_field, target_field in field_map.items():
+			val = source.get(source_field)
+			if val not in (None, "", []):
+				target.set(target_field, val)
+
+		# Robust fallbacks for special mappings
+		if source.get("custom_prroduct_p") and not target.get("custom_product_name"):
+			target.set("custom_product_name", source.custom_prroduct_p)
+			
+		if source.get("custom_remarks") and not target.get("custom_remark"):
+			target.set("custom_remark", source.custom_remarks)
+
+		if source.get("custom_contact_person_email_id") and hasattr(target, "contact_email"):
+			target.set("contact_email", source.custom_contact_person_email_id)
+
+		if source.get("custom_contact_number") and hasattr(target, "contact_mobile"):
+			target.set("contact_mobile", source.custom_contact_number)
+
+		if source.get("custom_industry_segment") and hasattr(target, "industry"):
+			target.set("industry", source.custom_industry_segment)
 
 	doclist = get_mapped_doc(
 		"Prospect",

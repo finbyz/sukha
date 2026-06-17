@@ -40,7 +40,7 @@ frappe.ui.form.on('Lead', {
                 };
             });
 
-           
+
 
             frm.set_query("custom_product_name", function () {
                 return {
@@ -276,6 +276,9 @@ frappe.ui.form.on('Lead', {
     custom_country_of_hq(frm) {
         render_lead_top_summary(frm);
     },
+    city(frm) {
+        render_lead_top_summary(frm);
+    },
     custom_buyer_type(frm) {
         render_lead_top_summary(frm);
     },
@@ -472,13 +475,13 @@ frappe.ui.form.on('Lead', {
                 );
             }
 
-            else if (contact.mobile_no) {
+            // else if (contact.mobile_no) {
 
-                frm.set_value(
-                    "custom_contact_person_phone_number",
-                    contact.mobile_no
-                );
-            }
+            //     frm.set_value(
+            //         "custom_contact_person_phone_number",
+            //         contact.mobile_no
+            //     );
+            // }
 
             if (contact.email_id) {
 
@@ -885,7 +888,7 @@ frappe.ui.form.on("L1 Other Products", {
 
 function lead_summary_value(value) {
     if (value === undefined || value === null || value === "") {
-        return "-";
+        return " ";
     }
 
     return frappe.utils.escape_html(value);
@@ -981,12 +984,12 @@ function render_lead_top_summary(frm) {
     const product_name =
         frm.doc.custom_l1_product_name ||
         frm.doc.custom_product_name_m ||
-        "-";
+        " ";
 
     const product_code =
         frm.doc.custom_product ||
         frm.doc.custom_product_name_i ||
-        "-";
+        " ";
 
     const product_title = product_name;
 
@@ -1066,32 +1069,55 @@ function render_lead_top_summary(frm) {
                 gap:14px;
             ">
                ${lead_summary_item(
-        frm.doc.custom_sales_type === "Domestic / Merchant" ? "First Name" : "Company",
-        frm.doc.custom_sales_type === "Domestic / Merchant"
-            ? (frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
-            : (frm.doc.company_name || frm.doc.first_name || frm.doc.custom_namee_of_the_company || "-")
+        (
+            frm.doc.custom_sales_type === "Domestic / Merchant" ||
+            frm.doc.custom_buyer_type === "Domestic"
+        )
+            ? "Company"
+            : "Company",
+
+        (
+            frm.doc.custom_buyer_type === "Domestic"
+        )
+            ? (
+                frm.doc.company_name ||
+                frm.doc.custom_namee_of_the_company ||
+                frm.doc.first_name
+            )
+            : (
+                frm.doc.custom_sales_type === "Domestic / Merchant"
+                    ? (
+                        frm.doc.first_name ||
+                        frm.doc.custom_namee_of_the_company
+                    )
+                    : (
+                        frm.doc.company_name ||
+                        frm.doc.first_name ||
+                        frm.doc.custom_namee_of_the_company
+                    )
+            )
     )}
                 ${lead_summary_item(
         "Product",
         `
-                    <div>
-                        <div>
-                            <strong>Name:</strong>
-                            ${frm.doc.custom_l1_product_name ||
+                                    <div>
+                                        <div>
+                                            <strong>Name:</strong>
+                                            ${frm.doc.custom_l1_product_name ||
         frm.doc.custom_product_name_m ||
-        "-"
+        " "
         }
-                        </div>
+                                        </div>
 
-                        <div style="margin-top:4px;">
-                            <strong>Code:</strong>
-                            ${frm.doc.custom_product ||
+                                        <div style="margin-top:4px;">
+                                            <strong>Code:</strong>
+                                            ${frm.doc.custom_product ||
         frm.doc.custom_product_name_i ||
-        "-"
+        " "
         }
-                        </div>
-                    </div>
-                    `
+                                        </div>
+                                    </div>
+                                    `
     )}
                 ${lead_summary_item(
         frm.doc.custom_buyer_type
@@ -1104,44 +1130,37 @@ function render_lead_top_summary(frm) {
 
         frm.doc.custom_buyer_type
         || frm.doc.custom_type_of_buyer
-        || "-"
+
     )}
-                ${lead_summary_item("Country", frm.doc.custom_country_of_hq)}
                 ${(() => {
 
-            let volume_html = "-";
+            if (frm.doc.city) {
+                return lead_summary_item("City", frm.doc.city);
+            }
+
+            return "";
+
+        })()}
+                ${(() => {
+            if (!frm.doc.custom_volume_range) {
+                return "";
+            }
+
+            let volume_html = frm.doc.custom_volume_range;
 
             if (
                 frm.doc.custom_commercials__logistic &&
                 frm.doc.custom_commercials__logistic.length
             ) {
 
-                // volume_html = frm.doc.custom_commercials__logistic
-                //     .filter(row => row.quantity_mtpa)
-                //     .map(row => `
-                //     <div style="margin-bottom:2px;">
-                //          ${flt(row.quantity_mtpa || 0)} MTPA
-                //     </div>
-                // `)
-                //     .join("");
-
                 const total_mtpa = (frm.doc.custom_commercials__logistic || [])
-                .reduce((sum, row) => {
-                    return sum + flt(row.quantity_mtpa || 0);
-                }, 0);
-            
-            volume_html = total_mtpa
-                ? `${total_mtpa} MTPA`
-                : "-";
+                    .reduce((sum, row) => {
+                        return sum + flt(row.quantity_mtpa || 0);
+                    }, 0);
 
-                if (!volume_html) {
-                    volume_html = "-";
+                if (total_mtpa) {
+                    volume_html = `${total_mtpa} MTPA`;
                 }
-
-            } 
-            else if (frm.doc.custom_volume_range) {
-
-                volume_html = frm.doc.custom_volume_range;
             }
 
             return lead_summary_item(
@@ -1180,7 +1199,7 @@ function lead_summary_item(label, value) {
                 ${lead_summary_value(label)}
             </div>
             <div style="font-size:15px;font-weight:600;color:#111827;">
-                ${value || "-"}
+                ${value}
             </div>
         </div>
     `;

@@ -35,7 +35,7 @@
   },
   {
    "fieldname": "demand_tpa",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Demand (TPA)",
    "options": "Packing"
@@ -45,7 +45,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-04 17:42:11.841506",
+ "modified": "2026-06-17 16:09:09.527623",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "L3 Product Demand",

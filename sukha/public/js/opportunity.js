@@ -129,29 +129,49 @@ frappe.ui.form.on('Opportunity', {
         contact_details(frm);
 
     },
-    custom_product_name(frm) {
+    	custom_product_name(frm) {
 
-        if (!frm.doc.custom_product_name) return;
+		if (!frm.doc.custom_product_name) {
+			return;
+		}
 
-        frappe.call({
-            method: "frappe.client.get",
-            args: {
-                doctype: "Item",
-                name: frm.doc.custom_product_name
-            },
-            callback(r) {
+		frm.set_value("custom_packing_type", "");
+		frm.set_value("custom_std_pakcing", "");
 
-                if (!r.message) return;
+		frappe.db.get_doc("Item", frm.doc.custom_product_name)
+			.then(item => {
 
-                frm.packing_types = (r.message.custom_packing_type || [])
-                    .map(row => row.packing_type)
-                    .filter(Boolean);
+				// Packing Type options from Item
+				frm.packing_types = (item.custom_packing_type || [])
+					.map(row => row.packing_type)
+					.filter(Boolean);
 
-                frm.set_value("custom_packing_type", "");
+				frm.refresh_field("custom_packing_type");
+			});
+	},
+    // custom_product_name(frm) {
 
-            }
-        });
-    },
+    //     if (!frm.doc.custom_product_name) return;
+
+    //     frappe.call({
+    //         method: "frappe.client.get",
+    //         args: {
+    //             doctype: "Item",
+    //             name: frm.doc.custom_product_name
+    //         },
+    //         callback(r) {
+
+    //             if (!r.message) return;
+
+    //             frm.packing_types = (r.message.custom_packing_type || [])
+    //                 .map(row => row.packing_type)
+    //                 .filter(Boolean);
+
+    //             frm.set_value("custom_packing_type", "");
+
+    //         }
+    //     });
+    // },
 
     create_prospect_from_opportunity: async function (frm, prospect_type) {
         let lead = await frappe.db.get_doc("Lead", frm.doc.party_name);
@@ -265,31 +285,89 @@ frappe.ui.form.on('Opportunity', {
     }
 });
 
+// function apply_std_packing_filter(frm) {
+//     if (!frm.doc.custom_product_name || !frm.doc.custom_packing_type) return;
+
+//     frappe.call({
+//         method: "frappe.client.get",
+//         args: { doctype: "Item", name: frm.doc.custom_product_name },
+//         callback(r) {
+//             if (!r.message) return;
+
+//             // Step 1: Match packing_type in item's custom_std_pakcing
+//             let matched = (r.message.custom_std_pakcing || [])
+//                 .filter(row => row.packing_type === frm.doc.custom_packing_type)
+//                 .map(row => row.std_packing);  // e.g. ["190 KG", "1195 KG"]
+
+//             // Step 2: Filter the link field to show only those
+//             frm.set_query("custom_std_pakcing", function () {
+//                 return {
+//                     filters: {
+//                         name: ["in", matched.length ? matched : ["__no_value__"]]
+//                     }
+//                 };
+//             });
+//         }
+//     });
+// }
+
 function apply_std_packing_filter(frm) {
-    if (!frm.doc.custom_product_name || !frm.doc.custom_packing_type) return;
 
-    frappe.call({
-        method: "frappe.client.get",
-        args: { doctype: "Item", name: frm.doc.custom_product_name },
-        callback(r) {
-            if (!r.message) return;
+	if (
+		!frm.doc.custom_product_name ||
+		!frm.doc.custom_packing_type
+	) {
+		return;
+	}
 
-            // Step 1: Match packing_type in item's custom_std_pakcing
-            let matched = (r.message.custom_std_pakcing || [])
-                .filter(row => row.packing_type === frm.doc.custom_packing_type)
-                .map(row => row.std_packing);  // e.g. ["190 KG", "1195 KG"]
+	frappe.db.get_doc("Item", frm.doc.custom_product_name)
+		.then(item => {
 
-            // Step 2: Filter the link field to show only those
-            frm.set_query("custom_std_pakcing", function () {
-                return {
-                    filters: {
-                        name: ["in", matched.length ? matched : ["__no_value__"]]
-                    }
-                };
-            });
-        }
-    });
+			// Item child table fieldname
+			const matched_std_packings =
+				(item.custom_standard_packing || [])
+					.filter(row =>
+						row.packing_type === frm.doc.custom_packing_type
+					)
+					.map(row => row.std_packing)
+					.filter(Boolean);
+
+			console.log(
+				"Selected Packing Type:",
+				frm.doc.custom_packing_type
+			);
+
+			console.log(
+				"Matched Std Packing:",
+				matched_std_packings
+			);
+
+			frm.set_query("custom_std_pakcing", () => {
+				return {
+					filters: {
+						name: [
+							"in",
+							matched_std_packings.length
+								? matched_std_packings
+								: ["__NO_VALUE__"]
+						]
+					}
+				};
+			});
+
+			frm.refresh_field("custom_std_pakcing");
+
+			// Auto select if only one option
+			if (matched_std_packings.length === 1) {
+				frm.set_value(
+					"custom_std_pakcing",
+					matched_std_packings[0]
+				);
+			}
+		});
 }
+
+
 function calculate_total_qty(frm) {
     let unit_size = frm.doc.custom_unit_size_of_packing_kg || 0;
     let total_units = frm.doc.custom_total_no_of_packing_units_in_a_container || 0;

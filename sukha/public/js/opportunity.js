@@ -1,20 +1,4 @@
 frappe.ui.form.on('Opportunity', {
-    // setup(frm) {
-
-    //     frm.fields_dict.custom_std_pakcing.grid
-    //         .get_field("packing_type")
-    //         .get_query = function (doc, cdt, cdn) {
-
-    //             let selected_packing_types = (frm.doc.custom_packing_type || [])
-    //                 .map(row => row.packing_type)
-    //                 .filter(Boolean);
-    //             return {
-    //                 filters: {
-    //                     name: ["in", selected_packing_types]
-    //                 }
-    //             };
-    //         };
-    // },
 
     onload: function (frm) {
         if (frm.doc.custom_posting_date === "now") {
@@ -102,6 +86,7 @@ frappe.ui.form.on('Opportunity', {
                     // Container and packing
                     container_type: frm.doc.custom_container_type,
                     packing_type: frm.doc.custom_packing_type,
+                    std_packing: frm.doc.custom_std_pakcing,
                     packing_unit_size: frm.doc.custom_unit_size_of_packing_kg,
                     units_per_fcl: frm.doc.custom_total_no_of_packing_units_in_a_container,
                     total_fcl: frm.doc.custom_total_no_of_ccontainers,
@@ -289,8 +274,8 @@ function apply_std_packing_filter(frm) {
         callback(r) {
             if (!r.message) return;
 
-            // Step 1: Match packing_type in item's custom_standard_packing
-            let matched = (r.message.custom_standard_packing || [])
+            // Step 1: Match packing_type in item's custom_std_pakcing
+            let matched = (r.message.custom_std_pakcing || [])
                 .filter(row => row.packing_type === frm.doc.custom_packing_type)
                 .map(row => row.std_packing);  // e.g. ["190 KG", "1195 KG"]
 

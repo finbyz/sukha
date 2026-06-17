@@ -54,7 +54,7 @@ doctype_js = {
     "Customer": "public/js/customer.js",
     "Item": "public/js/item.js",
     "Inward Sample": "/public/js/inward_sample.js",
-    "Outward Sample": "public/js/outward.js"
+    "Outward Sample": "public/js/outward.js",
 }
 doctype_list_js = {
     "Lead": "public/js/lead_list.js",
@@ -152,7 +152,8 @@ doc_events = {
         "on_update": "sukha.doc_events.lead.on_update"
     },
     "Contact": {
-        "on_update": "sukha.doc_events.contact.on_update"
+        "on_update": "sukha.doc_events.contact.on_update",
+        "validate": "sukha.doc_events.contact.validate"
     }
 }
 # Override standard ERPNext methods

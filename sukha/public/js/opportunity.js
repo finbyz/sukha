@@ -60,58 +60,110 @@ frappe.ui.form.on('Opportunity', {
 
         if (frm.doc.docstatus === 0) {
             frm.add_custom_button(__('Cost Sheet'), function () {
-                // Prepare data object to pass to Cost Sheet Dashboard
-                const costSheetData = {
-                    opportunity: frm.doc.name,
-                    opportunity_from: frm.doc.opportunity_from,
-                    party_name: frm.doc.party_name,
-                    customer_name: frm.doc.customer_name,
+                let d = new frappe.ui.Dialog({
+                    title: __('Select Cost Sheet Parameters'),
+                    fields: [
+                        {
+                            label: __('Base Incoterm'),
+                            fieldname: 'incoterm',
+                            fieldtype: 'Select',
+                            options: ['CIF', 'FOB', 'EXW'],
+                            default: frm.doc.custom_incoterm || 'CIF',
+                            reqd: 1,
+                            onchange: function() {
+                                let val = this.get_value();
+                                if (val === 'EXW') {
+                                    d.set_df_property('exw_sub_type', 'hidden', 0);
+                                    d.set_value('exw_sub_type', 'Domestic');
+                                } else {
+                                    d.set_df_property('exw_sub_type', 'hidden', 1);
+                                    d.set_value('exw_sub_type', '');
+                                }
+                            }
+                        },
+                        {
+                            label: __('Sourcing Origin Scope'),
+                            fieldname: 'origin_scope',
+                            fieldtype: 'Select',
+                            options: ['India', 'TC'],
+                            default: 'India',
+                            reqd: 1
+                        },
+                        {
+                            label: __('EXW Sale Sub-Type'),
+                            fieldname: 'exw_sub_type',
+                            fieldtype: 'Select',
+                            options: ['Domestic', 'Merchant', 'Repacking Service'],
+                            default: 'Domestic'
+                        }
+                    ],
+                    primary_action_label: __('Proceed'),
+                    primary_action: function(values) {
+                        d.hide();
+                        // Prepare data object to pass to Cost Sheet Dashboard
+                        const costSheetData = {
+                            opportunity: frm.doc.name,
+                            opportunity_from: frm.doc.opportunity_from,
+                            party_name: frm.doc.party_name,
+                            customer_name: frm.doc.customer_name,
 
-                    // Product details
-                    product: frm.doc.custom_product_name,
-                    product_grade: frm.doc.custom_product_grade,
+                            // Product details
+                            product: frm.doc.custom_product_name,
+                            product_grade: frm.doc.custom_product_grade,
 
-                    // Parties
-                    customer: frm.doc.opportunity_from === 'Customer' ? frm.doc.party_name : '',
-                    supplier: frm.doc.custom_preferred_supplier,
-                    customer_payment_term: frm.doc.custom_customer_desired_payment_terms,
+                            // Parties
+                            customer: frm.doc.opportunity_from === 'Customer' ? frm.doc.party_name : '',
+                            supplier: frm.doc.custom_preferred_supplier,
+                            customer_payment_term: frm.doc.custom_customer_desired_payment_terms,
 
+                            // Logistics
+                            country_of_destination: frm.doc.custom_country_of__destination__ship_to_destination,
+                            port_of_discharge: frm.doc.custom_port_of_destination_c,
+                            port_of_loading: frm.doc.custom_port_of_loading,
+                            delivery_location: frm.doc.custom_destination__place_of_delivery,
+                            shipping_line: frm.doc.custom_preferred_shipping_line,
 
-                    // Logistics
-                    country_of_destination: frm.doc.custom_country_of__destination__ship_to_destination,
-                    port_of_discharge: frm.doc.custom_port_of_destination_c,
-                    port_of_loading: frm.doc.custom_port_of_loading,
-                    delivery_location: frm.doc.custom_destination__place_of_delivery,
-                    shipping_line: frm.doc.custom_preferred_shipping_line,
+                            // Incoterm and type selected from dialog
+                            incoterm: values.incoterm,
+                            origin_scope: values.origin_scope,
+                            exw_sub_type: values.incoterm === 'EXW' ? (values.exw_sub_type || 'Domestic') : '',
 
-                    // Incoterm and type
-                    incoterm: frm.doc.custom_incoterm,
+                            // Container and packing
+                            container_type: frm.doc.custom_container_type,
+                            packing_type: frm.doc.custom_packing_type,
+                            std_packing: frm.doc.custom_std_pakcing,
+                            packing_unit_size: frm.doc.custom_unit_size_of_packing_kg,
+                            units_per_fcl: frm.doc.custom_total_no_of_packing_units_in_a_container,
+                            total_fcl: frm.doc.custom_total_no_of_ccontainers,
 
-                    // Container and packing
-                    container_type: frm.doc.custom_container_type,
-                    packing_type: frm.doc.custom_packing_type,
-                    std_packing: frm.doc.custom_std_pakcing,
-                    packing_unit_size: frm.doc.custom_unit_size_of_packing_kg,
-                    units_per_fcl: frm.doc.custom_total_no_of_packing_units_in_a_container,
-                    total_fcl: frm.doc.custom_total_no_of_ccontainers,
+                            // Lead/Prospect handling
+                            lead: frm.doc.opportunity_from === 'Lead' ? frm.doc.party_name : '',
+                            prospect: (frm.doc.opportunity_from === 'Prospect' ||
+                                frm.doc.opportunity_from === 'Prospect (L3/Qualified)') ? frm.doc.party_name : ''
+                        };
 
-                    // Lead/Prospect handling
-                    lead: frm.doc.opportunity_from === 'Lead' ? frm.doc.party_name : '',
-                    prospect: (frm.doc.opportunity_from === 'Prospect' ||
-                        frm.doc.opportunity_from === 'Prospect (L3/Qualified)') ? frm.doc.party_name : ''
-                };
+                        // Store data in localStorage for Dashboard to pick up
+                        localStorage.setItem('cost_sheet_load_data', JSON.stringify(costSheetData));
 
-                // Store data in localStorage for Dashboard to pick up
-                localStorage.setItem('cost_sheet_load_data', JSON.stringify(costSheetData));
+                        // Navigate to Cost Sheet Dashboard
+                        frappe.set_route('cost-sheet-dashboard');
 
-                // Navigate to Cost Sheet Dashboard
-                frappe.set_route('cost-sheet-dashboard');
+                        // Show notification
+                        frappe.show_alert({
+                            message: __('Opening Cost Sheet Dashboard with Opportunity data...'),
+                            indicator: 'blue'
+                        }, 3);
+                    }
+                });
 
-                // Show notification
-                frappe.show_alert({
-                    message: __('Opening Cost Sheet Dashboard with Opportunity data...'),
-                    indicator: 'blue'
-                }, 3);
+                // Toggle visibility based on initial value of incoterm
+                let initial_incoterm = d.get_value('incoterm');
+                if (initial_incoterm !== 'EXW') {
+                    d.set_df_property('exw_sub_type', 'hidden', 1);
+                    d.set_value('exw_sub_type', '');
+                }
+
+                d.show();
             }, __('Create'));
         }
 

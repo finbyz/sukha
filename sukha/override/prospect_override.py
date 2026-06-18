@@ -38,8 +38,8 @@ def make_opportunity(source_name, target_doc=None):
 		target.opportunity_type = opportunity_type
 
 		# Explicit field mappings
-		if source.get("custom_contact_person_email_id"):
-			target.custom_contact_email_id = source.custom_contact_person_email_id
+		# if source.get("custom_contact_person_email_id"):
+		# 	target.custom_contact_email_id = source.custom_contact_person_email_id
 
 		# -----------------------------------------
 		# Auto Map All Matching Custom Fields
@@ -86,8 +86,6 @@ def make_opportunity(source_name, target_doc=None):
 			"custom_bill_to_party_name": "customer_name",
 			"custom_contact_person_for_active_inquery": "custom_contact_person",
 			"custom_contact_person_email_id": "custom_contact_person_email_id",
-			"custom_contact_person_email_id": "custom_contact_email_id",
-			"custom_contact_number": "custom_contact_number",
 			"custom_industry_segment": "custom_industry_segment",
 			"custom_preferred_communication": "custom_preferred_communication",
 		}
@@ -108,8 +106,8 @@ def make_opportunity(source_name, target_doc=None):
 			target.set("contact_email", source.custom_contact_person_email_id)
 			
 
-		if source.get("custom_contact_number") and hasattr(target, "contact_mobile"):
-			target.set("contact_mobile", source.custom_contact_number)
+		# if source.get("custom_contact_number") and hasattr(target, "contact_mobile"):
+		# 	target.set("contact_mobile", source.custom_contact_number)
 
 		if source.get("custom_industry_segment") and hasattr(target, "industry"):
 			target.set("industry", source.custom_industry_segment)
@@ -153,8 +151,11 @@ def make_customer(source_name, target_doc=None):
 		target.company_name = source.name
 		target.customer_group = source.customer_group or frappe.db.get_default("Customer Group")
 		
-		if source.get("custom_contact_person_email_id"):
-			target.custom_contact_email_id = source.custom_contact_person_email_id
+		# Explicitly ensure custom_contact_number and custom_contact_email_id are not mapped/fetched
+		if hasattr(target, "custom_contact_number"):
+			target.custom_contact_number = None
+		if hasattr(target, "custom_contact_email_id"):
+			target.custom_contact_email_id = None
 
 		# Enhanced logic for custom fields based on buyer_type and type_of_buyer
 		if hasattr(source, 'custom_buyer_type') and source.custom_buyer_type:
@@ -196,6 +197,10 @@ def make_customer(source_name, target_doc=None):
 			
 			# Skip section breaks, column breaks, tab breaks
 			if field.fieldtype in ['Section Break', 'Column Break', 'Tab Break']:
+				continue
+			
+			# Skip specific custom fields that should not be mapped from Prospect to Customer
+			if field.fieldname in ['custom_contact_number', 'custom_contact_email_id']:
 				continue
 			
 			source_value = getattr(source, field.fieldname, None)

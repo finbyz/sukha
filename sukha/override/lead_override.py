@@ -103,7 +103,11 @@ def create_prospect_from_lead(lead_name, prospect_name, create_contact=False, pr
         prospect.custom_prroduct_p = product_name
     fill_if_empty("custom_item_name_2", getattr(lead, "custom_product_name_i", None))
     fill_if_empty("custom_company_name_f", getattr(lead, "company_name", None))
+    fill_if_empty("custom_approved_incoterms", getattr(lead, "custom_desired_incoterm", None))
+    fill_if_empty("custom_bill_to_party_contact", getattr(lead, "custom_contact_person", None))
+    fill_if_empty("custom_approved_payment_terms", getattr(lead, "custom_desired_payment_terms", None))
     fill_if_empty("custom_designation", getattr(lead, "job_title", None))
+    fill_if_empty("custom_notes_p", getattr(lead, "custom_notes_p", None))
     fill_if_empty("industry", getattr(lead, "custom_industry_type", None))
     fill_if_empty("custom_contact_person_for_active_inquery",getattr(lead,"custom_contact_person", None))
     fill_if_empty("custom_contact_person_email_id", getattr(lead, "email_id", None))

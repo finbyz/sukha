@@ -1250,6 +1250,8 @@ async function make_variant_leads(frm) {
             new_doc.mobile_no = "";
             new_doc.phone = "";
             new_doc.job_title = "";
+            new_doc.custom_volume_range = "";
+            new_doc.custom_volume_range_assumption = "";
 
             // Ensure the copied Lead has a company name to satisfy ERPNext validation
             if (!new_doc.company_name) {

@@ -981,7 +981,7 @@
                   </td>
                   <td class="text-right font-mono col-usd" id="lbl-rm-usd-tot">(1,169)</td>
                   <td class="text-right font-mono col-usd" id="lbl-rm-usd-mt">(17.2)</td>
-                  <td><span class="help-text domestic-hide" style="font-size:10px">Rebate / Base Adj</span></td>
+                  <td><span class="help-text domestic-hide" style="font-size:10px"></span></td>
                 </tr>
                 <!-- PM Cost Section -->
                 <tr class="bg-subtle"
@@ -1043,8 +1043,7 @@
                   <td class="text-right font-mono col-usd" id="lbl-repack-usd-tot">390</td>
                   <td class="text-right font-mono col-usd" id="lbl-repack-usd-mt">5.7</td>
                   <td style="padding:4px 8px">
-                    <span class="help-text domestic-hide exw-hide repack-hide" style="font-size:10px">Excel row:
-                      Repacking Cost</span>
+                    <span class="help-text domestic-hide exw-hide repack-hide" style="font-size:10px"></span>
                     <div class="repack-only d-none"
                       style="display:flex; align-items:center; justify-content:space-between; gap:6px">
                       <span style="font-size:10px;color:var(--color-text-muted)">Repacking Labour Cost</span>
@@ -1182,8 +1181,7 @@
                   <td class="text-right font-mono col-usd" id="lbl-labels-usd-mt">0.6</td>
                   <td style="padding:4px 8px">
                     <div class="domestic-hide">
-                      <span class="help-text" style="font-size:10px" id="lbl-labels-helper">Excel row: Labels /
-                        Other</span>
+                      <span class="help-text" style="font-size:10px" id="lbl-labels-helper"></span>
                     </div>
                     <div class="domestic-only d-none"
                       style="display:flex; flex-direction:column; gap:4px; align-items:flex-end">
@@ -1373,9 +1371,7 @@
                       style="width:75px;padding:2px 4px;font-size:11px" id="inp_cnf_trans" value=""
                       oninput="calculateEngine()">
                   </div>
-                  <span style="font-size:9px;color:var(--color-text-subtle);display:block">Remark: Based on Location
-                    to
-                    POL selection</span>
+                  <span style="font-size:9px;color:var(--color-text-subtle);display:block"></span>
                 </div>
                 <div
                   style="display:flex; align-items:center; justify-content:space-between; background:#E5E7EB; padding:2px 6px; border-radius:3px">
@@ -1388,8 +1384,7 @@
                     <input type="number" class="form-control manual-input font-mono text-right"
                       style="width:75px;padding:2px 4px;font-size:11px" id="inp_cnf_other" oninput="calculateEngine()">
                   </div>
-                  <span style="font-size:9px;color:var(--color-text-subtle);display:block">Remark: On Wheel: Any
-                    additional cost (on wheels/CFS/ICD/EDI) etc.</span>
+                  <span style="font-size:9px;color:var(--color-text-subtle);display:block"></span>
                 </div>
                 <div
                   style="display:flex; align-items:center; justify-content:space-between; background:#E5E7EB; padding:2px 6px; border-radius:3px">
@@ -1554,9 +1549,7 @@
                         <strong style="color:var(--color-brand)">%</strong>
                       </div>
                     </div>
-                    <span style="font-size:9px; display:block; margin-top:2px">1.0% Formula to be kept for 1% against
-                      30
-                      days credit</span>
+                    <span style="font-size:9px; display:block; margin-top:2px"></span>
                   </td>
                 </tr>
 
@@ -2111,7 +2104,7 @@
       if ($('lbl-vanning-row-name')) $('lbl-vanning-row-name').textContent = isRepack ? 'Chocking Belt' : 'Addl. Vanning Requirement (chocking/lashing)';
       if ($('lbl-vanning-helper-name')) $('lbl-vanning-helper-name').textContent = isRepack ? 'Chocking Belt' : 'Addl. Vanning Requirement (chocking/lashing)';
       if ($('lbl-labels-row-name')) $('lbl-labels-row-name').textContent = (isDom || isRepack) ? 'Any Other : Inventory Holding Cost' : 'Any Other : Labels Charges';
-      if ($('lbl-labels-helper')) $('lbl-labels-helper').textContent = (isDom || isRepack) ? 'Any other cost - Specify with Remarks' : (isMer ? '' : 'Excel row: Labels / Other');
+      if ($('lbl-labels-helper')) $('lbl-labels-helper').textContent = (isDom || isRepack) ? 'Any other cost - Specify with Remarks' : (isMer ? '' : ' ');
       if ($('lbl-comm-row-name')) $('lbl-comm-row-name').textContent = isExw ? 'Comission (Rs./MT)' : 'Comission';
       if ($('inp_rm_rs_mt')) $('inp_rm_rs_mt').readOnly = (isDom || isRepack);
       if ($('inp_dom_freight_out_mt')) $('inp_dom_freight_out_mt').readOnly = isExw;

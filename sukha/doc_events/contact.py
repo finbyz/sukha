@@ -2,9 +2,22 @@ import frappe
 import re
 
 def validate(self, method):
-    for row in self.phone_nos:
-        if row.phone:
-            row.custom_contact_number = row.phone
+	for row in self.phone_nos:
+		val = row.phone or row.custom_contact_number
+		if val:
+			val = val.strip()
+			if not val.startswith("+"):
+				digits = re.sub(r"\D", "", val)
+				if len(digits) == 10:
+					val = "+91" + digits
+				elif len(digits) == 11 and digits.startswith("0"):
+					val = "+91" + digits[1:]
+				elif len(digits) == 12 and digits.startswith("91"):
+					val = "+" + digits
+				elif len(digits) > 0:
+					val = "+91" + digits
+			row.phone = val
+			row.custom_contact_number = val
 
 def on_update(doc, method):
     # doc is a Contact

@@ -484,7 +484,77 @@ frappe.ui.form.on('Lead', {
         }
     },
     custom_contact_person_phone_number(frm) {
-        frm.set_value('custom_contact_number', frm.doc.custom_contact_person_phone_number)
+        if (frm.doc.custom_contact_person_phone_number) {
+            let val = frm.doc.custom_contact_person_phone_number.trim();
+            if (!val.startsWith("+")) {
+                let digits = val.replace(/\D/g, "");
+                if (digits.length === 10) {
+                    val = "+91" + digits;
+                } else if (digits.length === 11 && digits.startsWith("0")) {
+                    val = "+91" + digits.substring(1);
+                } else if (digits.length === 12 && digits.startsWith("91")) {
+                    val = "+" + digits;
+                } else if (digits.length > 0) {
+                    val = "+91" + digits;
+                }
+            }
+            frm.set_value('custom_contact_person_phone_number', val);
+            frm.set_value('custom_contact_number', val);
+        }
+    },
+    custom_contact_number(frm) {
+        if (frm.doc.custom_contact_number) {
+            let val = frm.doc.custom_contact_number.trim();
+            if (!val.startsWith("+")) {
+                let digits = val.replace(/\D/g, "");
+                if (digits.length === 10) {
+                    val = "+91" + digits;
+                } else if (digits.length === 11 && digits.startsWith("0")) {
+                    val = "+91" + digits.substring(1);
+                } else if (digits.length === 12 && digits.startsWith("91")) {
+                    val = "+" + digits;
+                } else if (digits.length > 0) {
+                    val = "+91" + digits;
+                }
+            }
+            frm.set_value('custom_contact_number', val);
+        }
+    },
+    phone(frm) {
+        if (frm.doc.phone) {
+            let val = frm.doc.phone.trim();
+            if (!val.startsWith("+")) {
+                let digits = val.replace(/\D/g, "");
+                if (digits.length === 10) {
+                    val = "+91" + digits;
+                } else if (digits.length === 11 && digits.startsWith("0")) {
+                    val = "+91" + digits.substring(1);
+                } else if (digits.length === 12 && digits.startsWith("91")) {
+                    val = "+" + digits;
+                } else if (digits.length > 0) {
+                    val = "+91" + digits;
+                }
+            }
+            frm.set_value('phone', val);
+        }
+    },
+    mobile_no(frm) {
+        if (frm.doc.mobile_no) {
+            let val = frm.doc.mobile_no.trim();
+            if (!val.startsWith("+")) {
+                let digits = val.replace(/\D/g, "");
+                if (digits.length === 10) {
+                    val = "+91" + digits;
+                } else if (digits.length === 11 && digits.startsWith("0")) {
+                    val = "+91" + digits.substring(1);
+                } else if (digits.length === 12 && digits.startsWith("91")) {
+                    val = "+" + digits;
+                } else if (digits.length > 0) {
+                    val = "+91" + digits;
+                }
+            }
+            frm.set_value('mobile_no', val);
+        }
     },
     custom_contact_person_phone_email_id(frm) {
         frm.set_value('custom_contact_person_email_id', frm.doc.custom_contact_person_phone_email_id)

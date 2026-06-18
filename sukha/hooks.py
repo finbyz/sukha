@@ -153,7 +153,7 @@ doc_events = {
     },
     "Contact": {
         "on_update": "sukha.doc_events.contact.on_update",
-        "before_insert": "sukha.doc_events.contact.validate",
+        "validate": "sukha.doc_events.contact.validate",
     }
 }
 # Override standard ERPNext methods

@@ -3847,7 +3847,7 @@
    "description": null,
    "docstatus": 0,
    "dt": "Opportunity",
-   "fetch_from": null,
+   "fetch_from": "custom_std_pakcing.weight",
    "fetch_if_empty": 0,
    "fieldname": "custom_unit_size_of_packing_kg",
    "fieldtype": "Float",

@@ -4,7 +4,199 @@ from erpnext.crm.doctype.lead.lead import Lead, _set_missing_values
 from sukha.override.opportunity_override import create_contact_from_lead
 
 class CustomLead(Lead):
-    pass
+    def before_insert(self):
+        # Match or create contact first so we populate custom_contact_person
+        self.match_or_create_contact()
+
+        if getattr(self, "custom_contact_person", None):
+            self.contact_doc = frappe.get_doc("Contact", self.custom_contact_person)
+            if self.lead_name and not any([self.first_name, self.middle_name, self.last_name]):
+                from erpnext.selling.doctype.customer.customer import parse_full_name
+                self.first_name, self.middle_name, self.last_name = parse_full_name(self.lead_name)
+            return
+        super().before_insert()
+
+    def validate(self):
+        self.match_or_create_contact()
+        super().validate()
+
+    def match_or_create_contact(self):
+        # We only match/create contact if email or phone is provided
+        email = getattr(self, "custom_central_email_id", None)
+        phone = getattr(self, "custom_board__number", None)
+        country = getattr(self, "custom_country_of_hq", None)
+
+        if not email and not phone:
+            return
+
+        # Check if the values actually changed, or if it's a new document
+        is_changed = False
+        if self.is_new():
+            is_changed = True
+        else:
+            db_values = frappe.db.get_value(
+                "Lead",
+                self.name,
+                ["custom_central_email_id", "custom_board__number", "custom_country_of_hq"],
+                as_dict=True
+            )
+            if db_values:
+                if (email != db_values.custom_central_email_id or 
+                    phone != db_values.custom_board__number or 
+                    country != db_values.custom_country_of_hq):
+                    is_changed = True
+
+        # If custom_contact_person is already set but values changed, we might need to check/re-link
+        if not getattr(self, "custom_contact_person", None):
+            is_changed = True
+
+        if not is_changed:
+            return
+
+        # Search for existing contact
+        contact_name = self.find_existing_contact(email, phone)
+
+        if contact_name:
+            # Match found! Link to it
+            self.custom_contact_person = contact_name
+            self.custom_contact_person_for_soft_inquiry = contact_name
+            
+            # Fetch details from the contact and populate Lead fields
+            contact_doc = frappe.get_doc("Contact", contact_name)
+            
+            # Fetch phone/mobile
+            contact_phone = None
+            if contact_doc.phone_nos:
+                primary_phone = next((p for p in contact_doc.phone_nos if p.is_primary_phone or p.is_primary_mobile_no), None)
+                if primary_phone:
+                    contact_phone = primary_phone.custom_contact_number or primary_phone.phone
+                else:
+                    contact_phone = contact_doc.phone_nos[0].custom_contact_number or contact_doc.phone_nos[0].phone
+            
+            if contact_phone:
+                self.custom_contact_person_phone_number = contact_phone
+            elif contact_doc.phone:
+                self.custom_contact_person_phone_number = contact_doc.phone
+            elif contact_doc.mobile_no:
+                self.custom_contact_person_phone_number = contact_doc.mobile_no
+
+            # Fetch email
+            contact_email = None
+            if contact_doc.email_ids:
+                primary_email = next((e for e in contact_doc.email_ids if e.is_primary), None)
+                if primary_email:
+                    contact_email = primary_email.email_id
+                else:
+                    contact_email = contact_doc.email_ids[0].email_id
+            
+            if contact_email:
+                self.custom_contact_person_phone_email_id = contact_email
+            elif contact_doc.email_id:
+                self.custom_contact_person_phone_email_id = contact_doc.email_id
+
+            # Fetch designation and country
+            if contact_doc.designation:
+                self.custom_contact_person_designation__department = contact_doc.designation
+            if contact_doc.get("custom_country"):
+                self.custom_bill_to_party_country = contact_doc.custom_country
+            if contact_doc.custom_visiting_card_attachment:
+                self.custom_attachment_ = contact_doc.custom_visiting_card_attachment
+
+            # Ensure Dynamic Link exists (if Lead is already saved)
+            if not self.is_new():
+                self.create_dynamic_link_if_not_exists(contact_name)
+        else:
+            # Create a new Contact!
+            contact = frappe.new_doc("Contact")
+            # Set name of contact as Company Name or Lead Name or Default
+            contact.first_name = self.company_name or self.lead_name or "Contact"
+            contact.custom_country = country
+            if email:
+                contact.append("email_ids", {"email_id": email, "is_primary": 1})
+            if phone:
+                contact.append("phone_nos", {
+                    "phone": phone,
+                    "custom_contact_number": phone,
+                    "is_primary_phone": 1,
+                    "is_primary_mobile_no": 1
+                })
+            contact.insert(ignore_permissions=True)
+            contact_name = contact.name
+
+            self.custom_contact_person = contact_name
+            self.custom_contact_person_for_soft_inquiry = contact_name
+            self.custom_contact_person_phone_number = phone
+            self.custom_contact_person_phone_email_id = email
+            if country:
+                self.custom_bill_to_party_country = country
+
+            if not self.is_new():
+                self.create_dynamic_link_if_not_exists(contact_name)
+
+    def find_existing_contact(self, email=None, phone=None):
+        if email:
+            contact_name = frappe.db.get_value("Contact Email", {"email_id": email}, "parent")
+            if contact_name:
+                return contact_name
+        if phone:
+            contact_name = frappe.db.get_value("Contact Phone", {"phone": phone}, "parent")
+            if contact_name:
+                return contact_name
+            contact_name = frappe.db.get_value("Contact Phone", {"custom_contact_number": phone}, "parent")
+            if contact_name:
+                return contact_name
+        return None
+
+    def create_dynamic_link_if_not_exists(self, contact_name):
+        # If we are linking to a new contact, we should remove the link from the old contact
+        if not self.is_new():
+            old_contact = frappe.db.get_value("Lead", self.name, "custom_contact_person")
+            if old_contact and old_contact != contact_name:
+                frappe.db.delete("Dynamic Link", {
+                    "parent": old_contact,
+                    "link_doctype": "Lead",
+                    "link_name": self.name
+                })
+                frappe.clear_document_cache("Contact", old_contact)
+
+        exists = frappe.db.exists("Dynamic Link", {
+            "parent": contact_name,
+            "parenttype": "Contact",
+            "parentfield": "links",
+            "link_doctype": "Lead",
+            "link_name": self.name
+        })
+        if not exists:
+            link = frappe.new_doc("Dynamic Link")
+            link.parent = contact_name
+            link.parenttype = "Contact"
+            link.parentfield = "links"
+            link.link_doctype = "Lead"
+            link.link_name = self.name
+            link.link_title = self.lead_name or self.company_name or self.name
+            link.insert(ignore_permissions=True)
+            frappe.clear_document_cache("Contact", contact_name)
+
+    def check_email_id_is_unique(self):
+        if self.email_id:
+            if not frappe.db.get_single_value("CRM Settings", "allow_lead_duplication_based_on_emails"):
+                filters = {"email_id": self.email_id, "name": ["!=", self.name]}
+                if getattr(self, "custom_contact_person", None):
+                    filters["custom_contact_person"] = ["!=", self.custom_contact_person]
+
+                duplicate_leads = frappe.get_all("Lead", filters=filters)
+                if duplicate_leads:
+                    from frappe.utils import comma_and, get_link_to_form
+                    from frappe import _
+                    duplicate_leads = [
+                        frappe.bold(get_link_to_form("Lead", lead.name)) for lead in duplicate_leads
+                    ]
+                    frappe.throw(
+                        _("Email Address must be unique, it is already used in {0}").format(
+                            comma_and(duplicate_leads)
+                        ),
+                        frappe.DuplicateEntryError,
+                    )
 
 @frappe.whitelist()
 def create_prospect_from_lead(lead_name, prospect_name, create_contact=False, prospect_type=None):

@@ -9,6 +9,10 @@ frappe.ui.form.on('Opportunity', {
         frm.set_value("custom_std_pakcing", "");
         apply_std_packing_filter(frm);
     },
+     custom_country_of__destination__ship_to_destination(frm) {
+        set_port_filter(frm);
+        frm.set_value("custom_port_of_destination_c", ""); // clear old value
+    },
     refresh: function (frm) {
         contact_details(frm);
 
@@ -75,7 +79,7 @@ frappe.ui.form.on('Opportunity', {
 
                     // Logistics
                     country_of_destination: frm.doc.custom_country_of__destination__ship_to_destination,
-                    port_of_discharge: frm.doc.custom_port_of_destination,
+                    port_of_discharge: frm.doc.custom_port_of_destination_c,
                     port_of_loading: frm.doc.custom_port_of_loading,
                     delivery_location: frm.doc.custom_destination__place_of_delivery,
                     shipping_line: frm.doc.custom_preferred_shipping_line,
@@ -406,4 +410,15 @@ function contact_details(frm) {
             });
 
     }
+}
+
+
+function set_port_filter(frm) {
+    frm.set_query("custom_port_of_destination_c", function () {
+        return {
+            filters: {
+                country: frm.doc.custom_country_of__destination__ship_to_destination
+            }
+        };
+    });
 }

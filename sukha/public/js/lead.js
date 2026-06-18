@@ -1298,28 +1298,30 @@ async function make_variant_leads(frm) {
             delete new_doc.owner;
             delete new_doc.docstatus;
 
-            // Clear all contact-related fields to prevent inheriting/linking the contact
-            new_doc.custom_contact_person = "";
-            new_doc.custom_contact_person_for_soft_inquiry = "";
-            new_doc.custom_contact_person_phone_number = "";
-            new_doc.custom_contact_person_phone_email_id = "";
-            new_doc.custom_contact_person_designation__department = "";
-            new_doc.custom_contact_person_whatsapp_number = "";
-            new_doc.custom_contact_number = "";
-            new_doc.custom_contact_person_email_id = "";
-            new_doc.custom_designation = "";
-            new_doc.custom_attachment_ = "";
+            // Clear contact-related fields only if no main contact is set
+            if (!frm.doc.custom_contact_person) {
+                new_doc.custom_contact_person = "";
+                new_doc.custom_contact_person_for_soft_inquiry = "";
+                new_doc.custom_contact_person_phone_number = "";
+                new_doc.custom_contact_person_phone_email_id = "";
+                new_doc.custom_contact_person_designation__department = "";
+                new_doc.custom_contact_person_whatsapp_number = "";
+                new_doc.custom_contact_number = "";
+                new_doc.custom_contact_person_email_id = "";
+                new_doc.custom_designation = "";
+                new_doc.custom_attachment_ = "";
 
-            new_doc.first_name = "";
-            new_doc.middle_name = "";
-            new_doc.last_name = "";
-            new_doc.salutation = "";
-            new_doc.lead_name = "";
-            new_doc.gender = "";
-            new_doc.email_id = "";
-            new_doc.mobile_no = "";
-            new_doc.phone = "";
-            new_doc.job_title = "";
+                new_doc.first_name = "";
+                new_doc.middle_name = "";
+                new_doc.last_name = "";
+                new_doc.salutation = "";
+                new_doc.lead_name = "";
+                new_doc.gender = "";
+                new_doc.email_id = "";
+                new_doc.mobile_no = "";
+                new_doc.phone = "";
+                new_doc.job_title = "";
+            }
             new_doc.custom_volume_range = "";
             new_doc.custom_volume_range_assumption = "";
 

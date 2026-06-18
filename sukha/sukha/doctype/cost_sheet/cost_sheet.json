@@ -28,6 +28,7 @@
   "section_break_party_terms",
   "customer_payment_terms",
   "country_of_destination",
+  "final_country_of_destination",
   "col_break_party_terms",
   "supplier_payment_terms",
   "section_break_currency",
@@ -248,6 +249,11 @@
    "fieldtype": "Link",
    "label": "Country of Destination",
    "options": "Country"
+  },
+  {
+   "fieldname": "final_country_of_destination",
+   "fieldtype": "Data",
+   "label": "Final Country of Destination"
   },
   {
    "fieldname": "col_break_party_terms",

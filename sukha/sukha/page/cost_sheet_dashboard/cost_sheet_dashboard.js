@@ -495,6 +495,7 @@ class CostSheetDashboard {
 
 				// Locations & Logistics
 				'country_of_destination': 'inp_destination',
+				'final_country_of_destination': 'inp_final_dest',
 				'port_of_discharge': 'inp_pod',
 				'port_of_loading': 'inp_pol',
 				'delivery_location': 'inp_destination',
@@ -1041,7 +1042,7 @@ class CostSheetDashboard {
 
 			this.populate_select(doc,
 				['#inp_destination', 'select[id*="destination"]'],
-				'Country'
+				'Port of Destinations'
 			);
 
 			this.populate_select(doc,

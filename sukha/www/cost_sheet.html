@@ -787,11 +787,17 @@
               </select>
             </div>
             <div class="form-group">
-              <label id="lbl-destination-label">Final Country of Destination</label>
+              <label id="lbl-destination-label">Country of Destination</label>
               <select class="form-control" id="inp_destination">
                 <option value="" selected>Select Destination...</option>
               </select>
             </div>
+
+            <div class="form-group">
+              <label>Final Country of Destination</label>
+              <input type="text" class="form-control" id="inp_final_dest" placeholder="Enter Final Destination...">
+            </div>
+            
             <div class="form-group domestic-hide exw-hide">
               <label>Port of Discharge</label>
               <select class="form-control" id="inp_pod">
@@ -820,6 +826,9 @@
                 <option value="">Select...</option>
               </select>
             </div>
+          </div>
+
+          <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
               <label id="lbl-container-label">Container type</label>
               <select class="form-control" id="inp_container" onchange="updateContainerDefaults()">
@@ -829,9 +838,6 @@
                 <option value="20'HC">20'HC</option>
               </select>
             </div>
-          </div>
-
-          <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
               <label>Packing type</label>
               <select class="form-control" style="font-size:11px" id="inp_packing_type">
@@ -851,13 +857,14 @@
                 oninput="calculateEngine()">
             </div>
 
+            
+          </div>
+          <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
               <label>No of Packing units in 1 FCL</label>
               <input type="number" class="form-control font-mono" id="inp_units_per_fcl" value=""
                 oninput="calculateEngine()">
             </div>
-          </div>
-          <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
               <label>Quantity / FCL / ISO</label>
               <input type="text" class="form-control font-mono" id="lbl-qty-fcl-box" value="" readonly
@@ -873,17 +880,15 @@
               <input type="text" class="form-control font-mono" id="lbl-total-mt-box" value="" readonly
                 style="background:#F8FAFC">
             </div>
+          </div>
 
+          <div class="grid-4 exw-hide">
             <div class="form-group exw-hide">
               <label>Cost Sheet Currency <span class="req">*</span></label>
               <select class="form-control manual-input font-mono" id="inp_cs_currency">
                 <option value="">Select Currency...</option>
               </select>
             </div>
-
-          </div>
-
-          <div class="grid-4 exw-hide">
             <div class="form-group exw-hide">
               <label>Exchange Premium (Rs.)
               </label>
@@ -908,7 +913,6 @@
               <input type="text" class="form-control font-mono" id="lbl-cs-exr" value="" readonly
                 style="background:#F8FAFC;font-weight:700;color:var(--color-brand)">
             </div>
-            <div class="form-group domestic-hide exw-hide"></div>
             <div class="form-group domestic-hide exw-hide"></div>
           </div>
 
@@ -2100,7 +2104,7 @@
       if ($('lbl-product-table-title')) {
         $('lbl-product-table-title').innerHTML = isExw ? '📦 Product Details' : '📦 Product Details';
       }
-      if ($('lbl-destination-label')) $('lbl-destination-label').textContent = (isDom || isRepack) ? 'Final Customer Delivery at' : 'Final Country of Destination';
+      if ($('lbl-destination-label')) $('lbl-destination-label').textContent = (isDom || isRepack) ? 'Final Customer Delivery at' : 'Country of Destination';
       if ($('lbl-container-label')) $('lbl-container-label').textContent = (isDom || isRepack) ? 'Delivery In' : 'Container type';
       if ($('lbl-pol-label')) $('lbl-pol-label').textContent = (isDom || isRepack) ? 'Loading Location' : 'Port of Loading';
       if ($('lbl-helper-th')) $('lbl-helper-th').textContent = (isDom || isRepack) ? 'Rs/Tanker or Trucks' : 'Rs/FCL & Helper Inputs';
@@ -2766,6 +2770,7 @@
         prospect: $('inp_prospect')?.value || '',
         customer_payment_terms: $('inp_cust_terms')?.value || '',
         country_of_destination: $('inp_destination')?.value || '',
+        final_country_of_destination: $('inp_final_dest')?.value || '',
         delivery_location: $('inp_destination')?.value || '',
         supplier: $('inp_supplier')?.value || '',
         supplier_payment_terms: $('inp_supp_terms')?.value || '',
@@ -3868,7 +3873,7 @@
           populateDropdown('inp_supplier', 'Supplier'),
           populateDropdown('inp_customer', 'Customer'),
           populateDropdown('inp_product', 'Item'),
-          populateDropdown('inp_destination', 'Country'),
+          populateDropdown('inp_destination', 'Port of Destinations'),
           populateDropdown('inp_pod', 'Port of Discharge'),
 
           populateDropdown('inp_pol', 'Port of Loading'),

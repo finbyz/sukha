@@ -74,7 +74,7 @@ def create_prospect_from_lead(lead_name, prospect_name, create_contact=False, pr
 
     def copy_matching_fields(source):
         for fieldname in prospect_fields:
-            if fieldname.startswith("_") or fieldname in ("name", "doctype", "company_name"):
+            if fieldname.startswith("_") or fieldname in ("name", "doctype", "company_name", "custom_product_name"):
                 continue
             if fieldname in prospect_table_fields or not hasattr(source, fieldname):
                 continue
@@ -87,14 +87,20 @@ def create_prospect_from_lead(lead_name, prospect_name, create_contact=False, pr
 
     fill_if_empty("custom_contact_number", getattr(lead, "mobile_no", None))
     fill_if_empty("custom_contact_number", getattr(lead, "phone", None))
-    fill_if_empty(
-        "custom_product",
-        getattr(lead, "custom_product_name_m", None) or getattr(lead, "custom_product_name", None),
-    )
-    fill_if_empty(
-        "custom_prroduct_p",
-        getattr(lead, "custom_product_name_m", None) or getattr(lead, "custom_product_name", None),
-    )
+    # Force product mapping
+
+    prospect.custom_product_name = ""
+    prospect.custom_prroduct_p = ""
+
+    if lead.custom_sales_type == "Direct Export Sales":
+        product_name = lead.custom_product_from_l1
+
+    else:
+        product_name = lead.custom_product_name_m
+
+    if product_name:
+        prospect.custom_product_name = product_name
+        prospect.custom_prroduct_p = product_name
     fill_if_empty("custom_item_name_2", getattr(lead, "custom_product_name_i", None))
     fill_if_empty("custom_company_name_f", getattr(lead, "company_name", None))
     fill_if_empty("custom_designation", getattr(lead, "job_title", None))
@@ -251,20 +257,16 @@ def make_opportunity(source_name, target_doc=None):
         target_doc.opportunity_type = "Soft Inquiry - Export"
 
     if lead.custom_sales_type == "Direct Export Sales":
-        product_name = (
-            getattr(lead, "custom_product_name_m", None)
-            or getattr(lead, "custom_product_name", None)
-        )
+        product_name = getattr(lead, "custom_product_from_l1", None)
+
     elif lead.custom_sales_type == "Domestic / Merchant":
-        product_name = (
-            getattr(lead, "custom_product_name", None)
-            or getattr(lead, "custom_product_name_m", None)
-        )
+        product_name = getattr(lead, "custom_product_name_m", None)
+
     else:
         product_name = (
-            getattr(lead, "custom_product_name", None)
-            or getattr(lead, "custom_product_name_m", None)
-        )
+        getattr(lead, "custom_product_from_l1", None)
+        or getattr(lead, "custom_product_name_m", None)
+    )
 
     if product_name:
         target_doc.custom_product_name = product_name

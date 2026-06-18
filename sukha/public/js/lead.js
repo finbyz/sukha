@@ -433,8 +433,12 @@ frappe.ui.form.on('Lead', {
 
         try {
             let contact = await frappe.db.get_doc('Contact', frm.doc.custom_contact_person);
-            let phone_number = "";
+            
+            // Set contact person for soft inquiry
+            frm.set_value('custom_contact_person_for_soft_inquiry', frm.doc.custom_contact_person);
 
+            // Fetch and set phone number
+            let phone_number = "";
             if (contact.phone_nos && contact.phone_nos.length) {
                 let phone_with_custom = contact.phone_nos.find(p => p.custom_contact_number);
                 if (phone_with_custom) {
@@ -444,73 +448,34 @@ frappe.ui.form.on('Lead', {
 
             if (phone_number) {
                 frm.set_value('custom_contact_person_phone_number', phone_number);
-            }
-        } catch (error) {
-            console.error("Error:", error);
-        }
-        frm.set_value('custom_contact_person_for_soft_inquiry', frm.doc.custom_contact_person)
-
-        if (!frm.doc.custom_contact_person) {
-            return;
-        }
-        if (contact.country) {
-            frm.set_value(
-                "custom_bill_to_party_country",
-                contact.country
-            );
-        }
-
-        try {
-
-            let contact = await frappe.db.get_doc(
-                "Contact",
-                frm.doc.custom_contact_person
-            );
-
-            if (contact.phone) {
-
-                frm.set_value(
-                    "custom_contact_person_phone_number",
-                    contact.phone
-                );
+            } else if (contact.phone) {
+                frm.set_value('custom_contact_person_phone_number', contact.phone);
+            } else if (contact.mobile_no) {
+                frm.set_value('custom_contact_person_phone_number', contact.mobile_no);
             }
 
-            // else if (contact.mobile_no) {
-
-            //     frm.set_value(
-            //         "custom_contact_person_phone_number",
-            //         contact.mobile_no
-            //     );
-            // }
-
+            // Fetch and set email
             if (contact.email_id) {
-
-                frm.set_value(
-                    "custom_contact_person_phone_email_id",
-                    contact.email_id
-                );
+                frm.set_value('custom_contact_person_phone_email_id', contact.email_id);
             }
 
+            // Fetch and set designation
             if (contact.designation) {
-
-                frm.set_value(
-                    "custom_contact_person_designation__department",
-                    contact.designation
-                );
+                frm.set_value('custom_contact_person_designation__department', contact.designation);
             }
-            if (
-                contact.custom_visiting_card_attachment
-            ) {
-                frm.set_value(
-                    "custom_attachment_",
-                    contact.custom_visiting_card_attachment
-                );
+
+            // Fetch and set country
+            if (contact.country) {
+                frm.set_value("custom_bill_to_party_country", contact.country);
+            }
+
+            // Fetch and set visiting card attachment
+            if (contact.custom_visiting_card_attachment) {
+                frm.set_value("custom_attachment_", contact.custom_visiting_card_attachment);
             }
 
         } catch (e) {
-
             console.error(e);
-
             frappe.msgprint({
                 title: __("Error"),
                 indicator: "red",
@@ -887,11 +852,18 @@ frappe.ui.form.on("L1 Other Products", {
 });
 
 function lead_summary_value(value) {
-    if (value === undefined || value === null || value === "") {
-        return " ";
+
+    if (
+        value === undefined ||
+        value === null ||
+        value === "" ||
+        value === "undefined" ||
+        value === "null"
+    ) {
+        return "";
     }
 
-    return frappe.utils.escape_html(value);
+    return frappe.utils.escape_html(String(value));
 }
 
 
@@ -1082,18 +1054,21 @@ function render_lead_top_summary(frm) {
             ? (
                 frm.doc.company_name ||
                 frm.doc.custom_namee_of_the_company ||
-                frm.doc.first_name
+                frm.doc.first_name  ||
+                        ""
             )
             : (
                 frm.doc.custom_sales_type === "Domestic / Merchant"
                     ? (
                         frm.doc.first_name ||
-                        frm.doc.custom_namee_of_the_company
+                        frm.doc.custom_namee_of_the_company ||
+                        ""
                     )
                     : (
                         frm.doc.company_name ||
                         frm.doc.first_name ||
-                        frm.doc.custom_namee_of_the_company
+                        frm.doc.custom_namee_of_the_company ||
+                        ""
                     )
             )
     )}
@@ -1193,12 +1168,31 @@ function render_lead_top_summary(frm) {
 }
 
 function lead_summary_item(label, value) {
+
+    if (
+        value === undefined ||
+        value === null ||
+        value === "" ||
+        value === "undefined" ||
+        value === "null"
+    ) {
+        value = "";
+    }
+
     return `
         <div>
-            <div style="font-size:12px;color:#6b7280;">
+            <div style="
+                font-size:12px;
+                color:#6b7280;
+            ">
                 ${lead_summary_value(label)}
             </div>
-            <div style="font-size:15px;font-weight:600;color:#111827;">
+
+            <div style="
+                font-size:15px;
+                font-weight:600;
+                color:#111827;
+            ">
                 ${value}
             </div>
         </div>
@@ -1233,6 +1227,35 @@ async function make_variant_leads(frm) {
             delete new_doc.modified_by;
             delete new_doc.owner;
             delete new_doc.docstatus;
+
+            // Clear all contact-related fields to prevent inheriting/linking the contact
+            new_doc.custom_contact_person = "";
+            new_doc.custom_contact_person_for_soft_inquiry = "";
+            new_doc.custom_contact_person_phone_number = "";
+            new_doc.custom_contact_person_phone_email_id = "";
+            new_doc.custom_contact_person_designation__department = "";
+            new_doc.custom_contact_person_whatsapp_number = "";
+            new_doc.custom_contact_number = "";
+            new_doc.custom_contact_person_email_id = "";
+            new_doc.custom_designation = "";
+            new_doc.custom_attachment_ = "";
+
+            new_doc.first_name = "";
+            new_doc.middle_name = "";
+            new_doc.last_name = "";
+            new_doc.salutation = "";
+            new_doc.lead_name = "";
+            new_doc.gender = "";
+            new_doc.email_id = "";
+            new_doc.mobile_no = "";
+            new_doc.phone = "";
+            new_doc.job_title = "";
+
+            // Ensure the copied Lead has a company name to satisfy ERPNext validation
+            if (!new_doc.company_name) {
+                new_doc.company_name = frm.doc.company_name || frm.doc.custom_namee_of_the_company || frm.doc.lead_name || "Variant Lead";
+            }
+
             new_doc.custom_export_lead_status = "L0";
             new_doc.custom_l0_status = "";
             new_doc.custom_l1_status = "";

@@ -109,7 +109,10 @@ class CustomLead(Lead):
             # Create a new Contact!
             contact = frappe.new_doc("Contact")
             # Set name of contact as Company Name or Lead Name or Default
-            contact.first_name = self.company_name or self.lead_name or "Contact"
+            first_name = self.company_name or self.lead_name or "Contact Person"
+            if first_name.strip().lower() == "contact":
+                first_name = "Contact Person"
+            contact.first_name = first_name
             contact.custom_country = country
             if email:
                 contact.append("email_ids", {"email_id": email, "is_primary": 1})

@@ -1970,6 +1970,12 @@
       }
 
       onMasterVariantChange();
+      if (window._lastFetchedIncoterm !== inc) {
+        window._lastFetchedIncoterm = inc;
+        fetchIncotermDetails(inc);
+      } else {
+        updateTotalInternalCostFromIncoterm();
+      }
     }
 
     /* Mutually Exclusive Checkbox Toggle Logic */
@@ -3479,6 +3485,17 @@
         }
       }
 
+      if (e.data.type === 'incoterm_details_response') {
+        const incName = e.data.incoterm;
+        const doc = e.data.doc;
+        window._incotermCache = window._incotermCache || {};
+        window._incotermCache[incName] = doc;
+        if ($('inp_user_incoterm')?.value === incName) {
+          window._currentIncotermDoc = doc;
+          updateTotalInternalCostFromIncoterm();
+        }
+      }
+
       if (e.data.type === 'supplier_stuffing_location_response') {
         const locField = $('inp_stuffing_loc');
         if (locField) {
@@ -3602,6 +3619,86 @@
         // No Frappe in this context — ask parent via postMessage
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'fetch_std_packing_weight', std_packing: stdPacking }, '*');
+        }
+      }
+    }
+
+    function fetchIncotermDetails(incotermName) {
+      if (!incotermName) {
+        window._currentIncotermDoc = null;
+        updateTotalInternalCostFromIncoterm();
+        return;
+      }
+
+      window._incotermCache = window._incotermCache || {};
+      if (window._incotermCache[incotermName]) {
+        window._currentIncotermDoc = window._incotermCache[incotermName];
+        updateTotalInternalCostFromIncoterm();
+        return;
+      }
+
+      const handleResponse = (doc) => {
+        window._incotermCache = window._incotermCache || {};
+        window._incotermCache[incName => {}]; // just cache variable setup
+        window._incotermCache[incotermName] = doc;
+        if ($('inp_user_incoterm')?.value === incotermName) {
+          window._currentIncotermDoc = doc;
+          updateTotalInternalCostFromIncoterm();
+        }
+      };
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        frappe.call({
+          method: 'frappe.client.get',
+          args: {
+            doctype: 'Incoterm',
+            name: incotermName
+          },
+          callback: function (r) {
+            handleResponse(r.message || null);
+          }
+        });
+      } else {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'fetch_incoterm_details', incoterm: incotermName }, '*');
+        }
+      }
+    }
+
+    function updateTotalInternalCostFromIncoterm() {
+      const incName = $('inp_user_incoterm')?.value;
+      const subType = $('inp_exw_subtype')?.value;
+      const origin = $('inp_user_origin')?.value;
+      const doc = window._currentIncotermDoc;
+
+      if (!incName || !doc) {
+        return;
+      }
+
+      // Determine subcategory based on base incoterm and sub-type
+      let targetSubIncoTerm = '';
+      if (incName === 'EXW') {
+        if (subType === 'Domestic') targetSubIncoTerm = 'Domestic Sale';
+        else if (subType === 'Merchant') targetSubIncoTerm = 'Merchant Export';
+        else if (subType === 'Repacking Service') targetSubIncoTerm = 'Repacking Service';
+      } else {
+        if (origin === 'India') targetSubIncoTerm = 'India (Local Sourcing)';
+        else if (origin === 'TC (Third Country)') targetSubIncoTerm = 'TC (Third Country Sourcing)';
+      }
+
+      if (!targetSubIncoTerm) return;
+
+      const subIncoTerms = doc.custom_sub_incoterm || [];
+      const match = subIncoTerms.find(row => 
+        (row.sub_inco_term || '').trim().toLowerCase() === targetSubIncoTerm.trim().toLowerCase()
+      );
+
+      if (match && typeof match.total_internal_cost !== 'undefined' && match.total_internal_cost !== null) {
+        const val = parseFloat(match.total_internal_cost);
+        const inputEl = $('inp_int_cost_pct');
+        if (inputEl) {
+          inputEl.value = val;
+          calculateEngine();
         }
       }
     }

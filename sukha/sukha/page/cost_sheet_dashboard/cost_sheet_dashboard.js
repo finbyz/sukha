@@ -202,6 +202,27 @@ class CostSheetDashboard {
 				});
 			}
 
+			// Incoterm details fetch request from iframe
+			if (event.data.type === 'fetch_incoterm_details') {
+				const iframe = document.getElementById('cost-sheet-iframe');
+				if (!iframe || !iframe.contentWindow) return;
+
+				frappe.call({
+					method: 'frappe.client.get',
+					args: {
+						doctype: 'Incoterm',
+						name: event.data.incoterm
+					},
+					callback: (r) => {
+						iframe.contentWindow.postMessage({
+							type: 'incoterm_details_response',
+							incoterm: event.data.incoterm,
+							doc: r.message || null
+						}, '*');
+					}
+				});
+			}
+
 			// Product grade fetch request from iframe
 			if (event.data.type === 'fetch_product_grade') {
 				const iframe = document.getElementById('cost-sheet-iframe');

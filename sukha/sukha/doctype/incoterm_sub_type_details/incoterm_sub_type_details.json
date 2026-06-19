@@ -34,9 +34,10 @@
   },
   {
    "fieldname": "total_internal_cost",
-   "fieldtype": "Int",
+   "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Total Internal Cost"
+   "label": "Total Internal Cost",
+   "precision": "0"
   }
  ],
  "grid_page_length": 50,
@@ -44,7 +45,7 @@
  "is_submittable": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-19 18:22:02.708778",
+ "modified": "2026-06-19 18:46:32.246219",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Incoterm Sub Type Details",

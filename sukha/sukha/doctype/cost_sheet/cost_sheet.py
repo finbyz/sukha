@@ -699,19 +699,37 @@ def create_from_dashboard(data):
         )
         data["company"] = match or frappe.defaults.get_global_default("company")
 
+    # ── Resolve Country of Destination ───────────────────────
+    dest_country = data.get("country_of_destination")
+    if dest_country:
+        if not frappe.db.exists("Country", dest_country):
+            # It's not a valid country. Is it a Port?
+            port_country = frappe.db.get_value("Port of Destinations", dest_country, "country")
+            if port_country and frappe.db.exists("Country", port_country):
+                data["country_of_destination"] = port_country
+            else:
+                # If we cannot find a valid country, clear it to avoid validation error
+                data["country_of_destination"] = None
+
     # ── Resolve Stuffing Location ────────────────────────────
     stuffing = data.get("stuffing_location") or data.get("packing_and_stuffing_location")
-    if stuffing and not frappe.db.exists("Warehouse", stuffing):
-        match = frappe.db.get_value(
-            "Warehouse",
-            {"name": ("like", f"%{stuffing}%")},
-            "name"
-        )
-        if match:
-            if "stuffing_location" in data:
-                data["stuffing_location"] = match
-            if "packing_and_stuffing_location" in data:
-                data["packing_and_stuffing_location"] = match
+    if stuffing:
+        if frappe.db.exists("Warehouse", stuffing):
+            if data.get("stuffing_at") == "Warehouse":
+                data["stuffing_warehouse"] = stuffing
+        else:
+            match = frappe.db.get_value(
+                "Warehouse",
+                {"name": ("like", f"%{stuffing}%")},
+                "name"
+            )
+            if match:
+                if "stuffing_location" in data:
+                    data["stuffing_location"] = match
+                if "packing_and_stuffing_location" in data:
+                    data["packing_and_stuffing_location"] = match
+                if data.get("stuffing_at") == "Warehouse":
+                    data["stuffing_warehouse"] = match
 
     # ── Normalize EXW Sub-Type ───────────────────────────────
     EXW_SUBTYPE_MAP = {

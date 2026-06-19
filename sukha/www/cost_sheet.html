@@ -833,9 +833,10 @@
               <label id="lbl-container-label">Container type</label>
               <select class="form-control" id="inp_container" onchange="updateContainerDefaults()">
                 <option value="" selected>Select...</option>
-                <option value="20'FT">20'FT</option>
-                <option value="40'FT">40'FT</option>
-                <option value="20'HC">20'HC</option>
+                <option value="20' FCL">20' FCL</option>
+                <option value="40' FCL">40' FCL</option>
+                <option value="20' ISO">20' ISO</option>
+                <option value="LCL">LCL</option>
               </select>
             </div>
             <div class="form-group">
@@ -2769,8 +2770,10 @@
         supplier_payment_terms: $('inp_supp_terms')?.value || '',
         stuffing_at: $('inp_stuffing_at')?.value || '',
         stuffing_location: $('inp_stuffing_loc')?.value || '',
+        stuffing_warehouse: $('inp_stuffing_at')?.value === 'Warehouse' ? ($('inp_stuffing_loc')?.value || '') : '',
         container_type: $('inp_container')?.value || '',
         packing_type: $('inp_packing_type')?.value || '',
+        custom_std_pakcing: $('inp_std_packing')?.value || '',
         packing_unit_size: parseFloat($('inp_unit_size')?.value || 0),
         units_per_fcl: parseFloat($('inp_units_per_fcl')?.value || 0),
         total_fcl: parseFloat($('inp_total_fcl')?.value || 0),

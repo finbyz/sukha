@@ -501,6 +501,7 @@ class CostSheetDashboard {
 				'delivery_location': 'inp_destination',
 				'stuffing_at': 'inp_stuffing_at',
 				'stuffing_location': 'inp_stuffing_loc',
+				'stuffing_warehouse': 'inp_stuffing_loc',
 
 				// Container & Packing
 				'container_type': 'inp_container',
@@ -873,6 +874,13 @@ class CostSheetDashboard {
 			"40' FCL": "40' FCL",
 			"20' ISO": "20' ISO",
 			"LCL": "LCL",
+			"20'FT": "20' FCL",
+			"40'FT": "40' FCL",
+			"20'HC": "20' FCL",
+			"20 FT": "20' FCL",
+			"40 FT": "40' FCL",
+			"40 HC": "40' FCL",
+			"ISO Tank Container": "20' ISO",
 			"Supplier's Place": "Supplier's Premises",
 			"Supplier Premises": "Supplier's Premises",
 			"Own Warehouse - Panoli": "Own Warehouse — Panoli",

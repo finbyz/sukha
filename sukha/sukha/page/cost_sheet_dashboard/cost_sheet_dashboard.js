@@ -505,6 +505,7 @@ class CostSheetDashboard {
 				// Container & Packing
 				'container_type': 'inp_container',
 				'packing_type': 'inp_packing_type',
+				'custom_packing_type': 'inp_packing_type',
 				'packing_unit_size': 'inp_unit_size',
 				'std_packing': 'inp_std_packing',
 				'custom_std_pakcing': 'inp_std_packing',
@@ -572,7 +573,7 @@ class CostSheetDashboard {
 
 			// Fields that should be set AFTER product change events settle
 			// (because the iframe repopulates these dropdowns when product changes)
-			const deferredFields = ['packing_type', 'std_packing', "custom_std_pakcing"];
+			const deferredFields = ['packing_type', 'custom_packing_type', 'std_packing', "custom_std_pakcing"];
 			const deferredValues = {};
 
 			// Populate main fields

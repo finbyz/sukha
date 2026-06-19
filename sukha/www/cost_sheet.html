@@ -3365,6 +3365,7 @@
             // Populate Packing Type dropdown from custom_packing_type
             const pTypeEl = $('inp_packing_type');
             if (pTypeEl) {
+              const currentVal = pTypeEl.value;
               const pTypes = doc.custom_packing_type || [];
               pTypeEl.innerHTML = '<option value="">Select...</option>';
               pTypes.forEach(row => {
@@ -3375,6 +3376,16 @@
                   pTypeEl.appendChild(opt);
                 }
               });
+              if (currentVal) {
+                let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
+                if (!optionExists) {
+                  const opt = document.createElement('option');
+                  opt.value = currentVal;
+                  opt.textContent = currentVal;
+                  pTypeEl.appendChild(opt);
+                }
+                pTypeEl.value = currentVal;
+              }
             }
           },
           error: () => {
@@ -3408,6 +3419,7 @@
         // Populate Packing Type dropdown from parent response
         const pTypeEl = $('inp_packing_type');
         if (pTypeEl) {
+          const currentVal = pTypeEl.value;
           const pTypes = e.data.packings || [];
           pTypeEl.innerHTML = '<option value="">Select...</option>';
           pTypes.forEach(row => {
@@ -3418,6 +3430,16 @@
               pTypeEl.appendChild(opt);
             }
           });
+          if (currentVal) {
+            let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
+            if (!optionExists) {
+              const opt = document.createElement('option');
+              opt.value = currentVal;
+              opt.textContent = currentVal;
+              pTypeEl.appendChild(opt);
+            }
+            pTypeEl.value = currentVal;
+          }
         }
       }
 
@@ -3837,7 +3859,7 @@
         const containerType = urlParams.get('container_type');
         if (containerType) setDropdownValue('inp_container', containerType, true);
 
-        const packingType = urlParams.get('packing_type');
+        const packingType = urlParams.get('packing_type') || urlParams.get('custom_packing_type');
         if (packingType) setDropdownValue('inp_packing_type', packingType);
 
         const unitSize = urlParams.get('unit_size');

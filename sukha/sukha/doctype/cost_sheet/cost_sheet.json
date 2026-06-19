@@ -271,6 +271,7 @@
    "label": "Currency & Exchange"
   },
   {
+   "default": "USD",
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
@@ -287,6 +288,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "0.30",
    "fieldname": "exchange_premium",
    "fieldtype": "Currency",
    "label": "Exchange Premium",

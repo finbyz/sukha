@@ -1303,11 +1303,11 @@ class CostSheetDashboard {
 				],
 				"Export": [
 					"product", "customer", "pol",
-					"supplier", "packing_type", "packing_unit_size", "total_fcl"
+					"packing_type", "packing_unit_size", "total_fcl"
 				],
 				"Direct Export": [
 					"product", "customer", "pol",
-					"supplier", "packing_type", "packing_unit_size", "total_fcl"
+					"packing_type", "packing_unit_size", "total_fcl"
 				]
 			};
 

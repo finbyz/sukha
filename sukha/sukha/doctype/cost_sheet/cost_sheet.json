@@ -357,7 +357,7 @@
    "fieldname": "container_type",
    "fieldtype": "Select",
    "label": "Container Type",
-   "options": "\n20 FT\n40 FT\n40 HC\nISO Tank Container"
+   "options": "\n20' FCL\n40' FCL\n20' ISO \nLCL"
   },
   {
    "fieldname": "packing_type",

@@ -9,7 +9,7 @@ frappe.ui.form.on('Opportunity', {
         frm.set_value("custom_std_pakcing", "");
         apply_std_packing_filter(frm);
     },
-     custom_country_of__destination__ship_to_destination(frm) {
+    custom_country_of__destination__ship_to_destination(frm) {
         set_port_filter(frm);
         frm.set_value("custom_port_of_destination_c", ""); // clear old value
     },
@@ -70,7 +70,7 @@ frappe.ui.form.on('Opportunity', {
                             options: ['CIF', 'FOB', 'EXW'],
                             default: frm.doc.custom_incoterm || 'CIF',
                             reqd: 1,
-                            onchange: function() {
+                            onchange: function () {
                                 let val = this.get_value();
                                 if (val === 'EXW') {
                                     d.set_df_property('exw_sub_type', 'hidden', 0);
@@ -98,7 +98,7 @@ frappe.ui.form.on('Opportunity', {
                         }
                     ],
                     primary_action_label: __('Proceed'),
-                    primary_action: function(values) {
+                    primary_action: function (values) {
                         d.hide();
                         // Prepare data object to pass to Cost Sheet Dashboard
                         const costSheetData = {
@@ -185,26 +185,26 @@ frappe.ui.form.on('Opportunity', {
         contact_details(frm);
 
     },
-    	custom_product_name(frm) {
+    custom_product_name(frm) {
 
-		if (!frm.doc.custom_product_name) {
-			return;
-		}
+        if (!frm.doc.custom_product_name) {
+            return;
+        }
 
-		frm.set_value("custom_packing_type", "");
-		frm.set_value("custom_std_pakcing", "");
+        frm.set_value("custom_packing_type", "");
+        frm.set_value("custom_std_pakcing", "");
 
-		frappe.db.get_doc("Item", frm.doc.custom_product_name)
-			.then(item => {
+        frappe.db.get_doc("Item", frm.doc.custom_product_name)
+            .then(item => {
 
-				// Packing Type options from Item
-				frm.packing_types = (item.custom_packing_type || [])
-					.map(row => row.packing_type)
-					.filter(Boolean);
+                // Packing Type options from Item
+                frm.packing_types = (item.custom_packing_type || [])
+                    .map(row => row.packing_type)
+                    .filter(Boolean);
 
-				frm.refresh_field("custom_packing_type");
-			});
-	},
+                frm.refresh_field("custom_packing_type");
+            });
+    },
     // custom_product_name(frm) {
 
     //     if (!frm.doc.custom_product_name) return;
@@ -232,10 +232,10 @@ frappe.ui.form.on('Opportunity', {
     create_prospect_from_opportunity: async function (frm, prospect_type) {
         let lead = await frappe.db.get_doc("Lead", frm.doc.party_name);
         let d = new frappe.ui.Dialog({
-            title: __('Create Prospect'),
+            title: __('Create L3/Qualified Lead'),
             fields: [
                 {
-                    label: __('Prospect Name'),
+                    label: __('L3/Qualified Lead Name'),
                     fieldname: 'prospect_name',
                     fieldtype: 'Data',
                     default: lead.company_name || lead.lead_name,
@@ -243,10 +243,10 @@ frappe.ui.form.on('Opportunity', {
                     description: __('Name of the company / prospect')
                 },
             ],
-            primary_action_label: __('Create Prospect'),
+            primary_action_label: __('Create L3/Qualified Lead'),
             primary_action: function (values) {
                 if (!values.prospect_name) {
-                    frappe.msgprint(__('Please enter a Prospect Name.'));
+                    frappe.msgprint(__('Please enter a L3/Qualified Lead Name.'));
                     return;
                 }
 
@@ -260,7 +260,7 @@ frappe.ui.form.on('Opportunity', {
                         prospect_type: prospect_type
                     },
                     freeze: true,
-                    freeze_message: __('Creating Prospect...'),
+                    freeze_message: __('Creating L3/Qualified Lead..'),
                     callback: function (r) {
                         if (!r.exc && r.message) {
                             d.hide();
@@ -369,58 +369,58 @@ frappe.ui.form.on('Opportunity', {
 
 function apply_std_packing_filter(frm) {
 
-	if (
-		!frm.doc.custom_product_name ||
-		!frm.doc.custom_packing_type
-	) {
-		return;
-	}
+    if (
+        !frm.doc.custom_product_name ||
+        !frm.doc.custom_packing_type
+    ) {
+        return;
+    }
 
-	frappe.db.get_doc("Item", frm.doc.custom_product_name)
-		.then(item => {
+    frappe.db.get_doc("Item", frm.doc.custom_product_name)
+        .then(item => {
 
-			// Item child table fieldname
-			const matched_std_packings =
-				(item.custom_standard_packing || [])
-					.filter(row =>
-						row.packing_type === frm.doc.custom_packing_type
-					)
-					.map(row => row.std_packing)
-					.filter(Boolean);
+            // Item child table fieldname
+            const matched_std_packings =
+                (item.custom_standard_packing || [])
+                    .filter(row =>
+                        row.packing_type === frm.doc.custom_packing_type
+                    )
+                    .map(row => row.std_packing)
+                    .filter(Boolean);
 
-			console.log(
-				"Selected Packing Type:",
-				frm.doc.custom_packing_type
-			);
+            console.log(
+                "Selected Packing Type:",
+                frm.doc.custom_packing_type
+            );
 
-			console.log(
-				"Matched Std Packing:",
-				matched_std_packings
-			);
+            console.log(
+                "Matched Std Packing:",
+                matched_std_packings
+            );
 
-			frm.set_query("custom_std_pakcing", () => {
-				return {
-					filters: {
-						name: [
-							"in",
-							matched_std_packings.length
-								? matched_std_packings
-								: ["__NO_VALUE__"]
-						]
-					}
-				};
-			});
+            frm.set_query("custom_std_pakcing", () => {
+                return {
+                    filters: {
+                        name: [
+                            "in",
+                            matched_std_packings.length
+                                ? matched_std_packings
+                                : ["__NO_VALUE__"]
+                        ]
+                    }
+                };
+            });
 
-			frm.refresh_field("custom_std_pakcing");
+            frm.refresh_field("custom_std_pakcing");
 
-			// Auto select if only one option
-			if (matched_std_packings.length === 1) {
-				frm.set_value(
-					"custom_std_pakcing",
-					matched_std_packings[0]
-				);
-			}
-		});
+            // Auto select if only one option
+            if (matched_std_packings.length === 1) {
+                frm.set_value(
+                    "custom_std_pakcing",
+                    matched_std_packings[0]
+                );
+            }
+        });
 }
 
 

@@ -868,9 +868,10 @@ class CostSheetDashboard {
 	normalize_default_value(val) {
 		if (!val) return "";
 		const mapping = {
-			"20' FCL": "20 FT",
-			"40' FCL": "40 FT",
-			"20' ISO": "20 ISO",
+			"20' FCL": "20' FCL",
+			"40' FCL": "40' FCL",
+			"20' ISO": "20' ISO",
+			"LCL": "LCL",
 			"Supplier's Place": "Supplier's Premises",
 			"Supplier Premises": "Supplier's Premises",
 			"Own Warehouse - Panoli": "Own Warehouse — Panoli",
@@ -972,10 +973,10 @@ class CostSheetDashboard {
 		// Hardcoded options from Cost Sheet DocType JSON (must stay in sync with doctype)
 		const field_options = {
 			'container_type': [
-				'20 FT',
-				'40 FT',
-				'40 HC',
-				'ISO Tank Container'
+				'20\' FCL',
+				'40\' FCL',
+				'20\' ISO',
+				'LCL'
 			],
 			'packing_type': [
 				'Bags',

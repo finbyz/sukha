@@ -330,6 +330,45 @@ def create_prospect_from_lead(lead_name, prospect_name, create_contact=False, pr
     fill_if_empty("website", getattr(lead, "website", None))
     fill_if_empty("no_of_employees", getattr(lead, "no_of_employees", None))
     fill_if_empty("prospect_owner", getattr(lead, "lead_owner", None))
+    
+    full_name = getattr(lead, "full_name", None)
+    if not full_name:
+        full_name = getattr(lead, "lead_name", None)
+    
+    if full_name:
+        fill_if_empty("custom_contact_person_for_soft_inquiry_b", full_name)
+    
+    # Map 2: mobile_no to custom_contact_number (PHONE ONLY)
+    mobile_no = getattr(lead, "mobile_no", None)
+    if not mobile_no:
+        # Fallback to phone field if mobile_no is empty
+        mobile_no = getattr(lead, "phone", None)
+    
+    # Also try to get from Contact if linked
+    if not mobile_no and getattr(lead, "custom_contact_person", None):
+        try:
+            contact = frappe.get_doc("Contact", lead.custom_contact_person)
+            if contact.phone:
+                mobile_no = contact.phone
+            elif contact.mobile_no:
+                mobile_no = contact.mobile_no
+            elif contact.phone_nos:
+                for phone_entry in contact.phone_nos:
+                    if phone_entry.is_primary_phone or phone_entry.is_primary_mobile_no:
+                        mobile_no = phone_entry.phone or phone_entry.custom_contact_number
+                        break
+                if not mobile_no:
+                    mobile_no = contact.phone_nos[0].phone or contact.phone_nos[0].custom_contact_number
+        except Exception as e:
+            frappe.logger().warning(f"Could not fetch phone from contact: {str(e)}")
+    
+    if mobile_no:
+        fill_if_empty("custom_contact_number_d", mobile_no)
+    
+    # Map 3: email_id to custom_designation_e (EMAIL ONLY)
+    email_id = getattr(lead, "email_id", None)
+    if email_id:
+        fill_if_empty("custom_contact_person_emaiil_id_c", email_id)
 
     if prospect_type == "qualified_lead":
         safe_set("custom_buyer_type", getattr(lead, "custom_buyer_type", None))

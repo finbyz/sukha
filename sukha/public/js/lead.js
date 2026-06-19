@@ -433,7 +433,7 @@ frappe.ui.form.on('Lead', {
 
         try {
             let contact = await frappe.db.get_doc('Contact', frm.doc.custom_contact_person);
-            
+
             // Set contact person for soft inquiry
             frm.set_value('custom_contact_person_for_soft_inquiry', frm.doc.custom_contact_person);
 
@@ -793,7 +793,7 @@ frappe.ui.form.on('Lead', {
                 prospect_type: prospect_type
             },
             freeze: true,
-            freeze_message: __('Creating Prospect...'),
+            freeze_message: __('Creating L3-Prospect..'),
             callback: function (r) {
 
                 if (!r.exc && r.message) {
@@ -1124,8 +1124,8 @@ function render_lead_top_summary(frm) {
             ? (
                 frm.doc.company_name ||
                 frm.doc.custom_namee_of_the_company ||
-                frm.doc.first_name  ||
-                        ""
+                frm.doc.first_name ||
+                ""
             )
             : (
                 frm.doc.custom_sales_type === "Domestic / Merchant"

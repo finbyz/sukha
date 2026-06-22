@@ -1313,38 +1313,138 @@ class CostSheetDashboard {
 	// DYNAMIC REQUIRED FIELDS
 	// ─────────────────────────────────────────────────────────────
 
-	setup_dynamic_required_fields(iframe) {
-		try {
-			const doc = iframe.contentDocument || iframe.contentWindow.document;
+	// setup_dynamic_required_fields(iframe) {
+	// 	try {
+	// 		const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-			this.required_rules = {
-				"Domestic": [
-					"product", "customer", "destination",
-					"packing_type", "packing_unit_size", "total_fcl"
-				],
-				"Export": [
-					"product", "customer", "pol",
-					"packing_type", "packing_unit_size", "total_fcl"
-				],
-				"Direct Export": [
-					"product", "customer", "pol",
-					"packing_type", "packing_unit_size", "total_fcl"
-				]
+	// 		this.required_rules = {
+	// 			"Domestic": [
+	// 				"product", "customer", "destination",
+	// 				"packing_type", "packing_unit_size", "total_fcl"
+	// 			],
+	// 			"Export": [
+	// 				"product", "customer", "pol",
+	// 				"packing_type", "packing_unit_size", "total_fcl"
+	// 			],
+	// 			"Direct Export": [
+	// 				"product", "customer", "pol",
+	// 				"packing_type", "packing_unit_size", "total_fcl"
+	// 			]
+	// 		};
+
+	// 		const $sale_type = this.get_iframe_select(doc, [
+	// 			'#type-of-sale', '[name="type_of_sale"]', '#inp_type_of_sale', 'select[id*="sale"]'
+	// 		]);
+
+	// 		this.apply_required_fields(doc, $sale_type.val() || "Domestic");
+
+	// 		$sale_type.on("change", (e) => {
+	// 			this.apply_required_fields(doc, e.target.value);
+	// 		});
+
+	// 	} catch (e) {
+	// 		console.error("Dynamic required setup error:", e);
+	// 	}
+	// }
+	setup_dynamic_required_fields(iframe) {
+		const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+		// Add CSS once
+		if (!doc.getElementById("required-style")) {
+			const style = doc.createElement("style");
+			style.id = "required-style";
+			style.innerHTML = `
+				.required-empty{
+					border:1px solid #ef4444 !important;
+					box-shadow:none !important;
+				}
+
+				.req-marker{
+					color:#ef4444;
+					font-weight:bold;
+					margin-left:4px;
+				}
+			`;
+			doc.head.appendChild(style);
+		}
+
+		const refreshFieldState = (field) => {
+			if (!field) return;
+
+			const required = field.dataset.required === "1";
+
+			if (!required) return;
+
+			const value = (field.value || "").trim();
+
+			const formGroup = field.closest(".form-group");
+			const label = formGroup ? formGroup.querySelector("label") : null;
+
+			let marker = label
+				? label.querySelector(".req-marker")
+				: null;
+
+			if (!value) {
+
+				field.classList.add("required-empty");
+
+				if (label && !marker) {
+					// marker = document.createElement("span");
+					marker = doc.createElement("span");
+					marker.className = "req-marker";
+					marker.innerHTML = "*";
+					label.appendChild(marker);
+				}
+
+			} else {
+				field.classList.remove("required-empty");
+				field.style.border = "";
+				field.style.boxShadow = "";
+
+				// field.classList.remove("required-empty");
+
+				if (marker) {
+					marker.remove();
+				}
+			}
+		};
+
+		// All mandatory fields
+		const mandatory_fields = [
+			"inp_user_incoterm",
+			"inp_user_origin",
+			"inp_product",
+			"inp_customer",
+			"inp_cust_terms",
+			"inp_pol",
+			"inp_stuffing_at",
+			"inp_unit_size",
+			"inp_total_fcl",
+			"inp_cs_currency",
+			"inp_base_rate",
+			"inp_packing_type"
+		];
+
+		mandatory_fields.forEach(fieldname => {
+
+			const field = doc.getElementById(fieldname);
+
+			if (!field) return;
+
+			field.dataset.required = "1";
+
+			field.removeEventListener("change", field._requiredHandler);
+			field.removeEventListener("input", field._requiredHandler);
+
+			field._requiredHandler = () => {
+				refreshFieldState(field);
 			};
 
-			const $sale_type = this.get_iframe_select(doc, [
-				'#type-of-sale', '[name="type_of_sale"]', '#inp_type_of_sale', 'select[id*="sale"]'
-			]);
+			field.addEventListener("change", field._requiredHandler);
+			field.addEventListener("input", field._requiredHandler);
 
-			this.apply_required_fields(doc, $sale_type.val() || "Domestic");
-
-			$sale_type.on("change", (e) => {
-				this.apply_required_fields(doc, e.target.value);
-			});
-
-		} catch (e) {
-			console.error("Dynamic required setup error:", e);
-		}
+			refreshFieldState(field);
+		});
 	}
 
 	apply_required_fields(doc, rule_name) {
@@ -1391,27 +1491,73 @@ class CostSheetDashboard {
 	}
 
 	validate_dynamic_required(iframe) {
-		const doc = iframe.contentDocument || iframe.contentWindow.document;
-		let missing = [];
 
-		$(doc).find("[required]").each(function () {
-			const val = $(this).val();
-			if (!val || !String(val).trim()) {
-				const label = $(this).closest(".form-group").find("label")
-					.text().replace("*", "").trim();
-				missing.push(label || $(this).attr("name"));
+		const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+		let valid = true;
+		let firstInvalid = null;
+
+		doc.querySelectorAll("[data-required='1']").forEach(field => {
+
+			const value = (field.value || "").trim();
+
+			if (!value) {
+
+				valid = false;
+
+				field.classList.add("required-empty");
+
+				if (!firstInvalid) {
+					firstInvalid = field;
+				}
 			}
 		});
 
-		if (missing.length) {
+		if (!valid) {
+
+			if (firstInvalid) {
+				firstInvalid.scrollIntoView({
+					behavior: "smooth",
+					block: "center"
+				});
+
+				firstInvalid.focus();
+			}
+
 			frappe.msgprint({
-				title: __("Missing Required Fields"),
+				title: __("Mandatory Fields"),
 				indicator: "red",
-				message: missing.map(f => `• ${f}`).join("<br>")
+				message: __("Please fill all mandatory fields.")
 			});
+
 			return false;
 		}
 
 		return true;
 	}
+
+	// validate_dynamic_required(iframe) {
+	// 	const doc = iframe.contentDocument || iframe.contentWindow.document;
+	// 	let missing = [];
+
+	// 	$(doc).find("[required]").each(function () {
+	// 		const val = $(this).val();
+	// 		if (!val || !String(val).trim()) {
+	// 			const label = $(this).closest(".form-group").find("label")
+	// 				.text().replace("*", "").trim();
+	// 			missing.push(label || $(this).attr("name"));
+	// 		}
+	// 	});
+
+	// 	if (missing.length) {
+	// 		frappe.msgprint({
+	// 			title: __("Missing Required Fields"),
+	// 			indicator: "red",
+	// 			message: missing.map(f => `• ${f}`).join("<br>")
+	// 		});
+	// 		return false;
+	// 	}
+
+	// 	return true;
+	// }
 }

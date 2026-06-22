@@ -1431,6 +1431,25 @@ class CostSheetDashboard {
 
 			if (!field) return;
 
+					field.dataset.required = "1";
+					if (fieldname === "inp_customer") {
+
+				const lead = doc.getElementById("inp_lead");
+				const prospect = doc.getElementById("inp_prospect");
+
+				const hasLead =
+					lead &&
+					String(lead.value || "").trim();
+
+				const hasProspect =
+					prospect &&
+					String(prospect.value || "").trim();
+
+				if (hasLead || hasProspect) {
+					return;
+				}
+			}
+
 			field.dataset.required = "1";
 
 			field.removeEventListener("change", field._requiredHandler);
@@ -1489,52 +1508,109 @@ class CostSheetDashboard {
 			</style>
 		`);
 	}
-
 	validate_dynamic_required(iframe) {
 
-		const doc = iframe.contentDocument || iframe.contentWindow.document;
+			const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-		let valid = true;
-		let firstInvalid = null;
+			let valid = true;
+			let firstInvalid = null;
+			let missing = [];
 
-		doc.querySelectorAll("[data-required='1']").forEach(field => {
+			doc.querySelectorAll("[data-required='1']").forEach(field => {
 
-			const value = (field.value || "").trim();
-
-			if (!value) {
-
-				valid = false;
-
-				field.classList.add("required-empty");
-
-				if (!firstInvalid) {
-					firstInvalid = field;
+				// Skip hidden fields
+				if (
+					field.offsetParent === null ||
+					field.closest('[style*="display:none"]')
+				) {
+					return;
 				}
-			}
-		});
 
-		if (!valid) {
+				const value = field.value;
 
-			if (firstInvalid) {
-				firstInvalid.scrollIntoView({
-					behavior: "smooth",
-					block: "center"
-				});
+				const hasValue =
+					value !== null &&
+					value !== undefined &&
+					String(value).trim() !== "";
 
-				firstInvalid.focus();
-			}
+				if (!hasValue) {
 
-			frappe.msgprint({
-				title: __("Mandatory Fields"),
-				indicator: "red",
-				message: __("Please fill all mandatory fields.")
+					valid = false;
+
+					field.classList.add("required-empty");
+
+					missing.push(field.id);
+
+					if (!firstInvalid) {
+						firstInvalid = field;
+					}
+				}
 			});
 
-			return false;
+			console.log("Missing Fields:", missing);
+
+			if (!valid) {
+
+				frappe.msgprint({
+					title: __("Mandatory Fields"),
+					indicator: "red",
+					message:
+						__("Missing Fields") +
+						"<br><br>" +
+						missing.join("<br>")
+				});
+
+				return false;
+			}
+
+			return true;
 		}
 
-		return true;
-	}
+	// validate_dynamic_required(iframe) {
+
+	// 	const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+	// 	let valid = true;
+	// 	let firstInvalid = null;
+
+	// 	doc.querySelectorAll("[data-required='1']").forEach(field => {
+
+	// 		const value = (field.value || "").trim();
+
+	// 		if (!value) {
+
+	// 			valid = false;
+
+	// 			field.classList.add("required-empty");
+
+	// 			if (!firstInvalid) {
+	// 				firstInvalid = field;
+	// 			}
+	// 		}
+	// 	});
+
+	// 	if (!valid) {
+
+	// 		if (firstInvalid) {
+	// 			firstInvalid.scrollIntoView({
+	// 				behavior: "smooth",
+	// 				block: "center"
+	// 			});
+
+	// 			firstInvalid.focus();
+	// 		}
+
+	// 		frappe.msgprint({
+	// 			title: __("Mandatory Fields"),
+	// 			indicator: "red",
+	// 			message: __("Please fill all mandatory fields.")
+	// 		});
+
+	// 		return false;
+	// 	}
+
+	// 	return true;
+	// }
 
 	// validate_dynamic_required(iframe) {
 	// 	const doc = iframe.contentDocument || iframe.contentWindow.document;

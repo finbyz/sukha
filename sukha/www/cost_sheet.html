@@ -749,7 +749,7 @@
           <!-- Fully Clickable/Editable Demo Fields -->
           <!-- hidden: numeric credit days for calculateEngine() -->
           <input type="hidden" id="inp_cust_credit_days" value="">
-          <div class="grid-4" style="margin-bottom:16px">
+          <div class="grid-5" style="margin-bottom:16px">
             <div class="form-group">
               <label>Product Name</label>
               <select class="form-control" id="inp_product" onchange="fetchProductGrade(this.value)">
@@ -765,7 +765,7 @@
             </div>
             <div class="form-group" id="wrapper-customer">
               <label>Customer Name</label>
-              <select class="form-control" id="inp_customer">
+              <select class="form-control" id="inp_customer" onchange="fetchCustomerName(this.value)">
                 <option value="">Select Customer...</option>
               </select>
             </div>
@@ -784,6 +784,10 @@
               <select class="form-control manual-input" id="inp_cust_terms" onchange="onCustTermsChange(this.value)">
                 <option value="">Select terms...</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label>Bill to Party Name</label>
+              <input type="text" class="form-control" id="inp_party_name" placeholder="Enter Party Name...">
             </div>
           </div>
 
@@ -1582,7 +1586,8 @@
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
                       <span style="color:var(--color-text-muted)">Special Export Document Required</span>
                       <select class="form-control manual-input"
-                        style="padding:1px 4px;font-size:10px;border-radius:3px;width:120px" id="inp_doc_select">
+                        style="padding:1px 4px;font-size:10px;border-radius:3px;width:120px" id="inp_doc_select"
+                        onchange="toggleSpecialDocOther(this.value)">
                         <option selected>Dropdown on list</option>
                         <option>BV Certification</option>
                         <option>SGS Verification</option>
@@ -1592,6 +1597,9 @@
                         <option>Any Other</option>
                         <option>Not Required</option>
                       </select>
+                      <input type="text" class="form-control manual-input" id="inp_doc_other"
+                        placeholder="Specify document..."
+                        style="padding:1px 4px;font-size:10px;border-radius:3px;width:120px;display:none;">
                     </div>
                     <div class="merchant-only d-none" style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
                       <span style="color:var(--color-text-muted)">Cost for Sp. Exp. Doc. ($)</span>
@@ -2762,7 +2770,12 @@
         name: $('inp_doc_name')?.value || '',
         naming_series: $('inp_naming_series')?.value || 'CS-.YYYY.-',
         cost_sheet_name: $('inp_cost_sheet_name')?.value ||
-          `Cost Sheet - ${$('inp_product')?.value || 'Product'} - ${new Date().toLocaleDateString()}`,
+          (() => {
+            const selectEl = $('inp_product');
+            const selectedText = selectEl && selectEl.selectedIndex >= 0 ? selectEl.options[selectEl.selectedIndex].text : '';
+            const prodName = (selectedText && selectedText !== 'Select Item...') ? selectedText : 'Product';
+            return `Cost Sheet - ${prodName} - ${new Date().toLocaleDateString()}`;
+          })(),
         cost_sheet_date: $('inp_cost_sheet_date')?.value || new Date().toISOString().split('T')[0],
         status: $('inp_status')?.value || 'Draft',
         company: $('inp_company')?.value ||
@@ -3321,6 +3334,48 @@
       // Frappe is available - used by Dashboard
     }
 
+    /* ─── SPECIAL EXPORT DOCUMENT TOGGLE ─── */
+    window.toggleSpecialDocOther = function(val) {
+      const otherEl = document.getElementById('inp_doc_other');
+      if (otherEl) {
+        otherEl.style.display = val === 'Any Other' ? 'inline-block' : 'none';
+        if (val !== 'Any Other') {
+          otherEl.value = '';
+        }
+      }
+    };
+
+    /* ─── CUSTOMER NAME AUTO-FETCH ─── */
+    function fetchCustomerName(customer) {
+      const partyNameEl = $('inp_party_name');
+      if (!partyNameEl) return;
+
+      if (!customer) {
+        partyNameEl.value = '';
+        return;
+      }
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        frappe.call({
+          method: 'frappe.client.get_value',
+          args: {
+            doctype: 'Customer',
+            filters: { name: customer },
+            fieldname: 'customer_name'
+          },
+          callback: (r) => {
+            if (r.message && r.message.customer_name) {
+              partyNameEl.value = r.message.customer_name;
+            }
+          }
+        });
+      } else {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'fetch_customer_name', customer: customer }, '*');
+        }
+      }
+    }
+
     /* ─── PRODUCT GRADE AUTO-FETCH ─── */
     /* Fetches custom_item_grade from the Item doctype when a product is selected.
        Field seen in Item: custom_item_grade = "64%" */
@@ -3430,6 +3485,13 @@
     /* Listen for responses from parent window (product grade, exchange rate) */
     window.addEventListener('message', (e) => {
       if (!e.data) return;
+
+      if (e.data.type === 'customer_name_response') {
+        const partyNameEl = $('inp_party_name');
+        if (partyNameEl) {
+          partyNameEl.value = e.data.customer_name || '';
+        }
+      }
 
       if (e.data.type === 'product_grade_response') {
         const gradeEl = $('inp_grade');
@@ -3852,11 +3914,16 @@
 
           console.log(`populateDropdown: Fetching ${doctype} for ${id}...`);
 
+          const fields = [fieldname];
+          if (doctype === 'Item' && fieldname === 'name') {
+            fields.push('item_name');
+          }
+
           frappe.call({
             method: 'frappe.client.get_list',
             args: {
               doctype: doctype,
-              fields: [fieldname],
+              fields: fields,
               limit_page_length: 9999,
               order_by: fieldname + ' asc'
             },
@@ -3871,7 +3938,7 @@
                   if (!val) return;
                   const opt = document.createElement('option');
                   opt.value = val;
-                  opt.textContent = val;
+                  opt.textContent = doctype === 'Item' && fieldname === 'item_name' ? (row.item_name || val) : val;
                   sel.appendChild(opt);
                 });
                 console.log(`populateDropdown: Successfully populated ${id} with ${sel.options.length} options`);
@@ -3915,6 +3982,21 @@
             opt.textContent = val;
             opt.selected = true;
             sel.appendChild(opt);
+            if (id === 'inp_product' && typeof frappe !== 'undefined' && frappe.call) {
+              frappe.call({
+                method: 'frappe.client.get_value',
+                args: {
+                  doctype: 'Item',
+                  filters: { name: val },
+                  fieldname: 'item_name'
+                },
+                callback: function (r) {
+                  if (r.message && r.message.item_name) {
+                    opt.textContent = r.message.item_name;
+                  }
+                }
+              });
+            }
           }
           if (triggerChange) {
             if (typeof sel.onchange === 'function') sel.onchange();
@@ -3924,6 +4006,11 @@
 
         const oppFrom = urlParams.get('opportunity_from');
         const partyName = urlParams.get('party_name');
+        const customerName = urlParams.get('customer_name');
+        if (customerName && $('inp_party_name')) {
+          $('inp_party_name').value = customerName;
+        }
+
         if (oppFrom === 'Lead') {
           if ($('wrapper-customer')) $('wrapper-customer').style.display = 'none';
           if ($('wrapper-lead')) $('wrapper-lead').style.display = 'block';

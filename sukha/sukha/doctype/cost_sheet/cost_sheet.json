@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2026-06-02 14:25:52.965086",
+ "creation": "2026-06-19 17:53:23.797397",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -311,13 +311,13 @@
    "fieldname": "port_of_loading",
    "fieldtype": "Link",
    "label": "Port of Loading",
-   "options": "Port of Loading"
+   "options": "Port Details"
   },
   {
    "fieldname": "port_of_discharge",
    "fieldtype": "Link",
    "label": "Port of Discharge",
-   "options": "Port of Discharge"
+   "options": "Port Details"
   },
   {
    "fieldname": "col_break_logistics",
@@ -359,7 +359,7 @@
    "fieldname": "container_type",
    "fieldtype": "Select",
    "label": "Container Type",
-   "options": "\n20' FCL\n40' FCL\n20' ISO \nLCL"
+   "options": "\n20' FCL\n40' FCL\n20' ISO\nLCL"
   },
   {
    "fieldname": "packing_type",
@@ -754,7 +754,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-16 16:53:50.812051",
+ "modified": "2026-06-23 12:29:48.683690",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

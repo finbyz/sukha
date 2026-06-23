@@ -332,6 +332,26 @@ class CostSheetDashboard {
 					}
 				});
 			}
+			// Customer name fetch request from iframe
+			if (event.data.type === 'fetch_customer_name') {
+				const iframe = document.getElementById('cost-sheet-iframe');
+				if (!iframe || !iframe.contentWindow) return;
+				frappe.call({
+					method: 'frappe.client.get_value',
+					args: {
+						doctype: 'Customer',
+						filters: { name: event.data.customer },
+						fieldname: 'customer_name'
+					},
+					callback: (r) => {
+						const customer_name = (r.message || {}).customer_name || '';
+						iframe.contentWindow.postMessage({
+							type: 'customer_name_response',
+							customer_name: customer_name
+						}, '*');
+					}
+				});
+			}
 		});
 	}
 
@@ -506,6 +526,7 @@ class CostSheetDashboard {
 				'product': 'inp_product',
 				'product_grade': 'inp_grade',
 				'customer': 'inp_customer',
+				'customer_name': 'inp_party_name',
 				'supplier': 'inp_supplier',
 				'company': 'inp_company',
 
@@ -633,6 +654,21 @@ class CostSheetDashboard {
 								opt.value = valueToSet;
 								opt.textContent = valueToSet;
 								element.appendChild(opt);
+								if (inputId === 'inp_product' || inputId.includes('product')) {
+									frappe.call({
+										method: 'frappe.client.get_value',
+										args: {
+											doctype: 'Item',
+											filters: { name: valueToSet },
+											fieldname: 'item_name'
+										},
+										callback: function (r) {
+											if (r.message && r.message.item_name) {
+												opt.textContent = r.message.item_name;
+											}
+										}
+									});
+								}
 							}
 						}
 
@@ -924,9 +960,14 @@ class CostSheetDashboard {
 		const $sel = this.get_iframe_select(doc, selectors);
 		if (!$sel.length) return;
 
+		const fields = ['name'];
+		if (doctype === 'Item') {
+			fields.push('item_name');
+		}
+
 		frappe.db.get_list(doctype, {
 			filters: filters,
-			fields: ['name'],
+			fields: fields,
 			limit: 500,
 			order_by: 'name asc'
 		}).then(records => {
@@ -963,6 +1004,21 @@ class CostSheetDashboard {
 				opt.selected = true;
 				selEl.appendChild(opt);
 				has_selection = true;
+				if (doctype === 'Item') {
+					frappe.call({
+						method: 'frappe.client.get_value',
+						args: {
+							doctype: 'Item',
+							filters: { name: current_val },
+							fieldname: 'item_name'
+						},
+						callback: function (r) {
+							if (r.message && r.message.item_name) {
+								opt.textContent = r.message.item_name;
+							}
+						}
+					});
+				}
 			}
 
 			records.forEach(row => {
@@ -971,7 +1027,7 @@ class CostSheetDashboard {
 
 				const opt = doc.createElement('option');
 				opt.value = row.name;
-				opt.textContent = row.name;
+				opt.textContent = doctype === 'Item' ? (row.item_name || row.name) : row.name;
 				if (is_selected) {
 					opt.selected = true;
 				}
@@ -1312,40 +1368,6 @@ class CostSheetDashboard {
 	// ─────────────────────────────────────────────────────────────
 	// DYNAMIC REQUIRED FIELDS
 	// ─────────────────────────────────────────────────────────────
-
-	// setup_dynamic_required_fields(iframe) {
-	// 	try {
-	// 		const doc = iframe.contentDocument || iframe.contentWindow.document;
-
-	// 		this.required_rules = {
-	// 			"Domestic": [
-	// 				"product", "customer", "destination",
-	// 				"packing_type", "packing_unit_size", "total_fcl"
-	// 			],
-	// 			"Export": [
-	// 				"product", "customer", "pol",
-	// 				"packing_type", "packing_unit_size", "total_fcl"
-	// 			],
-	// 			"Direct Export": [
-	// 				"product", "customer", "pol",
-	// 				"packing_type", "packing_unit_size", "total_fcl"
-	// 			]
-	// 		};
-
-	// 		const $sale_type = this.get_iframe_select(doc, [
-	// 			'#type-of-sale', '[name="type_of_sale"]', '#inp_type_of_sale', 'select[id*="sale"]'
-	// 		]);
-
-	// 		this.apply_required_fields(doc, $sale_type.val() || "Domestic");
-
-	// 		$sale_type.on("change", (e) => {
-	// 			this.apply_required_fields(doc, e.target.value);
-	// 		});
-
-	// 	} catch (e) {
-	// 		console.error("Dynamic required setup error:", e);
-	// 	}
-	// }
 	setup_dynamic_required_fields(iframe) {
 		const doc = iframe.contentDocument || iframe.contentWindow.document;
 
@@ -1565,75 +1587,4 @@ class CostSheetDashboard {
 
 			return true;
 		}
-
-	// validate_dynamic_required(iframe) {
-
-	// 	const doc = iframe.contentDocument || iframe.contentWindow.document;
-
-	// 	let valid = true;
-	// 	let firstInvalid = null;
-
-	// 	doc.querySelectorAll("[data-required='1']").forEach(field => {
-
-	// 		const value = (field.value || "").trim();
-
-	// 		if (!value) {
-
-	// 			valid = false;
-
-	// 			field.classList.add("required-empty");
-
-	// 			if (!firstInvalid) {
-	// 				firstInvalid = field;
-	// 			}
-	// 		}
-	// 	});
-
-	// 	if (!valid) {
-
-	// 		if (firstInvalid) {
-	// 			firstInvalid.scrollIntoView({
-	// 				behavior: "smooth",
-	// 				block: "center"
-	// 			});
-
-	// 			firstInvalid.focus();
-	// 		}
-
-	// 		frappe.msgprint({
-	// 			title: __("Mandatory Fields"),
-	// 			indicator: "red",
-	// 			message: __("Please fill all mandatory fields.")
-	// 		});
-
-	// 		return false;
-	// 	}
-
-	// 	return true;
-	// }
-
-	// validate_dynamic_required(iframe) {
-	// 	const doc = iframe.contentDocument || iframe.contentWindow.document;
-	// 	let missing = [];
-
-	// 	$(doc).find("[required]").each(function () {
-	// 		const val = $(this).val();
-	// 		if (!val || !String(val).trim()) {
-	// 			const label = $(this).closest(".form-group").find("label")
-	// 				.text().replace("*", "").trim();
-	// 			missing.push(label || $(this).attr("name"));
-	// 		}
-	// 	});
-
-	// 	if (missing.length) {
-	// 		frappe.msgprint({
-	// 			title: __("Missing Required Fields"),
-	// 			indicator: "red",
-	// 			message: missing.map(f => `• ${f}`).join("<br>")
-	// 		});
-	// 		return false;
-	// 	}
-
-	// 	return true;
-	// }
 }

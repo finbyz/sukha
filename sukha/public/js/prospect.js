@@ -8,7 +8,7 @@ frappe.ui.form.on('Prospect', {
                     doctype: "Item",
                     name: frm.doc.custom_product_name
                 },
-                callback: function(r) {
+                callback: function (r) {
                     if (r.message) {
                         // Store packing types for filter
                         frm.packing_types = r.message.custom_packing_type
@@ -65,16 +65,17 @@ frappe.ui.form.on('Prospect', {
                         return;
                     }
 
-                    Promise.all(remark_fields.map((fieldname) => frm.set_value(fieldname, reason)))
-                        .then(() => {
-                            dialog.hide();
-                            frappe.dom.freeze();
-                            resolve();
-                        })
-                        .catch((error) => {
-                            frappe.dom.unfreeze();
-                            reject(error);
-                        });
+                    remark_fields.forEach((fieldname) => {
+                        frm.doc[fieldname] = reason;
+                        frm.refresh_field(fieldname);
+
+                        // Also save directly to database
+                        frappe.db.set_value(frm.doctype, frm.docname, fieldname, reason);
+                    });
+
+                    dialog.hide();
+                    frappe.dom.freeze();
+                    resolve();
                 },
                 secondary_action_label: __("Cancel"),
                 secondary_action: function () {
@@ -124,7 +125,7 @@ frappe.ui.form.on('Prospect', {
                     doctype: "Item",
                     name: frm.doc.custom_product_name
                 },
-                callback: function(r) {
+                callback: function (r) {
                     if (r.message && r.message.custom_packing_type) {
                         frm.packing_types = r.message.custom_packing_type
                             .map(d => d.packing_type)
@@ -326,7 +327,6 @@ async function render_prospect_top_summary(frm) {
                 ${prospect_summary_item("State / Province", lead.state)}
                 ${prospect_summary_item("Territory", lead.territory)}
                 ${prospect_summary_item("Organisation Name", lead.company_name)}
-                ${prospect_summary_item("No of Employees", lead.no_of_employees)}
                 ${prospect_summary_item("Annual Revenue", lead.annual_revenue)}
                 ${prospect_summary_item("Industry", lead.industry)}
                 ${prospect_summary_item("Market Segment", lead.market_segment)}
@@ -366,7 +366,7 @@ async function render_prospect_top_summary(frm) {
                             color:var(--success);
                             padding:6px 14px;border-radius:999px;
                             font-size:12px;font-weight:600;
-                        ">Domestic</span>
+                        ">${lead.custom_buyer_type}</span>
                     </div>
 
                     <!-- Flat field grid -->

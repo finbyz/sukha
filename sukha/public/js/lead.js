@@ -948,6 +948,51 @@ frappe.ui.form.on("L1 Other Products", {
     }
 });
 
+frappe.ui.form.on("Source of Lead", {
+    sourece_of_lead(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+
+        const options_map = {
+            "Digital Sources": [
+                "Website Inquiry",
+                "LinkedIn Organic",
+                "LinkedIn Paid",
+                "Google Search",
+                "Email Campaign"
+            ],
+            "Offline Sources": [
+                "Exhibition / Trade Show",
+                "Conference / Seminar",
+                "Plant Visit",
+                "Cold Call"
+            ],
+            "Network Sources": [
+                "Referral - Existing Customer",
+                "Referral - Partner, Agents",
+                "Referral - Employee"
+            ],
+            "Data Sources": [
+                "Purchased Database / EXIM data",
+                "Internal Database",
+                "Previous Inquiry"
+            ],
+            "Other": []
+        };
+
+        const grid = frm.fields_dict.custom_source_of_lead_d.grid;
+        const docfield = frappe.meta.get_docfield(
+            "Source of Lead",
+            "specific_lead",
+            row.name
+        );
+
+        docfield.options = (options_map[row.sourece_of_lead] || []).join("\n");
+
+        frappe.model.set_value(cdt, cdn, "specific_lead", "");
+        frm.refresh_field("custom_source_of_lead_d");
+    }
+});
+
 function lead_summary_value(value) {
 
     if (

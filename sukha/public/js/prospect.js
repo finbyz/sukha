@@ -66,7 +66,6 @@ frappe.ui.form.on('Prospect', {
                     }
 
                     Promise.all(remark_fields.map((fieldname) => frm.set_value(fieldname, reason)))
-                        .then(() => frm.save())
                         .then(() => {
                             dialog.hide();
                             frappe.dom.freeze();

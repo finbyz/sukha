@@ -1139,12 +1139,12 @@ class CostSheetDashboard {
 
 			this.populate_select(doc,
 				['#inp_pod', 'select[id*="pod"]'],
-				'Port of Discharge'
+				'Port Details'
 			);
 
 			this.populate_select(doc,
 				['#inp_pol', 'select[id*="pol"]'],
-				'Port of Loading'
+				'Port Details'
 			);
 
 			// Product Grade will be populated based on selected Product
@@ -1182,7 +1182,7 @@ class CostSheetDashboard {
 				'Standard Packing'
 			);
 
-			// Port of Discharge is a Data field — no doctype link, no population needed
+
 
 			this.populate_select(doc,
 				['#inp_shipping_line', 'select[id*="shipping_line"]'],

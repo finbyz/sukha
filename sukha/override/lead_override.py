@@ -181,25 +181,8 @@ class CustomLead(Lead):
             frappe.clear_document_cache("Contact", contact_name)
 
     def check_email_id_is_unique(self):
-        if self.email_id:
-            if not frappe.db.get_single_value("CRM Settings", "allow_lead_duplication_based_on_emails"):
-                filters = {"email_id": self.email_id, "name": ["!=", self.name]}
-                if getattr(self, "custom_contact_person", None):
-                    filters["custom_contact_person"] = ["!=", self.custom_contact_person]
-
-                duplicate_leads = frappe.get_all("Lead", filters=filters)
-                if duplicate_leads:
-                    from frappe.utils import comma_and, get_link_to_form
-                    from frappe import _
-                    duplicate_leads = [
-                        frappe.bold(get_link_to_form("Lead", lead.name)) for lead in duplicate_leads
-                    ]
-                    frappe.throw(
-                        _("Email Address must be unique, it is already used in {0}").format(
-                            comma_and(duplicate_leads)
-                        ),
-                        frappe.DuplicateEntryError,
-                    )
+        # Duplicate emails are allowed on Lead records
+        pass
 
 @frappe.whitelist()
 def create_prospect_from_lead(lead_name, prospect_name, create_contact=False, prospect_type=None):

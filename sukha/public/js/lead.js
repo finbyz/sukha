@@ -634,6 +634,33 @@ frappe.ui.form.on('Lead', {
 
 
     refresh: function (frm) {
+        setTimeout(() => {
+            [
+                "custom_save_l0",
+                "custom_save_l1",
+                "custom_save"
+            ].forEach(fieldname => {
+                const field = frm.fields_dict[fieldname];
+
+                if (field && field.$wrapper) {
+                    // Align the button container to the right
+                    field.$wrapper.parent().css({
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        alignItems: "center"
+                    });
+
+                    // Increase button size
+                    field.$wrapper.find("button").css({
+                        width: "180px",      // Change as needed (200px, 220px, etc.)
+                        minWidth: "180px",
+                        height: "40px",
+                        fontSize: "14px",
+                        fontWeight: "600"
+                    });
+                }
+            });
+        }, 100);
         // Only show Items having Has Variants = 1
         if (frm.doc.custom_sales_type == "Direct Export Sales") {
             frm.set_query("custom_product", function () {

@@ -143,16 +143,26 @@ class CostSheetDashboard {
 				this.setup_dynamic_required_fields(iframe);
 
 				// Poll until key dropdowns are populated, then load data from localStorage
+				// Max retries: 25 × 200ms = 5 seconds, then give up and show the form
+				let _dropdownPollRetries = 0;
 				const waitForDropdowns = () => {
 					const doc = iframe.contentDocument || iframe.contentWindow.document;
 					const productSel = doc.getElementById('inp_product');
 					const customerSel = doc.getElementById('inp_customer');
 
-					if (productSel && productSel.options && productSel.options.length > 1 &&
-						customerSel && customerSel.options && customerSel.options.length > 1) {
+					const productReady = productSel && productSel.options && productSel.options.length > 1;
+					const customerReady = customerSel && customerSel.options && customerSel.options.length > 1;
+
+					if (productReady && customerReady) {
 						this.load_cost_sheet_data(iframe);
 						setTimeout(() => this.hide_loading_overlay(), 500);
+					} else if (_dropdownPollRetries >= 25) {
+						// Timed out after ~5 seconds — show the form anyway
+						console.warn('Cost Sheet: dropdowns did not populate in time, showing form anyway.');
+						this.load_cost_sheet_data(iframe);
+						this.hide_loading_overlay();
 					} else {
+						_dropdownPollRetries++;
 						setTimeout(waitForDropdowns, 200);
 					}
 				};

@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-06-29 12:56:59.349979",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "address_section",
+  "name1",
+  "email_id",
+  "street_name",
+  "city_name",
+  "country_name",
+  "column_break_plog",
+  "contact_person_name",
+  "contact_number",
+  "zip_code_postal_code",
+  "complete_address",
+  "tax_section",
+  "tax_id_no",
+  "ruc_no",
+  "vat_no"
+ ],
+ "fields": [
+  {
+   "fieldname": "address_section",
+   "fieldtype": "Section Break",
+   "label": "Complete Courier Address"
+  },
+  {
+   "fieldname": "contact_person_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contact Person Name"
+  },
+  {
+   "fieldname": "contact_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contact Number"
+  },
+  {
+   "fieldname": "email_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email ID",
+   "options": "Email"
+  },
+  {
+   "fieldname": "complete_address",
+   "fieldtype": "Small Text",
+   "label": "Complete Address",
+   "reqd": 1
+  },
+  {
+   "fieldname": "street_name",
+   "fieldtype": "Data",
+   "label": "Street Name"
+  },
+  {
+   "fieldname": "city_name",
+   "fieldtype": "Data",
+   "label": "City Name"
+  },
+  {
+   "fieldname": "zip_code_postal_code",
+   "fieldtype": "Data",
+   "label": "Zip Code / Postal Code"
+  },
+  {
+   "fieldname": "country_name",
+   "fieldtype": "Link",
+   "label": "Country Name",
+   "options": "Country"
+  },
+  {
+   "fieldname": "tax_section",
+   "fieldtype": "Section Break",
+   "label": "Tax Details"
+  },
+  {
+   "fieldname": "tax_id_no",
+   "fieldtype": "Data",
+   "label": "Tax ID No"
+  },
+  {
+   "fieldname": "ruc_no",
+   "fieldtype": "Data",
+   "label": "RUC No"
+  },
+  {
+   "fieldname": "vat_no",
+   "fieldtype": "Data",
+   "label": "VAT No"
+  },
+  {
+   "fieldname": "name1",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "fieldname": "column_break_plog",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-06-29 13:02:35.837558",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Courier Details",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

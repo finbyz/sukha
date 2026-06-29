@@ -361,14 +361,53 @@ class CostSheetDashboard {
 			args: { data: data },
 			callback: (r) => {
 				if (r.message) {
-					frappe.msgprint({
-						title: __('Success'),
-						message: __('Cost Sheet saved successfully'),
-						indicator: 'green'
-					});
+					const costSheetName = r.message.cost_sheet;
+					const quotationName = r.message.quotation;
+
 					// Clear localStorage after successful save
 					localStorage.removeItem('cost_sheet_load_data');
-					// DO NOT route to form - just stay on dashboard
+
+					// Build link buttons for the dialog
+					let linksHtml = `
+						<div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
+							<a href="/app/cost-sheet/${costSheetName}" target="_blank"
+								style="
+									display:inline-flex; align-items:center; gap:6px;
+									padding:8px 18px; border-radius:6px; font-size:13px; font-weight:600;
+									background:var(--primary); color:var(--white);
+									text-decoration:none;
+								">
+								<i class="octicon octicon-file-text"></i>
+								${__('Open Cost Sheet')} — ${costSheetName}
+							</a>
+					`;
+
+					if (quotationName) {
+						linksHtml += `
+							<a href="/app/quotation/${quotationName}" target="_blank"
+								style="
+									display:inline-flex; align-items:center; gap:6px;
+									padding:8px 18px; border-radius:6px; font-size:13px; font-weight:600;
+									background:var(--success); color:var(--white);
+									text-decoration:none;
+								">
+								<i class="octicon octicon-checklist"></i>
+								${__('Open Quotation')} — ${quotationName}
+							</a>
+						`;
+					}
+
+					linksHtml += `</div>`;
+
+					const msg = quotationName
+						? __('Cost Sheet and Quotation created successfully.')
+						: __('Cost Sheet saved. No Quotation created (missing party or product).');
+
+					frappe.msgprint({
+						title: __('Saved Successfully'),
+						message: msg + linksHtml,
+						indicator: 'green'
+					});
 				}
 			},
 			error: (r) => {

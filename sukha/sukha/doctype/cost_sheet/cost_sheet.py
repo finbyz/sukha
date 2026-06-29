@@ -817,4 +817,77 @@ def create_from_dashboard(data):
         doc.insert(ignore_permissions=True)
 
     frappe.db.commit()
-    return doc.name
+
+    # ── Create Quotation simultaneously ──────────────────────────
+    quotation_name = None
+    try:
+        quotation_name = create_quotation_from_cost_sheet(doc)
+        frappe.db.commit()
+    except Exception as e:
+        frappe.log_error(
+            message=frappe.get_traceback(),
+            title=f"Quotation creation failed for Cost Sheet {doc.name}"
+        )
+
+    return {
+        "cost_sheet": doc.name,
+        "quotation": quotation_name
+    }
+
+
+def create_quotation_from_cost_sheet(cost_sheet_doc):
+    """
+    Create a Quotation from a saved Cost Sheet document.
+
+    - If cost_sheet has a customer  → quotation_to = "Customer", party_name = customer
+    - If cost_sheet has a lead      → quotation_to = "Lead",     party_name = lead
+    - Items table: item_code = product, qty = total_quantity (MT)
+    """
+    doc = cost_sheet_doc
+
+    # Determine party
+    customer = cstr(doc.customer).strip()
+    lead = cstr(doc.lead).strip()
+
+    if customer:
+        quotation_to = "Customer"
+        party_name = customer
+        # Fetch customer display name for customer_name field
+        customer_name = frappe.db.get_value("Customer", customer, "customer_name") or customer
+    elif lead:
+        quotation_to = "Lead"
+        party_name = lead
+        customer_name = frappe.db.get_value("Lead", lead, "lead_name") or lead
+    else:
+        # Cannot create a quotation without a party — skip
+        return None
+
+    # Build Quotation
+    qty = flt(doc.total_quantity) or flt(doc.total_weight_mt) or 1
+    product = cstr(doc.product).strip()
+
+    if not product:
+        return None
+
+    quotation = frappe.new_doc("Quotation")
+    quotation.quotation_to = quotation_to
+    quotation.party_name = party_name
+    quotation.customer_name = customer_name
+
+    # Company
+    if doc.company:
+        quotation.company = doc.company
+
+    # Currency
+    if doc.currency:
+        quotation.currency = doc.currency
+
+    # Add item row
+    quotation.append("items", {
+        "item_code": product,
+        "qty": qty,
+        "uom": "MT",
+    })
+
+    quotation.insert(ignore_permissions=True)
+    return quotation.name

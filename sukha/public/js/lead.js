@@ -309,6 +309,7 @@ frappe.ui.form.on('Lead', {
     custom_sales_type(frm) {
         frm.refresh_fields();
         frm.refresh();
+        toggle_details_tab(frm);
 
         // Expand tabs for BOTH sales types, not just Direct Export Sales
         setTimeout(() => {
@@ -634,6 +635,7 @@ frappe.ui.form.on('Lead', {
 
 
     refresh: function (frm) {
+        toggle_details_tab(frm);
         setTimeout(() => {
             [
                 "custom_save_l0",
@@ -926,6 +928,20 @@ frappe.ui.form.on('Lead', {
         }
     }
 });
+
+function toggle_details_tab(frm) {
+    const hide = frm.doc.custom_sales_type === "Direct Export Sales";
+
+    [
+        "custom_basic_identification",
+        "custom_section_break_lsowl",
+        "custom_lead_snapshot_5"
+    ].forEach(fieldname => {
+        frm.set_df_property(fieldname, "hidden", hide);
+    });
+
+    frm.refresh_fields();
+}
 
 frappe.ui.form.on("L1 Other Products", {
     product_name(frm) {

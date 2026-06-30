@@ -1550,7 +1550,7 @@
 
                 <!-- Credit Cost Row -->
                 <tr>
-                  <td id="lbl-credit-cost-name">Credit Cost : 30 days</td>
+                  <td id="lbl-credit-cost-name">Credit Cost :</td>
                   <td class="text-right font-mono" id="lbl-marg-cr-tot">15,172</td>
                   <td class="text-right font-mono" id="lbl-marg-cr-mt">223</td>
                   <td class="text-right font-mono col-usd" id="lbl-marg-cr-utot">174</td>
@@ -2589,15 +2589,7 @@
       setTxt('lbl-marg-int-utot', intUsdTotal);
       setTxt('lbl-marg-int-umt', intUsdMt, 1);
 
-      // Read credit days from the dedicated hidden field (populated by onCustTermsChange)
-      const creditDays = parseFloat($('inp_cust_credit_days')?.value) || 0;
-      if ($('lbl-credit-cost-name')) {
-        const termsEl = $('inp_cust_terms');
-        const termsText = termsEl && termsEl.selectedIndex >= 0
-          ? termsEl.options[termsEl.selectedIndex]?.text || ''
-          : '';
-        $('lbl-credit-cost-name').textContent = `Credit Cost : ${termsText}`;
-      }
+      // Credit Cost % is entered manually by user — do NOT auto-update from payment terms
       const creditPctVal = parseFloat($('inp_dom_credit_pct')?.value) || 0;
       const creditPct = creditPctVal / 100;
       let creditTotalRs, creditMtRs, creditUsdMt, creditUsdTotal;
@@ -3614,7 +3606,7 @@
 
       if (!selectedName) {
         if (hiddenDays) hiddenDays.value = 0;
-        syncCreditPctFromDays(0);
+        // syncCreditPctFromDays(0);
         calculateEngine();
         return;
       }
@@ -3630,20 +3622,20 @@
           callback: (r) => {
             let days = extractDaysFromTermsName(selectedName);
             if (hiddenDays) hiddenDays.value = days;
-            syncCreditPctFromDays(days);
+            // syncCreditPctFromDays(days);
             calculateEngine();
           },
           error: () => {
             let days = extractDaysFromTermsName(selectedName);
             if (hiddenDays) hiddenDays.value = days;
-            syncCreditPctFromDays(days);
+            // syncCreditPctFromDays(days);
             calculateEngine();
           }
         });
       } else {
         let days = extractDaysFromTermsName(selectedName);
         if (hiddenDays) hiddenDays.value = days;
-        syncCreditPctFromDays(days);
+        // syncCreditPctFromDays(days);
         calculateEngine();
       }
     }

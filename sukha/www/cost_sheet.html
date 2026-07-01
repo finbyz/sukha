@@ -2358,7 +2358,7 @@ ll<!DOCTYPE html>
         let plyUsdMt = 0;
         let plyTotalUsd = 0;
         if (isExw) {
-          plyRsMt = qtyFcl > 0 ? (plyTotalRs / qtyFcl) : 0;
+          plyRsMt = qtyFcl > 0 ? (plyRsFcl/ qtyFcl) : 0;
           plyUsdMt = plyRsMt / csExr;
           plyTotalUsd = plyUsdMt * totalMt;
         } else {
@@ -2598,7 +2598,7 @@ ll<!DOCTYPE html>
       const intPctVal = parseFloat($('inp_int_cost_pct')?.value) || 0;
       let intTotalRs, intMtRs, intUsdMt, intUsdTotal;
       if (isExw) {
-        intMtRs = exwCostMtRs * (intPctVal / 100);
+        intMtRs = offeredMtRs * (intPctVal / 100);
         intTotalRs = exwCostRs * (intPctVal / 100);
         intUsdTotal = csExr ? intTotalRs / csExr : 0;
         intUsdMt = intUsdTotal ? intUsdTotal / totalMt : 0;

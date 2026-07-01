@@ -2619,8 +2619,9 @@ ll<!DOCTYPE html>
       const creditPct = creditPctVal / 100;
       let creditTotalRs, creditMtRs, creditUsdMt, creditUsdTotal;
       if (isExw) {
-        creditMtRs = exwCostMtRs * creditPct;
-        creditTotalRs = exwCostRs * creditPct;
+        // Use offered price per MT for credit cost Rs/MT so it reflects the offered rate
+        creditMtRs = offeredMtRs * creditPct;
+        creditTotalRs = creditMtRs * totalMt;
         creditUsdTotal = csExr ? creditTotalRs / csExr : 0;
         creditUsdMt = creditUsdTotal ? creditUsdTotal / totalMt : 0;
       } else {

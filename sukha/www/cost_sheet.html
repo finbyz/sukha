@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ll<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -802,14 +802,14 @@
                 <option value="">Select terms...</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group merchant-exw-hide">
               <label id="lbl-destination-label">Country of Destination</label>
               <select class="form-control" id="inp_destination">
                 <option value="" selected>Select Destination...</option>
               </select>
             </div>
-
-            <div class="form-group">
+        
+            <div class="form-group merchant-exw-hide domestic-exw-hide">
               <label>Final Country of Destination</label>
               <input type="text" class="form-control" id="inp_final_dest" placeholder="Enter Final Destination...">
             </div>
@@ -820,14 +820,20 @@
                 <option value="" selected>Select Port...</option>
               </select>
             </div>
-
-
-            <div class="form-group">
+        
+            <div class="form-group merchant-exw-hide">
               <label id="lbl-pol-label">Port of Loading</label>
               <select class="form-control" id="inp_pol">
                 <option value="" selected>Select Port...</option>
               </select>
             </div>
+            
+            <!-- NEW: Loading Location text field (shown only for Merchant Export EXW) -->
+            <div class="form-group merchant-exw-only domestic-exw-hide">
+              <label>Loading Location</label>
+              <input type="text" class="form-control" id="inp_loading_location" placeholder="Enter Loading Location...">
+            </div>
+            
             <div class="form-group">
               <label>Packing and Stuffing at <span class="req">*</span></label>
               <select class="form-control manual-input" id="inp_stuffing_at" onchange="updateStuffingLoc()">
@@ -842,7 +848,7 @@
                 <option value="">Select...</option>
               </select>
             </div>
-          </div>
+        </div>
 
           <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
@@ -1605,10 +1611,8 @@
                         style="width:70px;font-size:11px;padding:2px 4px" id="inp_mer_doc_usd_tot" value="320"
                         oninput="calculateEngine()">
                     </div>
-                    <span style="font-size:9px;color:var(--color-text-subtle);display:block">Special Export Documents
-                      Required (BV, SGS, PVOC, SONCAP, CRIA)</span>
-                    <span style="font-size:10px;color:var(--color-primary);font-weight:600"
-                      id="lbl-doc-helper-rate">BV/CRIA/PVOC/HC/Legalization ($/Container) [83]</span>
+                    <span style="font-size:9px;color:var(--color-text-subtle);display:block"></span>
+                    <span style="font-size:10px;color:var(--color-primary);font-weight:600" id="lbl-doc-helper-rate">BV/CRIA/PVOC/HC/Legalization ($/Container) <span style="display:inline-block;background:#D1FAE5;color:#065F46;border:1px solid #10B981;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:4px;vertical-align:middle;"></span></span>
                   </td>
                 </tr>
 
@@ -1637,7 +1641,7 @@
                   <td class="text-right font-mono col-usd" id="lbl-marg-dbk-utot">—</td>
                   <td class="text-right font-mono col-usd" id="lbl-marg-dbk-umt">—</td>
                   <td style="padding-left:16px;"><input type="number" step="0.1" class="cell-input cell-manual"
-                      style="width:50px;display:inline-block" id="cell_dbk_pct" value="1.1" oninput="calculateEngine()">
+                      style="width:80px;display:inline-block" id="cell_dbk_pct"oninput="calculateEngine()">
                     % Claim</td>
                 </tr>
                 <tr class="tr-benefit col-benefits d-none" id="row-marg-rodtep">
@@ -1647,7 +1651,7 @@
                   <td class="text-right font-mono col-usd" id="lbl-marg-rod-utot">—</td>
                   <td class="text-right font-mono col-usd" id="lbl-marg-rod-umt">—</td>
                   <td style="padding-left:16px;"><input type="number" step="0.1" class="cell-input cell-manual"
-                      style="width:50px;display:inline-block" id="cell_rodtep_pct" value="0.7"
+                      style="width:80px;display:inline-block" id="cell_rodtep_pct"
                       oninput="calculateEngine()"> % Claim</td>
                 </tr>
 
@@ -2073,6 +2077,10 @@
 
       document.querySelectorAll('.domestic-only').forEach(el => el.classList.toggle('d-none', !isDom && !isRepack));
       document.querySelectorAll('.domestic-hide').forEach(el => el.classList.toggle('d-none', isDom || isRepack));
+
+      const isDomesticExw = isDom && isExw;
+      document.querySelectorAll('.domestic-exw-hide').forEach(el => el.classList.toggle('d-none', isDomesticExw));
+      
       document.querySelectorAll('.merchant-only').forEach(el => el.classList.toggle('d-none', !isMer));
       document.querySelectorAll('.merchant-hide').forEach(el => el.classList.toggle('d-none', isMer));
       document.querySelectorAll('.repack-only').forEach(el => el.classList.toggle('d-none', !isRepack));
@@ -2080,7 +2088,20 @@
       document.querySelectorAll('.exw-only').forEach(el => el.classList.toggle('d-none', !isExw));
       document.querySelectorAll('.exw-hide').forEach(el => el.classList.toggle('d-none', isExw));
       document.querySelectorAll('.non-exw-only').forEach(el => el.classList.toggle('d-none', isExw));
+      // Merchant Export EXW specific toggles
+      const isMerchantExw = isMer && isExw;
+      document.querySelectorAll('.merchant-exw-hide').forEach(el => el.classList.toggle('d-none', isMerchantExw));
+      document.querySelectorAll('.merchant-exw-only').forEach(el => el.classList.toggle('d-none', !isMerchantExw));
       document.querySelectorAll('.col-usd').forEach(el => el.classList.toggle('d-none', isExw));
+
+      if (isMerchantExw) {
+        const destinationEl = $('inp_destination');
+        const finalDestEl = $('inp_final_dest');
+        const polEl = $('inp_pol');
+        if (destinationEl) destinationEl.value = '';
+        if (finalDestEl) finalDestEl.value = '';
+        if (polEl) polEl.value = '';
+      }
 
       /* Dynamically layout standard assembly tables versus direct Third-Country procurement grids */
       if ($('wrapper-standard-tables')) $('wrapper-standard-tables').classList.toggle('d-none', isTC);
@@ -2141,12 +2162,16 @@
       if ($('lbl-cs-type-view')) $('lbl-cs-type-view').textContent = mappedSheet;
 
       if ($('lbl-doc-helper-rate')) {
-        $('lbl-doc-helper-rate').textContent = isMer
+        const labelText = isMer
           ? 'Special Export Documents Required'
           : 'BV/CRIA/PVOC/HC/Legalization ($/Container)';
+        $('lbl-doc-helper-rate').innerHTML = labelText + ' <span style="display:inline-block;background:#D1FAE5;color:#065F46;border:1px solid #10B981;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:4px;vertical-align:middle;">0</span>';
       }
 
-      document.querySelectorAll('.col-benefits').forEach(el => el.classList.toggle('d-none', !isExport || isTC || !isRodtepActive || isAdvLicense));
+      const dbkVal = parseFloat($('cell_dbk_pct')?.value) || 0;
+      const rodtepVal = parseFloat($('cell_rodtep_pct')?.value) || 0;
+      const hasDbkRodtepValues = dbkVal > 0 || rodtepVal > 0;
+      document.querySelectorAll('.col-benefits').forEach(el => el.classList.toggle('d-none', !isExport || isTC || (!isRodtepActive && !hasDbkRodtepValues) || isAdvLicense));
 
       if ($('cell_dbk_pct')) {
         $('cell_dbk_pct').disabled = isAdvLicense;
@@ -2617,9 +2642,10 @@
 
       if ($('lbl-doc-helper-rate')) {
         const docPerFcl = totalFcl > 0 ? Math.round(docTotalUsd / totalFcl) : 0;
-        $('lbl-doc-helper-rate').textContent = isMerchant
+        const labelText = isMerchant
           ? 'Special Export Documents Required'
-          : `BV/CRIA/PVOC/HC/Legalization ($/Container) [${docPerFcl}]`;
+          : 'BV/CRIA/PVOC/HC/Legalization ($/Container)';
+        $('lbl-doc-helper-rate').innerHTML = labelText + ' <span style="display:inline-block;background:#D1FAE5;color:#065F46;border:1px solid #10B981;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:4px;vertical-align:middle;">' + docPerFcl + '</span>';
       }
       setTxt('lbl-marg-doc-tot', docTotalRs);
       setTxt('lbl-marg-doc-mt', docMtRs);
@@ -2792,6 +2818,7 @@
         country_of_destination: $('inp_destination')?.value || '',
         final_country_of_destination: $('inp_final_dest')?.value || '',
         delivery_location: $('inp_destination')?.value || '',
+        loading_location: $('inp_loading_location')?.value || '',
         supplier: $('inp_supplier')?.value || '',
         supplier_payment_terms: $('inp_supp_terms')?.value || '',
         stuffing_at: $('inp_stuffing_at')?.value || '',
@@ -2816,6 +2843,9 @@
 
         // Final Offered Price — resolved from active variant input
         final_offered_price: finalOfferedPrice,
+
+        // Field specifics for Merchant Export EXW
+        loading_location: $('inp_loading_location')?.value || '',
 
         // Product Cost Details (Child Table)
         product_cost_details: collectProductCostDetails(),
@@ -3369,108 +3399,179 @@
     /* ─── PRODUCT GRADE AUTO-FETCH ─── */
     /* Fetches custom_item_grade from the Item doctype when a product is selected.
        Field seen in Item: custom_item_grade = "64%" */
-    function fetchProductGrade(itemName) {
-      const gradeEl = $('inp_grade');
-      const statusEl = $('lbl-grade-status');
-      if (!gradeEl) return;
+    /* ─── PRODUCT GRADE AUTO-FETCH ─── */
+/* Fetches custom_item_grade, custom_duty_drawback_, custom_rodtep_ from Item doctype */
+/* ─── PRODUCT GRADE AUTO-FETCH ─── */
+/* Fetches custom_item_grade from the Item doctype when a product is selected.
+   Field seen in Item: custom_item_grade = "64%" */
+  /* ─── PRODUCT GRADE AUTO-FETCH ─── */
+function fetchProductGrade(itemCode) {
+  console.log('=== fetchProductGrade CALLED ===');
+  console.log('itemCode:', itemCode);
+  
+  const gradeEl = $('inp_grade');
+  const statusEl = $('lbl-grade-status');
+  if (!gradeEl) {
+    console.log('ERROR: gradeEl not found');
+    return;
+  }
 
-      if (!itemName) {
-        gradeEl.value = '';
-        if (statusEl) statusEl.textContent = '';
-        return;
-      }
+  if (!itemCode) {
+    console.log('itemCode is empty, resetting');
+    gradeEl.value = '';
+    if (statusEl) statusEl.textContent = '';
+    if ($('cell_dbk_pct')) $('cell_dbk_pct').value = '1.1';
+    if ($('cell_rodtep_pct')) $('cell_rodtep_pct').value = '0.7';
+    calculateEngine();
+    return;
+  }
 
-      if (statusEl) {
-        statusEl.textContent = '\u23F3 fetching…';
-        statusEl.style.color = 'var(--color-text-subtle)';
-      }
+  if (statusEl) {
+    statusEl.textContent = '\u23F3 fetching…';
+    statusEl.style.color = 'var(--color-text-subtle)';
+  }
 
-      if (typeof frappe !== 'undefined' && frappe.call) {
-        frappe.call({
-          method: 'frappe.client.get',
-          args: {
-            doctype: 'Item',
-            name: itemName
-          },
-          callback: (r) => {
-            const doc = r.message;
-            if (!doc) {
-              if (statusEl) { statusEl.textContent = 'item not found'; statusEl.style.color = '#EF4444'; }
-              return;
-            }
+  const applyDbkRodtep = (doc) => {
+    console.log('=== applyDbkRodtep called ===');
+    console.log('doc.custom_duty_drawback_:', doc.custom_duty_drawback_);
+    console.log('doc.custom_rodtep_:', doc.custom_rodtep_);
+    
+    let dbkValue = '';
+    let rodtepValue = '';
 
-            const grade = doc.custom_item_grade || '';
-            const parentItem = doc.variant_of || '';
-
-            if (grade) {
-              // Grade found directly on this item
-              if (!gradeEl.value) gradeEl.value = grade;
-              if (statusEl) {
-                statusEl.textContent = '\u2713 ' + grade;
-                statusEl.style.color = '#10B981';
-              }
-            } else if (parentItem) {
-              // This item is a variant — fetch grade from its parent template
-              if (statusEl) { statusEl.textContent = '\u23F3 fetching from parent…'; }
-              frappe.call({
-                method: 'frappe.client.get_value',
-                args: {
-                  doctype: 'Item',
-                  filters: { name: parentItem },
-                  fieldname: ['custom_item_grade']
-                },
-                callback: (rp) => {
-                  const parentGrade = (rp.message || {}).custom_item_grade || '';
-                  if (!gradeEl.value) gradeEl.value = parentGrade;
-                  if (statusEl) {
-                    statusEl.textContent = parentGrade ? '\u2713 ' + parentGrade : 'no grade on parent';
-                    statusEl.style.color = parentGrade ? '#10B981' : 'var(--color-text-subtle)';
-                  }
-                }
-              });
-            } else {
-              if (!gradeEl.value) gradeEl.value = '';
-              if (statusEl) { statusEl.textContent = 'no grade set on item'; statusEl.style.color = 'var(--color-text-subtle)'; }
-            }
-
-            // Populate Packing Type dropdown from custom_packing_type
-            const pTypeEl = $('inp_packing_type');
-            if (pTypeEl) {
-              const currentVal = pTypeEl.value;
-              const pTypes = doc.custom_packing_type || [];
-              pTypeEl.innerHTML = '<option value="">Select...</option>';
-              pTypes.forEach(row => {
-                if (row.packing_type) {
-                  const opt = document.createElement('option');
-                  opt.value = row.packing_type;
-                  opt.textContent = row.packing_type;
-                  pTypeEl.appendChild(opt);
-                }
-              });
-              if (currentVal) {
-                let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
-                if (!optionExists) {
-                  const opt = document.createElement('option');
-                  opt.value = currentVal;
-                  opt.textContent = currentVal;
-                  pTypeEl.appendChild(opt);
-                }
-                pTypeEl.value = currentVal;
-              }
-            }
-          },
-          error: () => {
-            if (statusEl) { statusEl.textContent = 'fetch failed'; statusEl.style.color = '#EF4444'; }
-          }
-        });
-      } else {
-        // No Frappe in this context — ask parent via postMessage
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'fetch_product_grade', item: itemName }, '*');
-        }
-        if (statusEl) { statusEl.textContent = 'loading…'; }
-      }
+    if (doc.custom_duty_drawback_ !== null && doc.custom_duty_drawback_ !== undefined && doc.custom_duty_drawback_ !== '') {
+      dbkValue = doc.custom_duty_drawback_;
     }
+    if (doc.custom_rodtep_ !== null && doc.custom_rodtep_ !== undefined && doc.custom_rodtep_ !== '') {
+      rodtepValue = doc.custom_rodtep_;
+    }
+
+    console.log('dbkValue:', dbkValue, 'rodtepValue:', rodtepValue);
+
+    const dbkNum = dbkValue !== '' ? parseFloat(dbkValue) : NaN;
+    const rodtepNum = rodtepValue !== '' ? parseFloat(rodtepValue) : NaN;
+
+    console.log('dbkNum:', dbkNum, 'rodtepNum:', rodtepNum);
+    console.log('cell_dbk_pct element:', $('cell_dbk_pct'));
+    console.log('cell_rodtep_pct element:', $('cell_rodtep_pct'));
+
+    if (!isNaN(dbkNum) && dbkNum > 0 && $('cell_dbk_pct')) {
+      $('cell_dbk_pct').value = dbkNum.toFixed(1);
+      console.log('DBK SET TO:', $('cell_dbk_pct').value);
+    }
+    if (!isNaN(rodtepNum) && rodtepNum > 0 && $('cell_rodtep_pct')) {
+      $('cell_rodtep_pct').value = rodtepNum.toFixed(1);
+      console.log('RODTEP SET TO:', $('cell_rodtep_pct').value);
+    }
+    if (!isNaN(dbkNum) || !isNaN(rodtepNum)) {
+      // Ensure RoDTEP checkbox is checked so rows stay visible
+      const rodtepChk = $('chk_scheme_rodtep');
+      if (rodtepChk) {
+        rodtepChk.checked = true;
+        rodtepChk.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      console.log('Triggering calculateEngine');
+      calculateEngine();
+    }
+  };
+
+  if (typeof frappe !== 'undefined' && frappe.call) {
+    console.log('Frappe is available, making API call');
+    frappe.call({
+      method: 'frappe.client.get',
+      args: {
+        doctype: 'Item',
+        name: itemCode
+      },
+      callback: (r) => {
+        console.log('=== API CALLBACK ===');
+        console.log('r.message exists:', !!r.message);
+        
+        const doc = r.message;
+        if (!doc) {
+          console.log('ERROR: doc is null');
+          if (statusEl) { statusEl.textContent = 'item not found'; statusEl.style.color = '#EF4444'; }
+          return;
+        }
+
+        console.log('Item fetched successfully:', doc.name);
+        
+        // Apply DBK and RoDTEP from this item
+        applyDbkRodtep(doc);
+
+        const grade = doc.custom_item_grade || '';
+        const parentItem = doc.variant_of || '';
+
+        if (grade) {
+          if (!gradeEl.value) gradeEl.value = grade;
+          if (statusEl) {
+            statusEl.textContent = '\u2713 ' + grade;
+            statusEl.style.color = '#10B981';
+          }
+        } else if (parentItem) {
+          if (statusEl) { statusEl.textContent = '\u23F3 fetching from parent…'; }
+          frappe.call({
+            method: 'frappe.client.get_value',
+            args: {
+              doctype: 'Item',
+              filters: { name: parentItem },
+              fieldname: ['custom_item_grade', 'custom_duty_drawback_', 'custom_rodtep_']
+            },
+            callback: (rp) => {
+              const parentDoc = rp.message || {};
+              const parentGrade = parentDoc.custom_item_grade || '';
+              if (!gradeEl.value) gradeEl.value = parentGrade;
+              if (statusEl) {
+                statusEl.textContent = parentGrade ? '\u2713 ' + parentGrade : 'no grade on parent';
+                statusEl.style.color = parentGrade ? '#10B981' : 'var(--color-text-subtle)';
+              }
+              applyDbkRodtep(parentDoc);
+            }
+          });
+        } else {
+          if (!gradeEl.value) gradeEl.value = '';
+          if (statusEl) { statusEl.textContent = 'no grade set on item'; statusEl.style.color = 'var(--color-text-subtle)'; }
+        }
+
+        // Populate Packing Type dropdown
+        const pTypeEl = $('inp_packing_type');
+        if (pTypeEl) {
+          const currentVal = pTypeEl.value;
+          const pTypes = doc.custom_packing_type || [];
+          pTypeEl.innerHTML = '<option value="">Select...</option>';
+          pTypes.forEach(row => {
+            if (row.packing_type) {
+              const opt = document.createElement('option');
+              opt.value = row.packing_type;
+              opt.textContent = row.packing_type;
+              pTypeEl.appendChild(opt);
+            }
+          });
+          if (currentVal) {
+            let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
+            if (!optionExists) {
+              const opt = document.createElement('option');
+              opt.value = currentVal;
+              opt.textContent = currentVal;
+              pTypeEl.appendChild(opt);
+            }
+            pTypeEl.value = currentVal;
+          }
+        }
+      },
+      error: (err) => {
+        console.log('API ERROR:', err);
+        if (statusEl) { statusEl.textContent = 'fetch failed'; statusEl.style.color = '#EF4444'; }
+      }
+    });
+  } else {
+    console.log('Frappe NOT available, using postMessage');
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'fetch_product_grade', item: itemCode }, '*');
+    }
+    if (statusEl) { statusEl.textContent = 'loading…'; }
+  }
+}
 
     /* Listen for responses from parent window (product grade, exchange rate) */
     window.addEventListener('message', (e) => {
@@ -3493,6 +3594,26 @@
             statusEl.style.color = e.data.grade ? '#10B981' : 'var(--color-text-subtle)';
           }
         }
+
+        // ── SET DBK AND RODTEP FROM PARENT RESPONSE ──
+  if (e.data.custom_duty_drawback_ !== undefined && e.data.custom_duty_drawback_ !== null && e.data.custom_duty_drawback_ !== '' && $('cell_dbk_pct')) {
+    const dbkNum = parseFloat(e.data.custom_duty_drawback_);
+    if (!isNaN(dbkNum) && dbkNum > 0) {
+      $('cell_dbk_pct').value = dbkNum.toFixed(1);
+    }
+  }
+  if (e.data.custom_rodtep_ !== undefined && e.data.custom_rodtep_ !== null && e.data.custom_rodtep_ !== '' && $('cell_rodtep_pct')) {
+    const rodtepNum = parseFloat(e.data.custom_rodtep_);
+    if (!isNaN(rodtepNum) && rodtepNum > 0) {
+      $('cell_rodtep_pct').value = rodtepNum.toFixed(1);
+    }
+  }
+  if ((e.data.custom_duty_drawback_ !== undefined && e.data.custom_duty_drawback_ !== null && e.data.custom_duty_drawback_ !== '') ||
+      (e.data.custom_rodtep_ !== undefined && e.data.custom_rodtep_ !== null && e.data.custom_rodtep_ !== '')) {
+    calculateEngine();
+  }
+  // ── END DBK/RODTEP ──
+
 
         // Populate Packing Type dropdown from parent response
         const pTypeEl = $('inp_packing_type');
@@ -3927,8 +4048,8 @@
                   const val = row[fieldname];
                   if (!val) return;
                   const opt = document.createElement('option');
-                  opt.value = val;
-                  opt.textContent = doctype === 'Item' && fieldname === 'item_name' ? (row.item_name || val) : val;
+                  opt.value = val;  // MUST be item_code (name field)
+                  opt.textContent = doctype === 'Item' && fieldname === 'name' ? (row.item_name || val) : val;
                   sel.appendChild(opt);
                 });
                 console.log(`populateDropdown: Successfully populated ${id} with ${sel.options.length} options`);
@@ -4081,7 +4202,7 @@
         Promise.all([
           populateDropdown('inp_supplier', 'Supplier'),
           populateDropdown('inp_customer', 'Customer'),
-          populateDropdown('inp_product', 'Item'),
+          populateDropdown('inp_product', 'Item', 'name'),
           populateDropdown('inp_destination', 'Port Details'),
           populateDropdown('inp_pod', 'Port Details'),
 
@@ -4100,6 +4221,7 @@
         });
       };
 
+      
       // Use Frappe.ready() if available, otherwise use retry mechanism
       const initializeDropdowns = () => {
         if (typeof frappe !== 'undefined' && frappe.call) {

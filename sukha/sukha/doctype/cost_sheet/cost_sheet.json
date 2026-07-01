@@ -39,6 +39,7 @@
   "effective_exchange_rate",
   "section_break_logistics",
   "port_of_loading",
+  "loading_location",
   "port_of_discharge",
   "col_break_logistics",
   "delivery_location",
@@ -749,12 +750,17 @@
    "fieldtype": "Link",
    "label": "Standard Packing",
    "options": "Standard Packing"
+  },
+  {
+   "fieldname": "loading_location",
+   "fieldtype": "Data",
+   "label": "Loading Location"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-23 12:29:48.683690",
+ "modified": "2026-06-30 12:14:52.514408",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

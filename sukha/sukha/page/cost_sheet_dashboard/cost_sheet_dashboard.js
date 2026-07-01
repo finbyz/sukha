@@ -250,9 +250,19 @@ class CostSheetDashboard {
 						const parentItem = doc.variant_of || '';
 						const packings = doc.custom_packing_type || [];
 						const stdPackings = doc.custom_std_pakcing || [];
+						// ── ADD DBK AND RODTEP ──
+						const dbk = doc.custom_duty_drawback_;
+						const rodtep = doc.custom_rodtep_;
 
-						if (grade || packings.length || stdPackings.length) {
-							iframe.contentWindow.postMessage({ type: 'product_grade_response', grade, packings, stdPackings }, '*');
+						if (grade || packings.length || stdPackings.length || dbk !== undefined || rodtep !== undefined) {
+							iframe.contentWindow.postMessage({ 
+								type: 'product_grade_response', 
+								grade, 
+								packings, 
+								stdPackings,
+								custom_duty_drawback_: dbk,
+								custom_rodtep_: rodtep
+							}, '*');
 						} else if (parentItem) {
 							// Variant — check parent template
 							frappe.call({
@@ -266,14 +276,31 @@ class CostSheetDashboard {
 									const parentGrade = pDoc.custom_item_grade || '';
 									const pPackings = pDoc.custom_packing_type || [];
 									const pStdPackings = pDoc.custom_std_pakcing || [];
+									// ── ADD DBK AND RODTEP FROM PARENT ──
+									const pDbk = pDoc.custom_duty_drawback_;
+									const pRodtep = pDoc.custom_rodtep_;
 									iframe.contentWindow.postMessage(
-										{ type: 'product_grade_response', grade: parentGrade, packings: pPackings, stdPackings: pStdPackings },
+										{ 
+											type: 'product_grade_response', 
+											grade: parentGrade, 
+											packings: pPackings, 
+											stdPackings: pStdPackings,
+											custom_duty_drawback_: pDbk,
+											custom_rodtep_: pRodtep
+										},
 										'*'
 									);
 								}
 							});
 						} else {
-							iframe.contentWindow.postMessage({ type: 'product_grade_response', grade: '', packings: [], stdPackings: [] }, '*');
+							iframe.contentWindow.postMessage({ 
+								type: 'product_grade_response', 
+								grade: '', 
+								packings: [], 
+								stdPackings: [],
+								custom_duty_drawback_: undefined,
+								custom_rodtep_: undefined
+							}, '*');
 						}
 					}
 				});
@@ -589,6 +616,7 @@ class CostSheetDashboard {
 				'final_country_of_destination': 'inp_final_dest',
 				'port_of_discharge': 'inp_pod',
 				'port_of_loading': 'inp_pol',
+				'loading_location': 'inp_loading_location',
 				'delivery_location': 'inp_destination',
 				'stuffing_at': 'inp_stuffing_at',
 				'stuffing_location': 'inp_stuffing_loc',
@@ -1294,18 +1322,20 @@ class CostSheetDashboard {
 			return;
 		}
 
-		// Fetch custom_item_grade from Item (e.g. "64%"), fall back to parent variant
+		// Fetch custom_item_grade, DBK, and RoDTEP from Item (e.g. "64%"), fall back to parent variant
 		frappe.call({
 			method: 'frappe.client.get_value',
 			args: {
 				doctype: 'Item',
 				filters: { name: item_name },
-				fieldname: ['custom_item_grade', 'variant_of', 'item_name']
+				fieldname: ['custom_item_grade', 'variant_of', 'item_name', 'custom_duty_drawback_', 'custom_rodtep_']
 			},
 			callback: (r) => {
 				if (!r.message) return;
 				const grade = r.message.custom_item_grade || '';
 				const parentItem = r.message.variant_of || '';
+				const dbk = r.message.custom_duty_drawback_;
+				const rodtep = r.message.custom_rodtep_;
 
 				const setGrade = (val) => {
 					const $grade = this.get_iframe_select(doc, ['#inp_grade', 'input[id*="grade"]']);
@@ -1315,21 +1345,56 @@ class CostSheetDashboard {
 					}
 				};
 
+				// Set DBK and RoDTEP directly in iframe
+				const setDbkRodtep = (dbkVal, rodtepVal) => {
+					const dbkEl = doc.getElementById('cell_dbk_pct');
+					const rodtepEl = doc.getElementById('cell_rodtep_pct');
+					let hasValues = false;
+					if (dbkEl && dbkVal !== undefined && dbkVal !== null && dbkVal !== '') {
+						const dbkNum = parseFloat(dbkVal);
+						if (!isNaN(dbkNum) && dbkNum > 0) {
+							dbkEl.value = dbkNum.toFixed(1);
+							dbkEl.dispatchEvent(new Event('input', { bubbles: true }));
+							hasValues = true;
+						}
+					}
+					if (rodtepEl && rodtepVal !== undefined && rodtepVal !== null && rodtepVal !== '') {
+						const rodtepNum = parseFloat(rodtepVal);
+						if (!isNaN(rodtepNum) && rodtepNum > 0) {
+							rodtepEl.value = rodtepNum.toFixed(1);
+							rodtepEl.dispatchEvent(new Event('input', { bubbles: true }));
+							hasValues = true;
+						}
+					}
+					if (hasValues) {
+						const rodtepChk = doc.getElementById('chk_scheme_rodtep');
+						if (rodtepChk) {
+							rodtepChk.checked = true;
+							rodtepChk.dispatchEvent(new Event('change', { bubbles: true }));
+						}
+					}
+				};
+
 				if (grade) {
 					setGrade(grade);
+					setDbkRodtep(dbk, rodtep);
 				} else if (parentItem) {
-					// Variant item — fetch grade from parent template
+					// Variant item — fetch grade and DBK/RoDTEP from parent template
 					frappe.call({
 						method: 'frappe.client.get_value',
 						args: {
 							doctype: 'Item',
 							filters: { name: parentItem },
-							fieldname: ['custom_item_grade']
+							fieldname: ['custom_item_grade', 'custom_duty_drawback_', 'custom_rodtep_']
 						},
 						callback: (rp) => {
-							setGrade((rp.message || {}).custom_item_grade || '');
+							const pMsg = rp.message || {};
+							setGrade(pMsg.custom_item_grade || '');
+							setDbkRodtep(pMsg.custom_duty_drawback_, pMsg.custom_rodtep_);
 						}
 					});
+				} else {
+					setDbkRodtep(dbk, rodtep);
 				}
 			}
 		});

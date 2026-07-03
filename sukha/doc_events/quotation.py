@@ -108,10 +108,83 @@ def make_quotation(source_name, target_doc=None):
         "Cost Sheet",
         source_name,
         {
-            "Cost Sheet": {
-                "doctype": "Quotation",
-                "postprocess": postprocess,
-            }
+        "Cost Sheet": {
+            "doctype": "Quotation",
+            "field_no_map": ["status", "name"],
+            "postprocess": postprocess,
+        }
         },
         target_doc,
     )
+
+
+@frappe.whitelist()
+def get_used_cost_sheets():
+    """Return Cost Sheets already linked to a non-cancelled Quotation via
+    Quotation Item.custom_cost_sheet, so they can be excluded from the
+    'Get Items From > Cost Sheet' picker."""
+    used = frappe.db.sql(
+        """
+        SELECT DISTINCT qi.custom_cost_sheet AS cost_sheet
+        FROM `tabQuotation Item` qi
+        INNER JOIN `tabQuotation` q ON q.name = qi.parent
+        WHERE qi.custom_cost_sheet IS NOT NULL
+          AND qi.custom_cost_sheet != ''
+          AND q.docstatus IN (0, 1)
+        """,
+        as_dict=True,
+    )
+    return [d.cost_sheet for d in used]
+
+
+
+@frappe.whitelist()
+def make_blanket_order(source_name, target_doc=None):
+    def set_missing_values(source, target):
+        target.blanket_order_type = "Selling"
+
+        if source.quotation_to == "Customer":
+            target.customer = source.party_name
+            target.customer_name = source.customer_name
+
+        target.company = source.company
+        target.tc_name = source.tc_name
+        target.terms = source.terms
+
+        target.from_date = frappe.utils.today()
+        target.to_date = frappe.utils.add_months(frappe.utils.today(), 12)
+
+    def update_item(source_item, target_item, source_parent):
+        target_item.item_code = source_item.item_code
+        target_item.item_name = source_item.item_name
+        target_item.description = source_item.description
+        target_item.qty = source_item.qty
+        target_item.rate = source_item.rate
+        target_item.uom = source_item.uom
+
+        target_item.custom_cost_sheet = source_item.custom_cost_sheet
+        target_item.custom_exw_subtype = source_item.custom_exw_subtype
+        target_item.custom_final_country_of_destination = source_item.custom_final_country_of_destination
+        target_item.custom_packing_type = source_item.custom_packing_type
+        target_item.custom_standard_packing = source_item.custom_standard_packing
+        target_item.custom_packing_unit_size_kg = source_item.custom_packing_unit_size
+
+    doclist = get_mapped_doc(
+        "Quotation",
+        source_name,
+        {
+            "Quotation": {
+                "doctype": "Blanket Order",
+                "field_no_map": ["naming_series"],
+            },
+            "Quotation Item": {
+                "doctype": "Blanket Order Item",
+                "field_no_map": ["name"],
+                "postprocess": update_item,
+            },
+        },
+        target_doc,
+        set_missing_values,
+    )
+
+    return doclist

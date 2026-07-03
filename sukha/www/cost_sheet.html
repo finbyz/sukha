@@ -1,4 +1,4 @@
-ll<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -740,7 +740,7 @@ ll<!DOCTYPE html>
             </div>
             <div>
               <span class="help-text" style="display:block">Cost Sheet Number:</span>
-              <strong class="font-mono" style="color:var(--color-text-muted)">Auto Generated</strong>
+              <strong class="font-mono" style="color:var(--color-text-muted)" id="lbl-cs-number">Auto Generated</strong>
             </div>
           </div>
 
@@ -4073,6 +4073,20 @@ function fetchProductGrade(itemCode) {
         const urlParams = new URLSearchParams(window.location.search);
         if (!urlParams.toString()) return;
 
+        // Ensure currency select always contains and defaults to USD
+        const currencyField = document.getElementById('inp_cs_currency');
+        if (currencyField && !currencyField.value) {
+          let usdOption = Array.from(currencyField.options).find(o => (o.value || '').toUpperCase() === 'USD' || (o.text || '').toUpperCase() === 'USD');
+          if (!usdOption) {
+            const opt = document.createElement('option');
+            opt.value = 'USD';
+            opt.textContent = 'USD';
+            currencyField.appendChild(opt);
+            usdOption = opt;
+          }
+          currencyField.value = 'USD';
+        }
+
         // Store URL params in window for dashboard to access
         window._costSheetUrlParams = urlParams;
 
@@ -4197,8 +4211,24 @@ function fetchProductGrade(itemCode) {
           applyUrlParams();
         }
       };
-
-      // ─── Execute ──────
+      // Update cost sheet number display if loading existing document
+let csName = null;
+const loadName = localStorage.getItem('cost_sheet_load_data_name');
+if (loadName) {
+    try { csName = JSON.parse(loadName); } catch (e) {}
+}
+// Fallback: try to get name from the full data
+if (!csName) {
+    const loadData = localStorage.getItem('cost_sheet_load_data');
+    if (loadData) {
+        try { csName = JSON.parse(loadData).name; } catch (e) {}
+    }
+}
+const csNumEl = $('lbl-cs-number');
+if (csNumEl && csName) {
+    csNumEl.textContent = csName;
+    csNumEl.style.color = '#1B82EE'; // Use hardcoded brand color instead of CSS var
+}
       const runPopulate = () => {
         Promise.all([
           populateDropdown('inp_supplier', 'Supplier'),
@@ -4215,8 +4245,15 @@ function fetchProductGrade(itemCode) {
           populateDropdown('inp_std_packing', 'Standard Packing')
         ]).then(() => {
           const currencyField = document.getElementById('inp_cs_currency');
-          if (currencyField && !currencyField.value) {
-            currencyField.value = 'USD';
+          if (currencyField) {
+            let usdOption = Array.from(currencyField.options).find(o => (o.value || '').toUpperCase() === 'USD' || (o.text || '').toUpperCase() === 'USD');
+            if (!usdOption) {
+              const opt = document.createElement('option');
+              opt.value = 'USD';
+              opt.textContent = 'USD';
+              currencyField.appendChild(opt);
+            }
+            if (!currencyField.value) currencyField.value = 'USD';
           }
           applyUrlParams();
         });

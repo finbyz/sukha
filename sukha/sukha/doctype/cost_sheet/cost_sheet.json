@@ -118,7 +118,8 @@
   "internal_cost_percentage",
   "domestic_credit_percentage",
   "document_charges_usd",
-  "merchant_document_charges"
+  "merchant_document_charges",
+  "amended_from"
  ],
  "fields": [
   {
@@ -755,12 +756,23 @@
    "fieldname": "loading_location",
    "fieldtype": "Data",
    "label": "Loading Location"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Cost Sheet",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2026-06-30 12:14:52.514408",
+ "modified": "2026-07-02 14:22:49.182062",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",
@@ -777,6 +789,7 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

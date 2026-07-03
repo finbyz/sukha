@@ -55,6 +55,7 @@ doctype_js = {
     "Item": "public/js/item.js",
     "Inward Sample": "/public/js/inward_sample.js",
     "Outward Sample": "public/js/outward.js",
+    "Quotation": "public/js/quotation.js",
 }
 doctype_list_js = {
     "Lead": "public/js/lead_list.js",

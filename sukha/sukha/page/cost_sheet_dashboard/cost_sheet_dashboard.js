@@ -399,11 +399,13 @@ class CostSheetDashboard {
 			callback: (r) => {
 				if (r.message) {
 					const costSheetName = r.message.cost_sheet;
-					const quotationName = r.message.quotation;
+					// const quotationName = r.message.quotation;
 
 					// Clear localStorage after successful save
 					localStorage.removeItem('cost_sheet_load_data');
-
+					localStorage.removeItem('cost_sheet_load_data_name');
+					const iframe = document.getElementById('cost-sheet-iframe');
+					this.load_cost_sheet_data(iframe);
 					// Build link buttons for the dialog
 					let linksHtml = `
 						<div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
@@ -419,26 +421,25 @@ class CostSheetDashboard {
 							</a>
 					`;
 
-					if (quotationName) {
-						linksHtml += `
-							<a href="/app/quotation/${quotationName}" target="_blank"
-								style="
-									display:inline-flex; align-items:center; gap:6px;
-									padding:8px 18px; border-radius:6px; font-size:13px; font-weight:600;
-									background:var(--success); color:var(--white);
-									text-decoration:none;
-								">
-								<i class="octicon octicon-checklist"></i>
-								${__('Open Quotation')} — ${quotationName}
-							</a>
-						`;
-					}
+					// if (quotationName) {
+					// 	linksHtml += `
+					// 		<a href="/app/quotation/${quotationName}" target="_blank"
+					// 			style="
+					// 				display:inline-flex; align-items:center; gap:6px;
+					// 				padding:8px 18px; border-radius:6px; font-size:13px; font-weight:600;
+					// 				background:var(--success); color:var(--white);
+					// 				text-decoration:none;
+					// 			">
+					// 			<i class="octicon octicon-checklist"></i>
+					// 			${__('Open Quotation')} — ${quotationName}
+					// 		</a>
+					// 	`;
+					// }
 
 					linksHtml += `</div>`;
 
-					const msg = quotationName
-						? __('Cost Sheet and Quotation created successfully.')
-						: __('Cost Sheet saved. No Quotation created (missing party or product).');
+					const msg = __('Cost Sheet created successfully.')
+						
 
 					frappe.msgprint({
 						title: __('Saved Successfully'),
@@ -545,6 +546,14 @@ class CostSheetDashboard {
 			const data = JSON.parse(storedData);
 			const doc = iframe.contentDocument || iframe.contentWindow.document;
 
+			const setInput = (id, val) => {
+				const el = doc.getElementById(id);
+				if (el && val !== undefined && val !== null) {
+					el.value = val;
+					el.dispatchEvent(new Event('input', { bubbles: true }));
+					el.dispatchEvent(new Event('change', { bubbles: true }));
+				}
+			};
 			console.log('Loading Cost Sheet data:', data);
 
 			// Handle Lead/Prospect/Customer conditional display
@@ -562,7 +571,9 @@ class CostSheetDashboard {
 			if (customerWrapper) customerWrapper.style.display = 'none';
 			if (leadWrapper) leadWrapper.style.display = 'none';
 			if (prospectWrapper) prospectWrapper.style.display = 'none';
-
+			if (data.name) {
+				setInput('inp_doc_name', data.name);
+			}
 			// Show the appropriate one based on opportunity_from or direct cost sheet data
 			if ((oppFrom === 'Lead' && partyName) || data.lead) {
 				const val = (oppFrom === 'Lead' ? partyName : data.lead);
@@ -771,14 +782,14 @@ class CostSheetDashboard {
 				}
 			});
 
-			const setInput = (id, val) => {
-				const el = doc.getElementById(id);
-				if (el && val !== undefined && val !== null) {
-					el.value = val;
-					el.dispatchEvent(new Event('input', { bubbles: true }));
-					el.dispatchEvent(new Event('change', { bubbles: true }));
-				}
-			};
+			// const setInput = (id, val) => {
+			// 	const el = doc.getElementById(id);
+			// 	if (el && val !== undefined && val !== null) {
+			// 		el.value = val;
+			// 		el.dispatchEvent(new Event('input', { bubbles: true }));
+			// 		el.dispatchEvent(new Event('change', { bubbles: true }));
+			// 	}
+			// };
 
 			// Checkboxes - always set explicitly (both checked and unchecked)
 			const rodtepEl = doc.getElementById('chk_scheme_rodtep');

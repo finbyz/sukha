@@ -3420,6 +3420,8 @@ function fetchProductGrade(itemCode) {
   if (!itemCode) {
     console.log('itemCode is empty, resetting');
     gradeEl.value = '';
+    const pTypeEl = $('inp_packing_type');
+    if (pTypeEl) pTypeEl.innerHTML = '<option value="">Select...</option>';
     if (statusEl) statusEl.textContent = '';
     if ($('cell_dbk_pct')) $('cell_dbk_pct').value = '1.1';
     if ($('cell_rodtep_pct')) $('cell_rodtep_pct').value = '0.7';
@@ -3535,18 +3537,32 @@ function fetchProductGrade(itemCode) {
         }
 
         // Populate Packing Type dropdown
-        const pTypeEl = $('inp_packing_type');
-        if (pTypeEl) {
+        const getPackingOptions = (itemDoc) => {
+          const seen = new Set();
+          const options = [];
+          const add = (packingType) => {
+            if (!packingType || seen.has(packingType)) return;
+            seen.add(packingType);
+            options.push({ packing_type: packingType });
+          };
+
+          (itemDoc.custom_packing_type || []).forEach(row => add(row.packing_type));
+          (itemDoc.custom_standard_packing || itemDoc.custom_std_pakcing || []).forEach(row => add(row.packing_type));
+          return options;
+        };
+
+        const populatePackingOptions = (itemDoc) => {
+          const pTypeEl = $('inp_packing_type');
+          if (!pTypeEl) return;
+
           const currentVal = pTypeEl.value;
-          const pTypes = doc.custom_packing_type || [];
+          const pTypes = getPackingOptions(itemDoc);
           pTypeEl.innerHTML = '<option value="">Select...</option>';
           pTypes.forEach(row => {
-            if (row.packing_type) {
-              const opt = document.createElement('option');
-              opt.value = row.packing_type;
-              opt.textContent = row.packing_type;
-              pTypeEl.appendChild(opt);
-            }
+            const opt = document.createElement('option');
+            opt.value = row.packing_type;
+            opt.textContent = row.packing_type;
+            pTypeEl.appendChild(opt);
           });
           if (currentVal) {
             let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
@@ -3558,6 +3574,21 @@ function fetchProductGrade(itemCode) {
             }
             pTypeEl.value = currentVal;
           }
+        };
+
+        const hasItemPackings = getPackingOptions(doc).length > 0;
+        populatePackingOptions(doc);
+        if (!hasItemPackings && parentItem) {
+          frappe.call({
+            method: 'frappe.client.get',
+            args: {
+              doctype: 'Item',
+              name: parentItem
+            },
+            callback: (rp) => {
+              populatePackingOptions(rp.message || {});
+            }
+          });
         }
       },
       error: (err) => {

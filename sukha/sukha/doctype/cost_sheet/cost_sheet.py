@@ -842,18 +842,19 @@ def create_from_dashboard(data):
     if data.get("name"):
         # Update existing
         doc = frappe.get_doc("Cost Sheet", data.get("name"))
+        doc.check_permission("write")
         # Clear child tables to replace them
         doc.set("product_cost_details", [])
         doc.set("cnf_charges", [])
         doc.set("sea_freight_details", [])
         doc.set("margin_analysis", [])
         doc.update(data)
-        doc.save(ignore_permissions=True)
+        doc.save()
     else:
         # Create new
         doc = frappe.new_doc("Cost Sheet")
         doc.update(data)
-        doc.insert(ignore_permissions=True)
+        doc.insert()
 
     # frappe.db.commit()
 
@@ -870,6 +871,57 @@ def create_from_dashboard(data):
 
     return {
         "cost_sheet": doc.name,
+    }
+
+
+@frappe.whitelist()
+def get_dashboard_workflow_transitions(doc):
+    from frappe.model.workflow import (
+        WorkflowStateError,
+        get_transitions,
+        get_workflow,
+        get_workflow_name,
+    )
+
+    doc = frappe.parse_json(doc)
+    doctype = doc.get("doctype") or "Cost Sheet"
+    name = doc.get("name")
+
+    if doctype != "Cost Sheet":
+        frappe.throw("Invalid doctype for Cost Sheet workflow lookup.")
+
+    workflow_name = get_workflow_name(doctype)
+
+    if not workflow_name:
+        return {
+            "has_workflow": False,
+            "transitions": [],
+            "workflow": None,
+        }
+
+    workflow = get_workflow(doctype)
+    workflow_doc = frappe.get_doc(doctype, name) if name else frappe.get_doc(doc)
+
+    try:
+        transitions = get_transitions(workflow_doc, workflow, raise_exception=True)
+    except WorkflowStateError:
+        transitions = []
+
+    normalized_transitions = []
+    for transition in transitions:
+        if hasattr(transition, "as_dict") and callable(transition.as_dict):
+            normalized_transitions.append(transition.as_dict())
+        else:
+            normalized_transitions.append(dict(transition))
+
+    return {
+        "has_workflow": True,
+        "transitions": normalized_transitions,
+        "workflow": {
+            "name": workflow.name,
+            "workflow_state_field": workflow.workflow_state_field,
+            "enable_action_confirmation": workflow.enable_action_confirmation,
+        },
     }
 
 import frappe

@@ -6,13 +6,14 @@ frappe.ui.form.on("Cost Sheet", {
 		// Add custom button to open Cost Sheet Dashboard with current values
 		if (frm.doc.name) {
 			var btn = frm.add_custom_button(__('Open in Dashboard'), function() {
-				// Store current form data in localStorage
-				localStorage.setItem('cost_sheet_load_data', JSON.stringify(frm.doc));
-				localStorage.setItem('cost_sheet_load_data_name', JSON.stringify(frm.doc.name));
-				
-				// Route to Cost Sheet Dashboard
-				frappe.set_route('cost-sheet-dashboard');
-				
+				const params = new URLSearchParams({
+					source_doctype: 'Cost Sheet',
+					source_name: frm.doc.name
+				});
+
+				// Route to Cost Sheet Dashboard with reload-safe URL context.
+				window.location.href = `/app/cost-sheet-dashboard?${params.toString()}`;
+
 				frappe.show_alert({
 					message: __('Loading cost sheet in dashboard...'),
 					indicator: 'green'

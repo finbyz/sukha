@@ -4,12 +4,34 @@ frappe.pages['cost-sheet-dashboard'].on_page_load = function (wrapper) {
 
 frappe.pages['cost-sheet-dashboard'].on_page_show = function (wrapper) {
 	if (wrapper.cost_sheet_dashboard) {
+		const dashboard = wrapper.cost_sheet_dashboard;
+		const route_context_key = dashboard.get_route_context_key();
 		const iframe = document.getElementById('cost-sheet-iframe');
-		if (iframe && wrapper.cost_sheet_dashboard.iframe_loaded) {
-			// Small delay to ensure DOM is ready
-			setTimeout(() => {
-				wrapper.cost_sheet_dashboard.load_cost_sheet_data(iframe);
-			}, 100);
+
+		if (route_context_key && iframe && dashboard.iframe_loaded && route_context_key !== dashboard.last_route_context_key) {
+			dashboard.last_route_context_key = route_context_key;
+			dashboard.current_cost_sheet_doc = null;
+			dashboard.sync_iframe_readonly_state();
+			dashboard.source_context = null;
+			dashboard.pending_load_data = null;
+			dashboard.set_iframe_doc_name(null);
+			dashboard.render_actions();
+
+			const page_content = dashboard.page_content;
+			if (!page_content.find('#loading-overlay').length) {
+				page_content.find('> div').prepend(`
+					<div id="loading-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+						<div style="text-align: center;">
+							<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+								<span class="sr-only">Loading...</span>
+							</div>
+							<p style="margin-top: 15px; color: #6c757d;">Loading Cost Sheet...</p>
+						</div>
+					</div>
+				`);
+			}
+
+			iframe.src = `/cost_sheet?v=${Date.now()}`;
 		}
 	}
 };
@@ -24,16 +46,22 @@ class CostSheetDashboard {
 
 		this.wrapper = $(wrapper);
 		this.page_content = this.wrapper.find('.page-content');
+		this.current_cost_sheet_doc = null;
+		this.is_dirty = false;
+		this.suppress_dirty = false;
+		this.workflow_refresh_id = 0;
+		this.workflow_actions_loading = false;
+		this.active_workflow = null;
+		this.source_context = null;
+		this.pending_load_data = null;
+		this.last_route_context_key = null;
 
 		this.setup_page();
 		this.render_html();
 	}
 
 	setup_page() {
-		this.page.set_primary_action('Save Cost Sheet', () => {
-			this.save_cost_sheet();
-		}, 'octicon octicon-check');
-
+		this.render_actions();
 		this.page.add_menu_item('New Cost Sheet', () => {
 			this.reset_form();
 		});
@@ -43,6 +71,328 @@ class CostSheetDashboard {
 		});
 
 		this.setup_search();
+	}
+
+	get_route_params() {
+		const params = new URLSearchParams(window.location.search || '');
+		const hash = window.location.hash || '';
+		const hash_query_index = hash.indexOf('?');
+
+		if (hash_query_index !== -1) {
+			const hash_params = new URLSearchParams(hash.slice(hash_query_index + 1));
+			hash_params.forEach((value, key) => {
+				if (!params.has(key)) {
+					params.set(key, value);
+				}
+			});
+		}
+
+		return {
+			source_doctype: params.get('source_doctype') || '',
+			source_name: params.get('source_name') || '',
+			incoterm: params.get('incoterm') || '',
+			origin_scope: params.get('origin_scope') || '',
+			exw_sub_type: params.get('exw_sub_type') || ''
+		};
+	}
+
+	has_route_context() {
+		const params = this.get_route_params();
+		return Boolean(params.source_doctype && params.source_name);
+	}
+
+	get_route_context_key() {
+		const params = this.get_route_params();
+		if (!params.source_doctype || !params.source_name) return '';
+
+		return JSON.stringify(params);
+	}
+
+	replace_dashboard_route(params = {}) {
+		const query = new URLSearchParams(params).toString();
+		const url = query ? `/app/cost-sheet-dashboard?${query}` : '/app/cost-sheet-dashboard';
+		window.history.replaceState(null, '', url);
+		this.last_route_context_key = this.get_route_context_key();
+	}
+
+	build_cost_sheet_data_from_opportunity(opportunity, params = {}) {
+		const incoterm = params.incoterm || opportunity.custom_incoterm || 'CIF';
+		const origin_scope = params.origin_scope || 'India';
+		const exw_sub_type = incoterm === 'EXW' ? (params.exw_sub_type || 'Domestic') : '';
+
+		return {
+			opportunity: opportunity.name,
+			inquiry: opportunity.name,
+			opportunity_from: opportunity.opportunity_from,
+			party_name: opportunity.party_name,
+			customer_name: opportunity.customer_name,
+
+			product: opportunity.custom_product_name,
+			product_grade: opportunity.custom_product_grade,
+
+			customer: opportunity.opportunity_from === 'Customer' ? opportunity.party_name : '',
+			// supplier: opportunity.custom_preferred_supplier,
+			customer_payment_term: opportunity.custom_customer_desired_payment_terms,
+
+			country_of_destination: opportunity.custom_country_of__destination__ship_to_destination,
+			port_of_discharge: opportunity.custom_port_of_destination,
+			port_of_loading: opportunity.custom_port_of_loading,
+			delivery_location: opportunity.custom_destination__place_of_delivery,
+			shipping_line: opportunity.custom_preferred_shipping_line,
+
+			incoterm,
+			origin_scope,
+			exw_sub_type,
+
+			container_type: opportunity.custom_container_type,
+			packing_type: opportunity.custom_packing_type || opportunity.custom_packing_type_with_unit_size_kg,
+			std_packing: opportunity.custom_std_pakcing,
+			packing_unit_size: opportunity.custom_unit_size_of_packing_kg,
+			units_per_fcl: opportunity.custom_total_no_of_packing_units_in_a_container,
+			total_fcl: opportunity.custom_total_no_of_ccontainers,
+
+			lead: opportunity.opportunity_from === 'Lead' ? opportunity.party_name : '',
+			prospect: (
+				opportunity.opportunity_from === 'Prospect' ||
+				opportunity.opportunity_from === 'Prospect (L3/Qualified)'
+			) ? opportunity.party_name : ''
+		};
+	}
+
+	set_source_context_from_data(data) {
+		if (data && (data.inquiry || data.opportunity)) {
+			this.source_context = {
+				doctype: 'Opportunity',
+				name: data.inquiry || data.opportunity
+			};
+			return;
+		}
+
+		this.source_context = null;
+	}
+
+	async get_route_source_data() {
+		const params = this.get_route_params();
+		if (!params.source_doctype || !params.source_name) return null;
+
+		this.last_route_context_key = this.get_route_context_key();
+
+		if (params.source_doctype === 'Opportunity') {
+			const opportunity = await this.call_frappe('frappe.client.get', {
+				doctype: 'Opportunity',
+				name: params.source_name
+			});
+			const data = this.build_cost_sheet_data_from_opportunity(opportunity, params);
+			this.set_source_context_from_data(data);
+			return data;
+		}
+
+		if (params.source_doctype === 'Cost Sheet') {
+			const doc = await this.fetch_cost_sheet_doc(params.source_name);
+			this.set_source_context_from_data(doc);
+			return doc;
+		}
+
+		return null;
+	}
+
+	set_save_primary_action() {
+		this.page.set_primary_action('Save Cost Sheet', () => {
+			this.save_cost_sheet();
+		}, 'octicon octicon-check');
+	}
+
+	set_submit_primary_action() {
+		this.page.set_primary_action(__('Submit'), () => {
+			this.submit_current_cost_sheet();
+		}, 'octicon octicon-check');
+	}
+
+	clear_page_actions() {
+		this.page.clear_actions_menu();
+		this.page.hide_actions_menu();
+		this.page.clear_actions();
+	}
+
+	clear_workflow_actions() {
+		this.render_actions();
+	}
+
+	clear_saved_doc_actions_while_loading() {
+		this.render_actions({ loading: true });
+	}
+
+	update_status_indicator() {
+		if (this.is_dirty && this.current_cost_sheet_doc) {
+			this.page.set_indicator(__('Not Saved'), 'orange');
+			return;
+		}
+
+		if (!this.current_cost_sheet_doc) {
+			this.page.clear_indicator();
+			return;
+		}
+
+		let indicator = null;
+		try {
+			indicator = frappe.get_indicator(this.current_cost_sheet_doc, 'Cost Sheet', true);
+		} catch (e) {
+			console.warn('Unable to resolve Cost Sheet indicator:', e);
+		}
+
+		let workflow_state_fieldname = null;
+		try {
+			workflow_state_fieldname = frappe.workflow?.get_state_fieldname?.('Cost Sheet');
+		} catch (e) {
+			workflow_state_fieldname = null;
+		}
+
+		const docstatus = Number(this.current_cost_sheet_doc.docstatus || 0);
+		const workflow_status = (workflow_state_fieldname && this.current_cost_sheet_doc[workflow_state_fieldname])
+			|| this.current_cost_sheet_doc.workflow_state;
+		const field_status = this.current_cost_sheet_doc.status;
+		let status = field_status || (indicator && indicator[0]);
+		let color = (indicator && indicator[1]) || (docstatus === 2 ? 'red' : 'gray');
+
+		if (docstatus === 2) {
+			status = field_status || workflow_status || __('Cancelled');
+			color = 'red';
+		} else if (this.active_workflow && workflow_status) {
+			status = workflow_status;
+		}
+
+		if (status) {
+			this.page.set_indicator(__(status), color);
+		} else {
+			this.page.clear_indicator();
+		}
+	}
+
+	set_iframe_doc_name(name, display_name) {
+		const iframe = document.getElementById('cost-sheet-iframe');
+		if (!iframe || !iframe.contentWindow) return;
+
+		const doc = iframe.contentDocument || iframe.contentWindow.document;
+		const nameInput = doc.getElementById('inp_doc_name');
+		if (nameInput) {
+			nameInput.value = name || '';
+		}
+
+		const idLabel = doc.getElementById('lbl-cost-sheet-id');
+		if (idLabel) {
+			idLabel.textContent = display_name || name || __('New Cost Sheet');
+		}
+
+		const numberLabel = doc.getElementById('lbl-cs-number');
+		if (numberLabel) {
+			numberLabel.textContent = name || __('Auto Generated');
+			numberLabel.style.color = name ? '#1B82EE' : 'var(--color-text-muted)';
+		}
+	}
+
+	is_current_doc_readonly() {
+		return Boolean(
+			this.current_cost_sheet_doc &&
+			Number(this.current_cost_sheet_doc.docstatus || 0) !== 0
+		);
+	}
+
+	sync_iframe_readonly_state() {
+		const iframe = document.getElementById('cost-sheet-iframe');
+		if (!iframe || !iframe.contentWindow) return;
+
+		const doc = iframe.contentDocument || iframe.contentWindow.document;
+		if (!doc || !doc.body) return;
+
+		const readonly = this.is_current_doc_readonly();
+		doc.body.classList.toggle('cost-sheet-readonly', readonly);
+
+		doc.querySelectorAll('input, select, textarea, button').forEach((field) => {
+			if (readonly) {
+				if (field.dataset.costSheetReadonlyApplied !== '1') {
+					field.dataset.costSheetOriginalDisabled = field.disabled ? '1' : '0';
+					field.dataset.costSheetOriginalReadonly = field.readOnly ? '1' : '0';
+					field.dataset.costSheetReadonlyApplied = '1';
+				}
+				field.disabled = true;
+				if ('readOnly' in field) {
+					field.readOnly = true;
+				}
+				return;
+			}
+
+			if (field.dataset.costSheetReadonlyApplied === '1') {
+				field.disabled = field.dataset.costSheetOriginalDisabled === '1';
+				if ('readOnly' in field) {
+					field.readOnly = field.dataset.costSheetOriginalReadonly === '1';
+				}
+			}
+
+			delete field.dataset.costSheetOriginalDisabled;
+			delete field.dataset.costSheetOriginalReadonly;
+			delete field.dataset.costSheetReadonlyApplied;
+		});
+
+		doc.querySelectorAll('[contenteditable]').forEach((field) => {
+			if (readonly) {
+				if (field.dataset.costSheetReadonlyApplied !== '1') {
+					field.dataset.costSheetOriginalContenteditable = field.getAttribute('contenteditable') || '';
+					field.dataset.costSheetReadonlyApplied = '1';
+				}
+				field.setAttribute('contenteditable', 'false');
+				return;
+			}
+
+			if (field.dataset.costSheetReadonlyApplied === '1') {
+				field.setAttribute('contenteditable', field.dataset.costSheetOriginalContenteditable || '');
+			}
+			delete field.dataset.costSheetOriginalContenteditable;
+			delete field.dataset.costSheetReadonlyApplied;
+		});
+	}
+
+	mark_cost_sheet_dirty() {
+		if (this.suppress_dirty) return;
+
+		if (this.is_current_doc_readonly()) {
+			this.sync_iframe_readonly_state();
+			return;
+		}
+
+		this.is_dirty = true;
+		this.update_status_indicator();
+		this.render_actions();
+	}
+
+	setup_iframe_dirty_tracking(iframe) {
+		try {
+			const doc = iframe.contentDocument || iframe.contentWindow.document;
+			if (!doc || doc.__cost_sheet_dirty_tracking) return;
+
+			doc.__cost_sheet_dirty_tracking = true;
+			['input', 'change'].forEach((event_name) => {
+				doc.addEventListener(event_name, () => {
+					this.mark_cost_sheet_dirty();
+				}, true);
+			});
+		} catch (e) {
+			console.error('Unable to setup Cost Sheet dirty tracking:', e);
+		}
+	}
+
+	get_packing_options_from_item(item) {
+		const seen = new Set();
+		const options = [];
+		const add = (packing_type) => {
+			if (!packing_type || seen.has(packing_type)) return;
+			seen.add(packing_type);
+			options.push({ packing_type });
+		};
+
+		(item.custom_packing_type || []).forEach(row => add(row.packing_type));
+		(item.custom_standard_packing || item.custom_std_pakcing || []).forEach(row => add(row.packing_type));
+
+		return options;
 	}
 
 	setup_search() {
@@ -138,11 +488,14 @@ class CostSheetDashboard {
 		if (iframe) {
 			iframe.onload = () => {
 				this.iframe_loaded = true;
+				this.suppress_dirty = true;
 
 				this.setup_dynamic_link_fields(iframe);
 				this.setup_dynamic_required_fields(iframe);
+				this.setup_iframe_dirty_tracking(iframe);
+				this.sync_iframe_readonly_state();
 
-				// Poll until key dropdowns are populated, then load data from localStorage
+				// Poll until key dropdowns are populated, then load data from route params.
 				// Max retries: 25 × 200ms = 5 seconds, then give up and show the form
 				let _dropdownPollRetries = 0;
 				const waitForDropdowns = () => {
@@ -154,13 +507,15 @@ class CostSheetDashboard {
 					const customerReady = customerSel && customerSel.options && customerSel.options.length > 1;
 
 					if (productReady && customerReady) {
-						this.load_cost_sheet_data(iframe);
-						setTimeout(() => this.hide_loading_overlay(), 500);
+						this.load_cost_sheet_data(iframe).finally(() => {
+							setTimeout(() => this.hide_loading_overlay(), 500);
+						});
 					} else if (_dropdownPollRetries >= 25) {
 						// Timed out after ~5 seconds — show the form anyway
 						console.warn('Cost Sheet: dropdowns did not populate in time, showing form anyway.');
-						this.load_cost_sheet_data(iframe);
-						this.hide_loading_overlay();
+						this.load_cost_sheet_data(iframe).finally(() => {
+							this.hide_loading_overlay();
+						});
 					} else {
 						_dropdownPollRetries++;
 						setTimeout(waitForDropdowns, 200);
@@ -248,23 +603,32 @@ class CostSheetDashboard {
 						const doc = r.message || {};
 						const grade = doc.custom_item_grade || '';
 						const parentItem = doc.variant_of || '';
-						const packings = doc.custom_packing_type || [];
-						const stdPackings = doc.custom_std_pakcing || [];
+						const standardPackings = doc.custom_standard_packing || doc.custom_std_pakcing || [];
+						const packings = this.get_packing_options_from_item(doc);
+						const stdPackings = standardPackings;
 						// ── ADD DBK AND RODTEP ──
 						const dbk = doc.custom_duty_drawback_;
 						const rodtep = doc.custom_rodtep_;
 
-						if (grade || packings.length || stdPackings.length || dbk !== undefined || rodtep !== undefined) {
-							iframe.contentWindow.postMessage({ 
-								type: 'product_grade_response', 
-								grade, 
-								packings, 
-								stdPackings,
-								custom_duty_drawback_: dbk,
-								custom_rodtep_: rodtep
+						const postProductResponse = (responseDoc = {}) => {
+							const parentGrade = responseDoc.custom_item_grade || '';
+							const pStandardPackings = responseDoc.custom_standard_packing || responseDoc.custom_std_pakcing || [];
+							const pPackings = this.get_packing_options_from_item(responseDoc);
+							const pStdPackings = pStandardPackings;
+							const pDbk = responseDoc.custom_duty_drawback_;
+							const pRodtep = responseDoc.custom_rodtep_;
+
+							iframe.contentWindow.postMessage({
+								type: 'product_grade_response',
+								grade: grade || parentGrade,
+								packings: packings.length ? packings : pPackings,
+								stdPackings: stdPackings.length ? stdPackings : pStdPackings,
+								custom_duty_drawback_: dbk !== undefined ? dbk : pDbk,
+								custom_rodtep_: rodtep !== undefined ? rodtep : pRodtep
 							}, '*');
-						} else if (parentItem) {
-							// Variant — check parent template
+						};
+
+						if (parentItem && (!packings.length || !stdPackings.length || !grade)) {
 							frappe.call({
 								method: 'frappe.client.get',
 								args: {
@@ -272,26 +636,11 @@ class CostSheetDashboard {
 									name: parentItem
 								},
 								callback: (rp) => {
-									const pDoc = rp.message || {};
-									const parentGrade = pDoc.custom_item_grade || '';
-									const pPackings = pDoc.custom_packing_type || [];
-									const pStdPackings = pDoc.custom_std_pakcing || [];
-									// ── ADD DBK AND RODTEP FROM PARENT ──
-									const pDbk = pDoc.custom_duty_drawback_;
-									const pRodtep = pDoc.custom_rodtep_;
-									iframe.contentWindow.postMessage(
-										{ 
-											type: 'product_grade_response', 
-											grade: parentGrade, 
-											packings: pPackings, 
-											stdPackings: pStdPackings,
-											custom_duty_drawback_: pDbk,
-											custom_rodtep_: pRodtep
-										},
-										'*'
-									);
+									postProductResponse(rp.message || {});
 								}
 							});
+						} else if (grade || packings.length || stdPackings.length || dbk !== undefined || rodtep !== undefined) {
+							postProductResponse();
 						} else {
 							iframe.contentWindow.postMessage({ 
 								type: 'product_grade_response', 
@@ -392,20 +741,457 @@ class CostSheetDashboard {
 		});
 	}
 
+
+	call_frappe(method, args = {}) {
+		return new Promise((resolve, reject) => {
+			frappe.call({
+				method,
+				args,
+				callback: (r) => resolve(r.message),
+				error: (r) => reject(r)
+			});
+		});
+	}
+
+	async refresh_workflow_metadata() {
+		if (!frappe.workflow) {
+			this.active_workflow = null;
+			return null;
+		}
+
+		try {
+			if (frappe.workflow.setup) {
+				frappe.workflow.setup('Cost Sheet');
+			}
+
+			const state_fieldname = frappe.workflow.get_state_fieldname('Cost Sheet');
+			if (!state_fieldname) {
+				this.active_workflow = null;
+				return null;
+			}
+
+			this.active_workflow = frappe.workflow.workflows['Cost Sheet'] || null;
+			if (
+				this.active_workflow &&
+				Object.prototype.hasOwnProperty.call(this.active_workflow, 'is_active') &&
+				!Number(this.active_workflow.is_active)
+			) {
+				this.active_workflow = null;
+				return null;
+			}
+			return this.active_workflow;
+		} catch (e) {
+			this.active_workflow = null;
+			console.warn('Unable to read local Cost Sheet workflow metadata:', e);
+			return null;
+		}
+	}
+
+	async fetch_cost_sheet_doc(name) {
+		if (!name) return null;
+
+		return await this.call_frappe('frappe.client.get', {
+			doctype: 'Cost Sheet',
+			name
+		});
+	}
+
+	async set_current_cost_sheet_doc(doc, opts = {}) {
+		if (!doc) return;
+
+		this.current_cost_sheet_doc = doc;
+		this.set_source_context_from_data(doc);
+		this.set_iframe_doc_name(doc.name, doc.cost_sheet_name || doc.name);
+		this.sync_iframe_readonly_state();
+
+		if (opts.clean !== false) {
+			this.is_dirty = false;
+		}
+
+		await this.refresh_workflow_actions();
+		this.update_status_indicator();
+	}
+
+	async set_current_cost_sheet(name, opts = {}) {
+		const doc = await this.fetch_cost_sheet_doc(name);
+		await this.set_current_cost_sheet_doc(doc, opts);
+	}
+
+	is_transition_allowed_for_user(transition) {
+		const user = frappe.session.user;
+		const role_allowed = frappe.user_roles.includes(transition.allowed);
+		const approval_allowed = (
+			user === 'Administrator' ||
+			transition.allow_self_approval ||
+			user !== this.current_cost_sheet_doc.owner
+		);
+
+		return role_allowed && approval_allowed;
+	}
+
+	async get_workflow_transition_context() {
+		if (!this.current_cost_sheet_doc || this.is_dirty) {
+			return { has_workflow: false, transitions: [] };
+		}
+
+		try {
+			const response = await this.call_frappe(
+				'sukha.sukha.doctype.cost_sheet.cost_sheet.get_dashboard_workflow_transitions',
+				{
+					doc: {
+						doctype: 'Cost Sheet',
+						name: this.current_cost_sheet_doc.name
+					}
+				}
+			);
+
+			if (!response || !response.has_workflow) {
+				this.active_workflow = null;
+				return { has_workflow: false, transitions: [] };
+			}
+
+			this.active_workflow = response.workflow || null;
+			return {
+				has_workflow: true,
+				transitions: (response.transitions || []).filter((transition) => this.is_transition_allowed_for_user(transition))
+			};
+		} catch (e) {
+			this.active_workflow = null;
+			return { has_workflow: false, transitions: [] };
+		}
+	}
+
+	async get_current_doc_permissions() {
+		if (!this.current_cost_sheet_doc) return {};
+
+		try {
+			const response = await this.call_frappe('frappe.client.get_doc_permissions', {
+				doctype: 'Cost Sheet',
+				docname: this.current_cost_sheet_doc.name
+			});
+			return (response && response.permissions) || {};
+		} catch (e) {
+			return {};
+		}
+	}
+
+	async can_cancel_current_doc(has_workflow) {
+		if (!this.current_cost_sheet_doc || Number(this.current_cost_sheet_doc.docstatus) !== 1) return false;
+
+		const permissions = await this.get_current_doc_permissions();
+		if (Object.keys(permissions).length && !permissions.cancel) return false;
+		if (!Object.keys(permissions).length && !frappe.model.can_cancel('Cost Sheet')) return false;
+
+		if (!has_workflow) return true;
+
+		try {
+			return await frappe.xcall(
+				'frappe.model.workflow.can_cancel_document',
+				{ doctype: 'Cost Sheet' },
+				null,
+				{ silent: true }
+			);
+		} catch (e) {
+			return false;
+		}
+	}
+
+	async can_submit_current_doc() {
+		if (!this.current_cost_sheet_doc || Number(this.current_cost_sheet_doc.docstatus) !== 0 || this.is_dirty) return false;
+
+		const permissions = await this.get_current_doc_permissions();
+		if (Object.keys(permissions).length) return Boolean(permissions.submit);
+
+		return Boolean(frappe.model.can_submit && frappe.model.can_submit('Cost Sheet'));
+	}
+
+	async render_actions(opts = {}) {
+		const refresh_id = ++this.workflow_refresh_id;
+		const loading = Boolean(opts.loading);
+
+		this.workflow_actions_loading = loading;
+		this.clear_page_actions();
+
+		if (loading) return;
+
+		if (!this.current_cost_sheet_doc || this.is_dirty) {
+			this.set_save_primary_action();
+			return;
+		}
+
+		const docstatus = Number(this.current_cost_sheet_doc.docstatus || 0);
+		if (docstatus === 2) return;
+
+		try {
+			const { has_workflow, transitions } = await this.get_workflow_transition_context();
+			if (refresh_id !== this.workflow_refresh_id) return;
+
+			this.clear_page_actions();
+
+			if (transitions.length) {
+				transitions.forEach((transition) => {
+					this.page.add_action_item(__(transition.action), () => {
+						this.apply_workflow_action(transition);
+					});
+				});
+				return;
+			}
+
+			if (docstatus === 0) {
+				if (!has_workflow) {
+					// No workflow: show Submit if permitted, otherwise Save
+					if (await this.can_submit_current_doc()) {
+						if (refresh_id !== this.workflow_refresh_id) return;
+						this.set_submit_primary_action();
+					} else {
+						if (refresh_id !== this.workflow_refresh_id) return;
+						this.set_save_primary_action();
+					}
+				} else {
+					// Workflow exists but no transitions are available for this user/state.
+					// Frappe core behaviour: the doc is still editable/saveable in this state.
+					// Show Save so the user can update fields even while waiting for approval.
+					if (refresh_id !== this.workflow_refresh_id) return;
+					this.set_save_primary_action();
+				}
+				return;
+			}
+
+			if (docstatus === 1 && await this.can_cancel_current_doc(has_workflow)) {
+				if (refresh_id !== this.workflow_refresh_id) return;
+				this.page.set_secondary_action(__('Cancel'), () => {
+					this.cancel_current_cost_sheet();
+				});
+			}
+		} catch (e) {
+			console.error('Unable to render Cost Sheet actions:', e);
+			if (refresh_id !== this.workflow_refresh_id) return;
+			this.clear_page_actions();
+			if (!this.current_cost_sheet_doc || this.is_dirty) {
+				this.set_save_primary_action();
+			}
+		}
+	}
+
+	async refresh_workflow_actions(opts = {}) {
+		return this.render_actions(opts);
+	}
+
+	async submit_current_cost_sheet() {
+		if (!this.current_cost_sheet_doc || Number(this.current_cost_sheet_doc.docstatus) !== 0 || this.is_dirty) return;
+
+		frappe.confirm(
+			__('Permanently Submit {0}?', [this.current_cost_sheet_doc.name]),
+			() => {
+				frappe.call({
+					method: 'frappe.desk.form.save.savedocs',
+					args: {
+						doc: this.current_cost_sheet_doc,
+						action: 'Submit'
+					},
+					freeze: true,
+					freeze_message: __('Submitting'),
+					callback: () => {
+						this.set_current_cost_sheet(this.current_cost_sheet_doc.name).catch((e) => {
+							console.error('Unable to refresh Cost Sheet after submit:', e);
+							this.render_actions();
+						});
+					}
+				});
+			}
+		);
+	}
+
+	async cancel_current_cost_sheet() {
+		if (!this.current_cost_sheet_doc || Number(this.current_cost_sheet_doc.docstatus) !== 1) return;
+
+		frappe.confirm(
+			__('Permanently Cancel {0}?', [this.current_cost_sheet_doc.name]),
+			() => {
+				const args = {
+					doctype: 'Cost Sheet',
+					name: this.current_cost_sheet_doc.name
+				};
+				let workflow_state_fieldname = null;
+				try {
+					workflow_state_fieldname = frappe.workflow?.get_state_fieldname?.('Cost Sheet');
+				} catch (e) {
+					workflow_state_fieldname = null;
+				}
+				if (workflow_state_fieldname && this.current_cost_sheet_doc[workflow_state_fieldname]) {
+					args.workflow_state_fieldname = workflow_state_fieldname;
+					args.workflow_state = this.current_cost_sheet_doc[workflow_state_fieldname];
+				}
+
+				frappe.call({
+					method: 'frappe.desk.form.save.cancel',
+					args,
+					freeze: true,
+					callback: () => {
+						this.set_current_cost_sheet(args.name).catch((e) => {
+							console.error('Unable to refresh Cost Sheet after cancel:', e);
+							this.render_actions();
+						});
+					}
+				});
+			}
+		);
+	}
+
+	async prompt_rejection_remarks() {
+		return new Promise((resolve, reject) => {
+			const dialog = new frappe.ui.Dialog({
+				title: __('Rejection Remarks'),
+				fields: [
+					{
+						fieldname: 'remarks',
+						label: __('Remarks'),
+						fieldtype: 'Small Text',
+						reqd: 1
+					}
+				],
+				primary_action_label: __('Reject'),
+				primary_action: (values) => {
+					const remarks = (values.remarks || '').trim();
+					if (!remarks) {
+						frappe.msgprint({
+							title: __('Validation'),
+							message: __('Please enter rejection remarks.'),
+							indicator: 'red'
+						});
+						return;
+					}
+
+					dialog.hide();
+					resolve(remarks);
+				},
+				secondary_action_label: __('Cancel'),
+				secondary_action: () => {
+					dialog.hide();
+					reject();
+				}
+			});
+
+			dialog.show();
+		});
+	}
+
+	async apply_workflow_action(transition) {
+		if (!this.current_cost_sheet_doc || this.is_dirty) {
+			this.clear_workflow_actions();
+			frappe.msgprint(__('Please save the Cost Sheet before applying a workflow action.'));
+			return;
+		}
+
+		try {
+			if (this.active_workflow && this.active_workflow.enable_action_confirmation) {
+				const confirmed = await new Promise((resolve) => {
+					frappe.confirm(
+						__('Are you sure you want to {0}?', [transition.action]),
+						() => resolve(true),
+						() => resolve(false)
+					);
+				});
+				if (!confirmed) return;
+			}
+
+			frappe.dom.freeze(__('Applying workflow action...'));
+
+			if (/reject/i.test(transition.action)) {
+				frappe.dom.unfreeze();
+				const remarks = await this.prompt_rejection_remarks();
+				frappe.dom.freeze(__('Applying workflow action...'));
+
+				await frappe.db.set_value('Cost Sheet', this.current_cost_sheet_doc.name, 'remarks', remarks);
+				this.current_cost_sheet_doc = await this.fetch_cost_sheet_doc(this.current_cost_sheet_doc.name);
+			}
+
+			const updated_doc = await frappe.xcall('frappe.model.workflow.apply_workflow', {
+				doc: this.current_cost_sheet_doc,
+				action: transition.action
+			});
+
+			this.current_cost_sheet_doc = updated_doc;
+			this.is_dirty = false;
+			this.set_iframe_doc_name(updated_doc.name, updated_doc.cost_sheet_name || updated_doc.name);
+			this.sync_iframe_readonly_state();
+			await this.refresh_workflow_actions();
+			this.update_status_indicator();
+
+			frappe.show_alert({
+				message: __('Workflow action applied.'),
+				indicator: 'green'
+			}, 3);
+		} catch (e) {
+			if (e) {
+				console.error('Workflow action failed:', e);
+			}
+		} finally {
+			frappe.dom.unfreeze();
+		}
+	}
+
+	prepare_cost_sheet_data_for_save(data) {
+		const payload = Object.assign({}, data || {});
+		const inquiry = (this.source_context && this.source_context.doctype === 'Opportunity' && this.source_context.name)
+			|| payload.inquiry
+			|| payload.opportunity
+			|| (this.current_cost_sheet_doc && this.current_cost_sheet_doc.inquiry);
+
+		if (inquiry) {
+			payload.inquiry = inquiry;
+		}
+		delete payload.opportunity;
+
+		if (!payload.name && this.current_cost_sheet_doc && this.current_cost_sheet_doc.name) {
+			payload.name = this.current_cost_sheet_doc.name;
+		}
+
+		if (payload.name) {
+			delete payload.naming_series;
+		}
+
+		return payload;
+	}
+
+	finish_cost_sheet_load(data) {
+		this.suppress_dirty = false;
+
+		if (data && data.name) {
+			this.set_current_cost_sheet(data.name).catch((e) => {
+				console.error('Unable to load workflow actions for Cost Sheet:', e);
+				this.render_actions();
+			});
+		} else {
+			this.current_cost_sheet_doc = null;
+			this.sync_iframe_readonly_state();
+			this.is_dirty = true;
+			this.update_status_indicator();
+			this.render_actions();
+		}
+	}
+
 	save_cost_sheet_from_iframe(data) {
+		const payload = this.prepare_cost_sheet_data_for_save(data);
+
 		frappe.call({
 			method: 'sukha.sukha.doctype.cost_sheet.cost_sheet.create_from_dashboard',
-			args: { data: data },
+			args: { data: payload },
 			callback: (r) => {
 				if (r.message) {
 					const costSheetName = r.message.cost_sheet;
 					// const quotationName = r.message.quotation;
 
-					// Clear localStorage after successful save
-					localStorage.removeItem('cost_sheet_load_data');
-					localStorage.removeItem('cost_sheet_load_data_name');
-					const iframe = document.getElementById('cost-sheet-iframe');
-					this.load_cost_sheet_data(iframe);
+					this.suppress_dirty = false;
+					this.set_iframe_doc_name(costSheetName, costSheetName);
+					this.replace_dashboard_route({
+						source_doctype: 'Cost Sheet',
+						source_name: costSheetName
+					});
+					this.set_current_cost_sheet(costSheetName).catch((e) => {
+						console.error('Unable to refresh workflow after Cost Sheet save:', e);
+						this.render_actions();
+					});
 					// Build link buttons for the dialog
 					let linksHtml = `
 						<div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
@@ -449,6 +1235,7 @@ class CostSheetDashboard {
 				}
 			},
 			error: (r) => {
+				this.suppress_dirty = false;
 				frappe.msgprint({
 					title: __('Error'),
 					message: __('Failed to save Cost Sheet. Please try again.'),
@@ -494,6 +1281,18 @@ class CostSheetDashboard {
 	}
 
 	reset_form() {
+		this.current_cost_sheet_doc = null;
+		this.sync_iframe_readonly_state();
+		this.source_context = null;
+		this.pending_load_data = null;
+		this.last_route_context_key = null;
+		this.is_dirty = false;
+		this.suppress_dirty = false;
+		this.replace_dashboard_route();
+		this.update_status_indicator();
+		this.set_iframe_doc_name(null);
+		this.render_actions();
+
 		const iframe = document.getElementById('cost-sheet-iframe');
 		if (iframe) iframe.src = iframe.src;
 	}
@@ -518,8 +1317,15 @@ class CostSheetDashboard {
 						callback: function (r) {
 							if (r.message) {
 								const iframe = document.getElementById('cost-sheet-iframe');
-								// Call load_cost_sheet_data directly with the fetched doc
-								localStorage.setItem('cost_sheet_load_data', JSON.stringify(r.message));
+								me.set_current_cost_sheet_doc(r.message).catch((e) => {
+									console.error('Unable to refresh workflow after loading Cost Sheet:', e);
+									me.render_actions();
+								});
+								me.pending_load_data = r.message;
+								me.replace_dashboard_route({
+									source_doctype: 'Cost Sheet',
+									source_name: r.message.name
+								});
 								me.load_cost_sheet_data(iframe);
 								cur_dialog.hide();
 								frappe.show_alert({
@@ -538,12 +1344,30 @@ class CostSheetDashboard {
 	// LOAD COST SHEET DATA FROM LOCALSTORAGE
 	// ─────────────────────────────────────────────────────────────
 
-	load_cost_sheet_data(iframe) {
+	async load_cost_sheet_data(iframe) {
 		try {
-			const storedData = localStorage.getItem('cost_sheet_load_data');
-			if (!storedData) return;
+			let data = this.pending_load_data;
+			this.pending_load_data = null;
 
-			const data = JSON.parse(storedData);
+			if (!data) {
+				data = await this.get_route_source_data();
+			}
+
+			if (!data) {
+				this.suppress_dirty = false;
+				this.render_actions();
+				return;
+			}
+
+			this.set_source_context_from_data(data);
+			this.suppress_dirty = true;
+			if (data.name) {
+				this.clear_saved_doc_actions_while_loading();
+				this.set_current_cost_sheet(data.name).catch((e) => {
+					console.error('Unable to refresh workflow while loading Cost Sheet:', e);
+					this.render_actions();
+				});
+			}
 			const doc = iframe.contentDocument || iframe.contentWindow.document;
 
 			const setInput = (id, val) => {
@@ -573,6 +1397,7 @@ class CostSheetDashboard {
 			if (prospectWrapper) prospectWrapper.style.display = 'none';
 			if (data.name) {
 				setInput('inp_doc_name', data.name);
+				this.set_iframe_doc_name(data.name, data.cost_sheet_name || data.name);
 			}
 			// Show the appropriate one based on opportunity_from or direct cost sheet data
 			if ((oppFrom === 'Lead' && partyName) || data.lead) {
@@ -637,6 +1462,7 @@ class CostSheetDashboard {
 				'container_type': 'inp_container',
 				'packing_type': 'inp_packing_type',
 				'custom_packing_type': 'inp_packing_type',
+				'custom_packing_type_with_unit_size_kg': 'inp_packing_type',
 				'packing_unit_size': 'inp_unit_size',
 				'std_packing': 'inp_std_packing',
 				'custom_std_pakcing': 'inp_std_packing',
@@ -704,7 +1530,7 @@ class CostSheetDashboard {
 
 			// Fields that should be set AFTER product change events settle
 			// (because the iframe repopulates these dropdowns when product changes)
-			const deferredFields = ['packing_type', 'custom_packing_type', 'std_packing', "custom_std_pakcing"];
+			const deferredFields = ['packing_type', 'custom_packing_type', 'custom_packing_type_with_unit_size_kg', 'std_packing', "custom_std_pakcing"];
 			const deferredValues = {};
 
 			// Populate main fields
@@ -808,6 +1634,7 @@ class CostSheetDashboard {
 			}
 			if (data.name) {
 				setInput('inp_doc_name', data.name);
+				this.set_iframe_doc_name(data.name, data.cost_sheet_name || data.name);
 			}
 
 			// Populate child table data if available
@@ -895,95 +1722,79 @@ class CostSheetDashboard {
 					}
 				}
 
-				// Apply deferred fields AFTER product change events have settled
-				// (packing_type and std_packing get repopulated by iframe when product changes)
-				// Apply deferred fields AFTER product change events have settled
-				// ─── AFTER ───────────────────────────────────────────────────────────────
-				// Step 1 @ 1500ms: apply packing_type first (NOT std_packing yet)
+				// Apply deferred fields after product-driven dropdowns settle.
+				const PACKING_TYPE_KEYS = ['packing_type', 'custom_packing_type', 'custom_packing_type_with_unit_size_kg'];
 				const STD_PACKING_KEYS = ['std_packing', 'custom_std_pakcing'];
-
-				Object.keys(deferredValues)
-					.filter(docField => !STD_PACKING_KEYS.includes(docField))
-					.forEach(docField => {
-						const inputId = fieldMapping[docField];
-						const element = doc.getElementById(inputId);
-						if (!element) return;
-
-						let valueToSet = deferredValues[docField];
-
-						if (element.tagName === 'SELECT') {
-							const normalizedVal = this.normalize_default_value(valueToSet);
-							let optionExists = Array.from(element.options).some(
-								opt => opt.value === valueToSet || opt.value === normalizedVal
-							);
-							if (!optionExists && normalizedVal !== valueToSet) {
-								valueToSet = normalizedVal;
-								optionExists = Array.from(element.options).some(opt => opt.value === valueToSet);
-							}
-							if (!optionExists) {
-								const opt = doc.createElement('option');
-								opt.value = valueToSet;
-								opt.textContent = valueToSet;
-								element.appendChild(opt);
-							}
-						}
-
-						element.value = valueToSet;
-						element.dispatchEvent(new Event('change', { bubbles: true }));
-						console.log(`Applied deferred ${docField}: ${valueToSet} into ${inputId}`);
-					});
-
-				// Step 2 @ 1500+1000ms: apply std_packing AFTER packing_type's async
-				// handlers (iframe option repopulation) have had time to settle
+				const packingTypeDocField = PACKING_TYPE_KEYS.find(k => deferredValues[k] !== undefined);
 				const stdPackingDocField = STD_PACKING_KEYS.find(k => deferredValues[k] !== undefined);
 
-				const applyStdPackingAndCalculate = () => {
-					if (stdPackingDocField) {
-						const inputId = fieldMapping[stdPackingDocField];
-						const element = doc.getElementById(inputId);
-						if (element) {
-							let valueToSet = deferredValues[stdPackingDocField];
+				const applyDeferredField = (docField, opts = {}) => {
+					const inputId = fieldMapping[docField];
+					const element = doc.getElementById(inputId);
+					if (!element || deferredValues[docField] === undefined || deferredValues[docField] === null) return true;
 
-							if (element.tagName === 'SELECT') {
-								const normalizedVal = this.normalize_default_value(valueToSet);
-								let optionExists = Array.from(element.options).some(
-									opt => opt.value === valueToSet || opt.value === normalizedVal
-								);
-								if (!optionExists && normalizedVal !== valueToSet) {
-									valueToSet = normalizedVal;
-									optionExists = Array.from(element.options).some(opt => opt.value === valueToSet);
-								}
-								if (!optionExists) {
-									const opt = doc.createElement('option');
-									opt.value = valueToSet;
-									opt.textContent = valueToSet;
-									element.appendChild(opt);
-								}
-							}
+					let valueToSet = deferredValues[docField];
+					if (valueToSet === '') return true;
 
-							element.value = valueToSet;
-							element.dispatchEvent(new Event('change', { bubbles: true }));
-							if (element.onchange) element.onchange();   // triggers fetchStdPackingWeight
-							console.log(`Applied deferred std_packing (${stdPackingDocField}): ${valueToSet} into ${inputId}`);
+					if (element.tagName === 'SELECT') {
+						const normalizedVal = this.normalize_default_value(valueToSet);
+						let optionExists = Array.from(element.options).some(
+							opt => opt.value === valueToSet || opt.value === normalizedVal
+						);
+						if (!optionExists && normalizedVal !== valueToSet) {
+							valueToSet = normalizedVal;
+							optionExists = Array.from(element.options).some(opt => opt.value === valueToSet);
+						}
+						if (!optionExists) {
+							const opt = doc.createElement('option');
+							opt.value = valueToSet;
+							opt.textContent = valueToSet;
+							element.appendChild(opt);
 						}
 					}
 
+					element.value = valueToSet;
+					element.dispatchEvent(new Event('change', { bubbles: true }));
+					if (opts.triggerOnchange && element.onchange) {
+						element.onchange();
+					}
+
+					console.log(`Applied deferred ${docField}: ${valueToSet} into ${inputId}, value now: ${element.value}`);
+					return element.tagName !== 'SELECT' || element.value === valueToSet;
+				};
+
+				const retryDeferredField = (docField, opts, done, attempt = 0) => {
+					if (!docField) {
+						done();
+						return;
+					}
+
+					const applied = applyDeferredField(docField, opts);
+					if (applied || attempt >= 15) {
+						done();
+						return;
+					}
+
+					setTimeout(() => retryDeferredField(docField, opts, done, attempt + 1), 200);
+				};
+
+				const calculateAndFinishLoad = () => {
 					if (iframe.contentWindow && typeof iframe.contentWindow.calculateEngine === 'function') {
 						console.log('Triggering calculateEngine after data load');
 						iframe.contentWindow.calculateEngine();
 					}
+
+					this.finish_cost_sheet_load(data);
 				};
 
-				// Give packing_type's iframe handlers 1 second to finish async repopulation
-				if (stdPackingDocField) {
-					setTimeout(applyStdPackingAndCalculate, 1000);
-				} else {
-					applyStdPackingAndCalculate();
-				}
+				retryDeferredField(packingTypeDocField, {}, () => {
+					retryDeferredField(
+						stdPackingDocField,
+						{ triggerOnchange: true },
+						calculateAndFinishLoad
+					);
+				});
 			}, 1500);
-
-			// Clear localStorage after loading
-			localStorage.removeItem('cost_sheet_load_data');
 
 			frappe.show_alert({
 				message: __('Cost Sheet data loaded successfully'),
@@ -991,6 +1802,7 @@ class CostSheetDashboard {
 			}, 5);
 
 		} catch (e) {
+			this.suppress_dirty = false;
 			console.error('Error loading cost sheet data:', e);
 			frappe.msgprint({
 				title: __('Error'),
@@ -1327,32 +2139,61 @@ class CostSheetDashboard {
 
 	fetch_product_grade(doc, item_name) {
 		if (!item_name) {
-			// Clear the grade field if no product selected
+			// Clear dependent fields if no product selected
 			const $grade = this.get_iframe_select(doc, ['#inp_grade', 'input[id*="grade"]']);
 			$grade.val('');
+			const packingTypeEl = doc.getElementById('inp_packing_type');
+			if (packingTypeEl) {
+				packingTypeEl.innerHTML = '<option value="">Select...</option>';
+			}
 			return;
 		}
 
-		// Fetch custom_item_grade, DBK, and RoDTEP from Item (e.g. "64%"), fall back to parent variant
+		// Fetch full Item so packing child-table options are available too.
 		frappe.call({
-			method: 'frappe.client.get_value',
+			method: 'frappe.client.get',
 			args: {
 				doctype: 'Item',
-				filters: { name: item_name },
-				fieldname: ['custom_item_grade', 'variant_of', 'item_name', 'custom_duty_drawback_', 'custom_rodtep_']
+				name: item_name
 			},
 			callback: (r) => {
 				if (!r.message) return;
-				const grade = r.message.custom_item_grade || '';
-				const parentItem = r.message.variant_of || '';
-				const dbk = r.message.custom_duty_drawback_;
-				const rodtep = r.message.custom_rodtep_;
+				const itemDoc = r.message || {};
+				const grade = itemDoc.custom_item_grade || '';
+				const parentItem = itemDoc.variant_of || '';
+				const dbk = itemDoc.custom_duty_drawback_;
+				const rodtep = itemDoc.custom_rodtep_;
 
 				const setGrade = (val) => {
 					const $grade = this.get_iframe_select(doc, ['#inp_grade', 'input[id*="grade"]']);
 					if ($grade.length) {
 						$grade.val(val);
 						$grade.trigger('change');
+					}
+				};
+
+				const setPackingOptions = (item) => {
+					const packingTypeEl = doc.getElementById('inp_packing_type');
+					if (!packingTypeEl) return;
+
+					const currentVal = packingTypeEl.value;
+					packingTypeEl.innerHTML = '<option value="">Select...</option>';
+					this.get_packing_options_from_item(item).forEach((row) => {
+						const opt = doc.createElement('option');
+						opt.value = row.packing_type;
+						opt.textContent = row.packing_type;
+						packingTypeEl.appendChild(opt);
+					});
+
+					if (currentVal) {
+						let optionExists = Array.from(packingTypeEl.options).some(opt => opt.value === currentVal);
+						if (!optionExists) {
+							const opt = doc.createElement('option');
+							opt.value = currentVal;
+							opt.textContent = currentVal;
+							packingTypeEl.appendChild(opt);
+						}
+						packingTypeEl.value = currentVal;
 					}
 				};
 
@@ -1386,26 +2227,41 @@ class CostSheetDashboard {
 					}
 				};
 
-				if (grade) {
-					setGrade(grade);
-					setDbkRodtep(dbk, rodtep);
-				} else if (parentItem) {
-					// Variant item — fetch grade and DBK/RoDTEP from parent template
+				const hasItemPackings = this.get_packing_options_from_item(itemDoc).length > 0;
+				setPackingOptions(itemDoc);
+
+				const applyItemValues = () => {
+					if (grade) {
+						setGrade(grade);
+						setDbkRodtep(dbk, rodtep);
+					} else {
+						setDbkRodtep(dbk, rodtep);
+					}
+				};
+
+				if (parentItem && (!grade || !hasItemPackings)) {
+					// Variant item — packing options often live on the parent/template item.
 					frappe.call({
-						method: 'frappe.client.get_value',
+						method: 'frappe.client.get',
 						args: {
 							doctype: 'Item',
-							filters: { name: parentItem },
-							fieldname: ['custom_item_grade', 'custom_duty_drawback_', 'custom_rodtep_']
+							name: parentItem
 						},
 						callback: (rp) => {
-							const pMsg = rp.message || {};
-							setGrade(pMsg.custom_item_grade || '');
-							setDbkRodtep(pMsg.custom_duty_drawback_, pMsg.custom_rodtep_);
+							const pDoc = rp.message || {};
+							if (!hasItemPackings) {
+								setPackingOptions(pDoc);
+							}
+							if (!grade) {
+								setGrade(pDoc.custom_item_grade || '');
+								setDbkRodtep(pDoc.custom_duty_drawback_, pDoc.custom_rodtep_);
+							} else {
+								applyItemValues();
+							}
 						}
 					});
 				} else {
-					setDbkRodtep(dbk, rodtep);
+					applyItemValues();
 				}
 			}
 		});
@@ -1527,31 +2383,29 @@ class CostSheetDashboard {
 			const formGroup = field.closest(".form-group");
 			const label = formGroup ? formGroup.querySelector("label") : null;
 
-			let marker = label
+			const existingMarker = label
+				? label.querySelector(".req, .req-marker, .required-star")
+				: null;
+			const dynamicMarker = label
 				? label.querySelector(".req-marker")
 				: null;
 
 			if (!value) {
-
 				field.classList.add("required-empty");
 
-				if (label && !marker) {
-					// marker = document.createElement("span");
-					marker = doc.createElement("span");
+				if (label && !existingMarker) {
+					const marker = doc.createElement("span");
 					marker.className = "req-marker";
 					marker.innerHTML = "*";
 					label.appendChild(marker);
 				}
-
 			} else {
 				field.classList.remove("required-empty");
 				field.style.border = "";
 				field.style.boxShadow = "";
 
-				// field.classList.remove("required-empty");
-
-				if (marker) {
-					marker.remove();
+				if (dynamicMarker) {
+					dynamicMarker.remove();
 				}
 			}
 		};
@@ -1638,7 +2492,7 @@ class CostSheetDashboard {
 			$field.attr("required", true).addClass("dynamic-required");
 
 			const $label = $field.closest(".form-group").find("label");
-			if ($label.length && !$label.find(".required-star").length) {
+			if ($label.length && !$label.find(".req, .req-marker, .required-star").length) {
 				$label.append(`<span class="required-star" style="color:red;margin-left:3px">*</span>`);
 			}
 		});

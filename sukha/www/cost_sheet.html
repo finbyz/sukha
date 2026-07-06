@@ -613,6 +613,10 @@
           </div>
         </div>
         <div class="kb-stats">
+          <div class="kb-stat" id="banner-lead-stat" style="display:none">
+            <span class="rp-summary-label" style="color:#7C3AED">Lead</span>
+            <span class="rp-summary-val" style="color:#7C3AED;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" id="lbl-rp-lead">—</span>
+          </div>
           <div class="kb-stat">
             <span class="rp-summary-label">Scope</span>
             <span class="rp-summary-val" style="color:var(--color-brand)" id="lbl-rp-scope">India-CIF</span>
@@ -802,14 +806,28 @@
                 <option value="">Select terms...</option>
               </select>
             </div>
-            <div class="form-group merchant-exw-hide">
+            <div class="form-group merchant-exw-hide" id="wrapper-destination">
               <label id="lbl-destination-label">Country of Destination</label>
+              <!-- Export mode: country dropdown -->
               <select class="form-control" id="inp_destination">
                 <option value="" selected>Select Destination...</option>
               </select>
+              <!-- Domestic/Lead mode: free-text delivery address (hidden by default) -->
+              <input type="text" class="form-control" id="inp_destination_text"
+                placeholder="Enter delivery address…" style="display:none">
+            </div>
+
+            <!-- Pincode & City fields (Domestic/Lead only) -->
+            <div class="form-group d-none" id="wrapper-pincode">
+              <label>PIcode</label>
+              <input type="text" class="form-control" id="inp_pincode" placeholder="Enter Pincode...">
+            </div>
+            <div class="form-group d-none" id="wrapper-city">
+              <label>City</label>
+              <input type="text" class="form-control" id="inp_city" placeholder="Enter City...">
             </div>
         
-            <div class="form-group merchant-exw-hide domestic-exw-hide">
+            <div class="form-group merchant-exw-hide domestic-exw-hide" style="display:none">
               <label>Final Country of Destination</label>
               <input type="text" class="form-control" id="inp_final_dest" placeholder="Enter Final Destination...">
             </div>
@@ -821,17 +839,17 @@
               </select>
             </div>
         
-            <div class="form-group merchant-exw-hide">
+            <div class="form-group" id="wrapper-pol">
               <label id="lbl-pol-label">Port of Loading</label>
               <select class="form-control" id="inp_pol">
                 <option value="" selected>Select Port...</option>
               </select>
             </div>
             
-            <!-- NEW: Loading Location text field (shown only for Merchant Export EXW) -->
-            <div class="form-group merchant-exw-only domestic-exw-hide">
+            <!-- Loading Location free-text field (shown for Domestic/Repacking EXW) -->
+            <div class="form-group d-none" id="wrapper-loading-loc">
               <label>Loading Location</label>
-              <input type="text" class="form-control" id="inp_loading_location" placeholder="Enter Loading Location...">
+              <input type="text" class="form-control manual-input" id="inp_loading_location" placeholder="Enter Loading Location...">
             </div>
             
             <div class="form-group">
@@ -884,7 +902,7 @@
           </div>
           <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
-              <label>No of Packing units in 1 FCL</label>
+              <label>No of Packing units</label>
               <input type="number" class="form-control font-mono" id="inp_units_per_fcl" value=""
                 oninput="calculateEngine()">
             </div>
@@ -1091,10 +1109,10 @@
                     </div>
                   </td>
                 </tr>
-                <tr class="exw-only d-none">
+                <tr class="d-none" id="tr-vanning-row">
                   <td id="lbl-vanning-row-name">Addl. Vanning Requirement (chocking/lashing)</td>
-                  <td class="text-right font-mono" id="lbl-vanning-rs-tot">21,000</td>
-                  <td class="text-right font-mono" id="lbl-vanning-rs-mt">308</td>
+                  <td class="text-right font-mono" id="lbl-vanning-rs-tot"></td>
+                  <td class="text-right font-mono" id="lbl-vanning-rs-mt">3</td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td style="padding:4px 8px">
@@ -1564,7 +1582,7 @@
                   <td
                     style="padding-left:16px; background-color:#F8FAFC; font-size:11px; color:var(--color-text-muted)">
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
-                      <span>Credit Cost (Customer Payment Terms)</span>
+                      <span>Credit Cost</span>
                       <div style="display:flex; align-items:center; gap:4px">
                         <input type="number" step="0.1" class="form-control manual-input font-mono"
                           style="width:55px; padding:2px 4px; font-size:11px; text-align:center" id="inp_dom_credit_pct"
@@ -1714,6 +1732,9 @@
     "use strict";
 
     const $ = id => document.getElementById(id);
+    window.logDebug = function(msg) {
+      console.log('IFRAME:', msg);
+    };
     const v = id => parseFloat($(id)?.value) || 0;
     const fmt = (num, decimals = 3) => {
       if (isNaN(num) || !isFinite(num)) return '—';
@@ -2086,6 +2107,9 @@
       document.querySelectorAll('.repack-only').forEach(el => el.classList.toggle('d-none', !isRepack));
       document.querySelectorAll('.repack-hide').forEach(el => el.classList.toggle('d-none', isRepack));
       document.querySelectorAll('.exw-only').forEach(el => el.classList.toggle('d-none', !isExw));
+      // Vanning row: show for Merchant EXW and Repacking only (hide for Domestic EXW)
+      const vanningRow = $('tr-vanning-row');
+      if (vanningRow) vanningRow.classList.toggle('d-none', !(isMer || isRepack));
       document.querySelectorAll('.exw-hide').forEach(el => el.classList.toggle('d-none', isExw));
       document.querySelectorAll('.non-exw-only').forEach(el => el.classList.toggle('d-none', isExw));
       // Merchant Export EXW specific toggles
@@ -2146,8 +2170,85 @@
         $('lbl-product-table-title').innerHTML = isExw ? '📦 Product Details' : '📦 Product Details';
       }
       if ($('lbl-destination-label')) $('lbl-destination-label').textContent = (isDom || isRepack) ? 'Final Customer Delivery at' : 'Country of Destination';
+      // Toggle between select (export) and text input (domestic/lead) for the destination field
+      {
+        const destSel  = $('inp_destination');
+        const destTxt  = $('inp_destination_text');
+        if (destSel && destTxt) {
+          const isDomesticMode = isDom || isRepack;
+          if (isDomesticMode) {
+            // Switch to text input; carry over any existing select value if set
+            logDebug('cost_sheet.html: applyScopeLogic - domestic mode destination switch');
+            if (!destTxt.value && destSel.value) {
+              logDebug('cost_sheet.html: carrying over destSel.value to destTxt.value: ' + destSel.value);
+              destTxt.value = destSel.value;
+            }
+            destSel.style.display = 'none';
+            destTxt.style.display = '';
+            if ($('wrapper-pincode')) $('wrapper-pincode').classList.remove('d-none');
+            if ($('wrapper-city')) $('wrapper-city').classList.remove('d-none');
+            // Auto-fill from customer stuffing address if a customer is selected
+            const custId = $('inp_customer')?.value;
+            logDebug('cost_sheet.html: applyScopeLogic custId: ' + custId + ' wrapper-customer display: ' + ($('wrapper-customer') ? $('wrapper-customer').style.display : 'not found'));
+            if (custId && $('wrapper-customer')?.style.display !== 'none') {
+              fetchCustomerStuffingAddress(custId);
+            }
+          } else {
+            // Switch back to select; carry over text value if possible
+            if (destTxt.value) setDropdownValue('inp_destination', destTxt.value, false);
+            destTxt.style.display = 'none';
+            destSel.style.display = '';
+            if ($('wrapper-pincode')) $('wrapper-pincode').classList.add('d-none');
+            if ($('wrapper-city')) $('wrapper-city').classList.add('d-none');
+          }
+        }
+      }
       if ($('lbl-container-label')) $('lbl-container-label').textContent = (isDom || isRepack) ? 'Delivery In' : 'Container type';
-      if ($('lbl-pol-label')) $('lbl-pol-label').textContent = (isDom || isRepack) ? 'Loading Location' : 'Port of Loading';
+      // Rebuild the Delivery In / Container Type dropdown with only the options for this mode.
+      // NOTE: display:none on <option> is ignored by Chrome, so we rebuild innerHTML instead.
+      {
+        const cSel = $('inp_container');
+        if (cSel) {
+          const isDomesticMode = isDom || isRepack;
+          const prevVal = cSel.value;
+          if (isDomesticMode) {
+            cSel.innerHTML = `
+              <option value="">Select...</option>
+              <option value="Open Truck">Open Truck</option>
+              <option value="Container">Container</option>
+              <option value="Tempo">Tempo</option>`;
+          } else {
+            cSel.innerHTML = `
+              <option value="">Select...</option>
+              <option value="20' FCL">20' FCL</option>
+              <option value="40' FCL">40' FCL</option>
+              <option value="20' ISO">20' ISO</option>
+              <option value="LCL">LCL</option>`;
+          }
+          // Restore previous value if it still exists in the new option set
+          if (prevVal) cSel.value = prevVal;
+        }
+      }
+      // Port of Loading / Loading Location / Port of Destination field toggle
+      {
+        const wPol = $('wrapper-pol');
+        const wLoc = $('wrapper-loading-loc');
+        if (isMer) {
+          // Merchant EXW → port dropdown labeled 'Port of Destination'
+          if (wPol) wPol.classList.remove('d-none');
+          if (wLoc) wLoc.classList.add('d-none');
+          if ($('lbl-pol-label')) $('lbl-pol-label').textContent = 'Port of Destination';
+        } else if (isDom || isRepack) {
+          // Domestic / Repacking EXW → free-text Loading Location
+          if (wPol) wPol.classList.add('d-none');
+          if (wLoc) wLoc.classList.remove('d-none');
+        } else {
+          // CIF / FOB / TC → port dropdown labeled 'Port of Loading'
+          if (wPol) wPol.classList.remove('d-none');
+          if (wLoc) wLoc.classList.add('d-none');
+          if ($('lbl-pol-label')) $('lbl-pol-label').textContent = 'Port of Loading';
+        }
+      }
       if ($('lbl-helper-th')) $('lbl-helper-th').textContent = (isDom || isRepack) ? 'Rs/Tanker or Trucks' : 'Rs/FCL & Helper Inputs';
       if ($('lbl-vanning-row-name')) $('lbl-vanning-row-name').textContent = isRepack ? 'Chocking Belt' : 'Addl. Vanning Requirement (chocking/lashing)';
       if ($('lbl-vanning-helper-name')) $('lbl-vanning-helper-name').textContent = isRepack ? 'Chocking Belt' : 'Addl. Vanning Requirement (chocking/lashing)';
@@ -2382,7 +2483,7 @@
 
         let vanningTotalRs = 0;
         let vanningRsMt = 0;
-        if (isExw) {
+        if (isExw && !isDomestic) {
           const vanningFcl = v('inp_vanning_rs_fcl');
           // Formula: Rs per FCL ÷ Quantity per FCL (MT)
           vanningRsMt = qtyFcl > 0 ? (vanningFcl / qtyFcl) : 0;
@@ -2816,9 +2917,11 @@
         lead: $('inp_lead')?.value || '',
         prospect: $('inp_prospect')?.value || '',
         customer_payment_terms: $('inp_cust_terms')?.value || '',
-        country_of_destination: $('inp_destination')?.value || '',
+        country_of_destination: (($('inp_destination_text')?.style.display !== 'none') ? ($('inp_destination_text')?.value || '') : ($('inp_destination')?.value || '')),
         final_country_of_destination: $('inp_final_dest')?.value || '',
-        delivery_location: $('inp_destination')?.value || '',
+        pincode: $('inp_pincode')?.value || '',
+        city: $('inp_city')?.value || '',
+        delivery_location: (($('inp_destination_text')?.style.display !== 'none') ? ($('inp_destination_text')?.value || '') : ($('inp_destination')?.value || '')),
         loading_location: $('inp_loading_location')?.value || '',
         supplier: $('inp_supplier')?.value || '',
         supplier_payment_terms: $('inp_supp_terms')?.value || '',
@@ -3367,7 +3470,11 @@
     };
 
     /* ─── CUSTOMER NAME AUTO-FETCH ─── */
+    // Cache for stuffing addresses: { [customerDocName]: address }
+    window._stuffingAddressCache = window._stuffingAddressCache || {};
+
     function fetchCustomerName(customer) {
+      logDebug('cost_sheet.html: fetchCustomerName called with customer: ' + customer);
       const partyNameEl = $('inp_party_name');
       if (!partyNameEl) return;
 
@@ -3377,23 +3484,75 @@
       }
 
       if (typeof frappe !== 'undefined' && frappe.call) {
+        logDebug('cost_sheet.html: frappe.call available, fetching customer name directly');
         frappe.call({
           method: 'frappe.client.get_value',
           args: {
             doctype: 'Customer',
             filters: { name: customer },
-            fieldname: 'customer_name'
+            fieldname: ['customer_name', 'custom_stuffing_address']
           },
           callback: (r) => {
+            logDebug('cost_sheet.html: direct customer name fetch response: ' + JSON.stringify(r.message));
             if (r.message && r.message.customer_name) {
               partyNameEl.value = r.message.customer_name;
+            }
+            // Cache the stuffing address for use when domestic mode activates
+            const addr = (r.message && r.message.custom_stuffing_address) || '';
+            window._stuffingAddressCache[customer] = addr;
+            // Fill immediately if the delivery text field is already visible
+            const destTxt = $('inp_destination_text');
+            logDebug('cost_sheet.html: destTxt visibility: ' + (destTxt ? destTxt.style.display : 'no element'));
+            if (destTxt && destTxt.style.display !== 'none') {
+              if (addr) {
+                logDebug('cost_sheet.html: setting destTxt.value to: ' + addr);
+                destTxt.value = addr;
+              }
             }
           }
         });
       } else {
         if (window.parent && window.parent !== window) {
+          logDebug('cost_sheet.html: posting fetch_customer_name message to parent');
           window.parent.postMessage({ type: 'fetch_customer_name', customer: customer }, '*');
         }
+      }
+    }
+
+    /* Fetch custom_stuffing_address from Customer and fill the domestic delivery field */
+    function fetchCustomerStuffingAddress(customer) {
+      logDebug('cost_sheet.html: fetchCustomerStuffingAddress called with customer: ' + customer);
+      if (!customer) return;
+      const destTxt = $('inp_destination_text');
+      if (!destTxt) return;
+
+      // Use cache if available (avoids extra round-trip)
+      if (window._stuffingAddressCache && customer in window._stuffingAddressCache) {
+        const cached = window._stuffingAddressCache[customer];
+        logDebug('cost_sheet.html: found cached stuffing address: ' + cached);
+        if (cached) destTxt.value = cached;
+        return;
+      }
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        logDebug('cost_sheet.html: frappe.call available, fetching stuffing address directly');
+        frappe.call({
+          method: 'frappe.client.get_value',
+          args: {
+            doctype: 'Customer',
+            filters: { name: customer },
+            fieldname: 'custom_stuffing_address'
+          },
+          callback: (r) => {
+            logDebug('cost_sheet.html: direct stuffing address fetch response: ' + JSON.stringify(r.message));
+            const addr = (r.message && r.message.custom_stuffing_address) || '';
+            window._stuffingAddressCache[customer] = addr;
+            if (addr) destTxt.value = addr;
+          }
+        });
+      } else if (window.parent && window.parent !== window) {
+        logDebug('cost_sheet.html: posting fetch_customer_stuffing_address message to parent');
+        window.parent.postMessage({ type: 'fetch_customer_stuffing_address', customer: customer }, '*');
       }
     }
 
@@ -3609,10 +3768,35 @@ function fetchProductGrade(itemCode) {
     window.addEventListener('message', (e) => {
       if (!e.data) return;
 
+      logDebug('cost_sheet.html: received message from parent: ' + e.data.type + ' ' + JSON.stringify(e.data));
+
       if (e.data.type === 'customer_name_response') {
         const partyNameEl = $('inp_party_name');
         if (partyNameEl) {
           partyNameEl.value = e.data.customer_name || '';
+        }
+        // Cache the stuffing address and fill the delivery text field if already visible
+        const addr = e.data.stuffing_address || '';
+        const custId = $('inp_customer')?.value;
+        if (custId && addr) {
+          window._stuffingAddressCache = window._stuffingAddressCache || {};
+          window._stuffingAddressCache[custId] = addr;
+        }
+        const destTxt = $('inp_destination_text');
+        logDebug('cost_sheet.html: customer_name_response destTxt visibility: ' + (destTxt ? destTxt.style.display : 'none'));
+        if (destTxt && destTxt.style.display !== 'none' && addr) {
+          logDebug('cost_sheet.html: setting destTxt.value to: ' + addr);
+          destTxt.value = addr;
+        }
+      }
+
+      if (e.data.type === 'customer_stuffing_address_response') {
+        const destTxt = $('inp_destination_text');
+        logDebug('cost_sheet.html: customer_stuffing_address_response destTxt visibility: ' + (destTxt ? destTxt.style.display : 'none'));
+        if (destTxt && destTxt.style.display !== 'none') {
+          const addr = e.data.stuffing_address || '';
+          logDebug('cost_sheet.html: setting destTxt.value to: ' + addr);
+          if (addr) destTxt.value = addr;
         }
       }
 
@@ -4172,6 +4356,17 @@ function fetchProductGrade(itemCode) {
           if ($('wrapper-customer')) $('wrapper-customer').style.display = 'none';
           if ($('wrapper-lead')) $('wrapper-lead').style.display = 'block';
           if ($('inp_lead')) $('inp_lead').value = partyName || '';
+          // Show lead name in KPI banner
+          if ($('lbl-rp-lead')) $('lbl-rp-lead').textContent = partyName || '—';
+          if ($('banner-lead-stat')) $('banner-lead-stat').style.display = 'flex';
+          // For Lead, Final Customer Delivery at is always a plain text field
+          window._isLeadMode = true;
+          const destSel = $('inp_destination');
+          const destTxt = $('inp_destination_text');
+          if (destSel && destTxt) {
+            destSel.style.display = 'none';
+            destTxt.style.display = '';
+          }
         } else if (oppFrom === 'Prospect' || oppFrom === 'Prospect (L3/Qualified)') {
           if ($('wrapper-customer')) $('wrapper-customer').style.display = 'none';
           if ($('wrapper-prospect')) $('wrapper-prospect').style.display = 'block';
@@ -4225,6 +4420,12 @@ function fetchProductGrade(itemCode) {
 
         const unitSize = urlParams.get('unit_size');
         if (unitSize) { const el = $('inp_unit_size'); if (el) { el.value = unitSize; el.dispatchEvent(new Event('input')); } }
+
+        const pincode = urlParams.get('pincode');
+        if (pincode) { const el = $('inp_pincode'); if (el) { el.value = pincode; } }
+
+        const city = urlParams.get('city');
+        if (city) { const el = $('inp_city'); if (el) { el.value = city; } }
 
         const unitsPerFcl = urlParams.get('units_per_fcl');
         if (unitsPerFcl) { const el = $('inp_units_per_fcl'); if (el) { el.value = unitsPerFcl; el.dispatchEvent(new Event('input')); } }

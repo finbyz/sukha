@@ -144,6 +144,9 @@ class CostSheetDashboard {
 			origin_scope,
 			exw_sub_type,
 
+			pincode: opportunity.custom_pincode || '',
+			city: opportunity.custom_city_p || '',
+
 			container_type: opportunity.custom_container_type,
 			packing_type: opportunity.custom_packing_type || opportunity.custom_packing_type_with_unit_size_kg,
 			std_packing: opportunity.custom_std_pakcing,
@@ -720,6 +723,7 @@ class CostSheetDashboard {
 			}
 			// Customer name fetch request from iframe
 			if (event.data.type === 'fetch_customer_name') {
+				console.log('dashboard: received fetch_customer_name request for:', event.data.customer);
 				const iframe = document.getElementById('cost-sheet-iframe');
 				if (!iframe || !iframe.contentWindow) return;
 				frappe.call({
@@ -727,18 +731,51 @@ class CostSheetDashboard {
 					args: {
 						doctype: 'Customer',
 						filters: { name: event.data.customer },
-						fieldname: 'customer_name'
+						fieldname: ['customer_name', 'custom_stuffing_address']
 					},
 					callback: (r) => {
+						console.log('dashboard: frappe.client.get_value (name & stuffing) response:', r.message);
 						const customer_name = (r.message || {}).customer_name || '';
+						const stuffing_address = (r.message || {}).custom_stuffing_address || '';
 						iframe.contentWindow.postMessage({
 							type: 'customer_name_response',
-							customer_name: customer_name
+							customer_name: customer_name,
+							stuffing_address: stuffing_address
 						}, '*');
 					}
 				});
 			}
+
+			// Customer stuffing address fetch request from iframe (domestic mode)
+			if (event.data.type === 'fetch_customer_stuffing_address') {
+				console.log('dashboard: received fetch_customer_stuffing_address request for:', event.data.customer);
+				this.log_debug('received fetch_customer_stuffing_address request for ' + event.data.customer);
+				const iframe = document.getElementById('cost-sheet-iframe');
+				if (!iframe || !iframe.contentWindow) return;
+				frappe.call({
+					method: 'frappe.client.get_value',
+					args: {
+						doctype: 'Customer',
+						filters: { name: event.data.customer },
+						fieldname: 'custom_stuffing_address'
+					},
+					callback: (r) => {
+						console.log('dashboard: frappe.client.get_value (stuffing only) response:', r.message);
+						this.log_debug('frappe.client.get_value stuffing response: ' + JSON.stringify(r.message));
+						const stuffing_address = (r.message || {}).custom_stuffing_address || '';
+						iframe.contentWindow.postMessage({
+							type: 'customer_stuffing_address_response',
+							stuffing_address: stuffing_address
+						}, '*');
+					}
+				});
+			}
+
 		});
+	}
+
+	log_debug(msg) {
+		console.log('DASHBOARD:', msg);
 	}
 
 
@@ -1450,6 +1487,8 @@ class CostSheetDashboard {
 				// Locations & Logistics
 				'country_of_destination': 'inp_destination',
 				'final_country_of_destination': 'inp_final_dest',
+				'pincode': 'inp_pincode',
+				'city': 'inp_city',
 				'port_of_discharge': 'inp_pod',
 				'port_of_loading': 'inp_pol',
 				'loading_location': 'inp_loading_location',

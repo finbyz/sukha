@@ -30,6 +30,8 @@
   "customer_payment_terms",
   "country_of_destination",
   "final_country_of_destination",
+  "pincode",
+  "city",
   "col_break_party_terms",
   "supplier_payment_terms",
   "section_break_currency",
@@ -259,6 +261,16 @@
    "label": "Final Country of Destination"
   },
   {
+   "fieldname": "pincode",
+   "fieldtype": "Data",
+   "label": "Pincode"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
    "fieldname": "col_break_party_terms",
    "fieldtype": "Column Break"
   },
@@ -362,7 +374,7 @@
    "fieldname": "container_type",
    "fieldtype": "Select",
    "label": "Container Type",
-   "options": "\n20' FCL\n40' FCL\n20' ISO\nLCL"
+   "options": "\n20' FCL\n40' FCL\n20' ISO\nLCL\nOpen Truck\nContainer\nTempo"
   },
   {
    "fieldname": "packing_type",
@@ -781,7 +793,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-07-03 14:10:55.595023",
+ "modified": "2026-07-06 14:59:12.739948",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

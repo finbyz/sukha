@@ -771,6 +771,28 @@ class CostSheetDashboard {
 				});
 			}
 
+			// Lead name fetch request from iframe
+			if (event.data.type === 'fetch_lead_name') {
+				console.log('dashboard: received fetch_lead_name request for:', event.data.lead);
+				const iframe = document.getElementById('cost-sheet-iframe');
+				if (!iframe || !iframe.contentWindow) return;
+				frappe.call({
+					method: 'frappe.client.get_value',
+					args: {
+						doctype: 'Lead',
+						filters: { name: event.data.lead },
+						fieldname: 'lead_name'
+					},
+					callback: (r) => {
+						console.log('dashboard: frappe.client.get_value (lead_name) response:', r.message);
+						const lead_name = (r.message || {}).lead_name || '';
+						iframe.contentWindow.postMessage({
+							type: 'lead_name_response',
+							lead_name: lead_name
+						}, '*');
+					}
+				});
+			}
 		});
 	}
 
@@ -1424,6 +1446,7 @@ class CostSheetDashboard {
 			// Get the wrapper elements
 			const customerWrapper = doc.getElementById('wrapper-customer');
 			const leadWrapper = doc.getElementById('wrapper-lead');
+			const leadNameWrapper = doc.getElementById('wrapper-lead-name');
 			const prospectWrapper = doc.getElementById('wrapper-prospect');
 			const leadInput = doc.getElementById('inp_lead');
 			const prospectInput = doc.getElementById('inp_prospect');
@@ -1431,6 +1454,7 @@ class CostSheetDashboard {
 			// Hide all by default
 			if (customerWrapper) customerWrapper.style.display = 'none';
 			if (leadWrapper) leadWrapper.style.display = 'none';
+			if (leadNameWrapper) leadNameWrapper.style.display = 'none';
 			if (prospectWrapper) prospectWrapper.style.display = 'none';
 			if (data.name) {
 				setInput('inp_doc_name', data.name);
@@ -1441,9 +1465,12 @@ class CostSheetDashboard {
 				const val = (oppFrom === 'Lead' ? partyName : data.lead);
 				console.log('Showing Lead field with:', val);
 				if (leadWrapper) leadWrapper.style.display = 'block';
+				if (leadNameWrapper) leadNameWrapper.style.display = 'block';
 				if (leadInput) {
 					leadInput.value = val;
 					leadInput.readOnly = true;
+					leadInput.dispatchEvent(new Event('input', { bubbles: true }));
+					leadInput.dispatchEvent(new Event('change', { bubbles: true }));
 				}
 				// Clear customer from data to prevent it being set
 				delete data.customer;
@@ -1454,6 +1481,8 @@ class CostSheetDashboard {
 				if (prospectInput) {
 					prospectInput.value = val;
 					prospectInput.readOnly = true;
+					prospectInput.dispatchEvent(new Event('input', { bubbles: true }));
+					prospectInput.dispatchEvent(new Event('change', { bubbles: true }));
 				}
 				// Clear customer from data to prevent it being set
 				delete data.customer;

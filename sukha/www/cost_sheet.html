@@ -69,17 +69,17 @@
     }
 
     .required-empty {
-        border: 1px solid #ef4444 !important;
+      border: 1px solid #ef4444 !important;
     }
 
     .required-filled {
-        border: 1px solid #d1d5db !important;
+      border: 1px solid #d1d5db !important;
     }
 
     .req-indicator {
-        color: #ef4444;
-        font-weight: bold;
-        margin-left: 4px;
+      color: #ef4444;
+      font-weight: bold;
+      margin-left: 4px;
     }
 
     /* REMOVED SHELL CSS */
@@ -251,6 +251,12 @@
     .grid-5 {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+    }
+
+    .grid-6 {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
       gap: 16px;
     }
 
@@ -579,7 +585,7 @@
       display: none !important;
     }
   </style>
-<base target="_blank">
+  <base target="_blank">
 </head>
 
 <body>
@@ -615,7 +621,9 @@
         <div class="kb-stats">
           <div class="kb-stat" id="banner-lead-stat" style="display:none">
             <span class="rp-summary-label" style="color:#7C3AED">Lead</span>
-            <span class="rp-summary-val" style="color:#7C3AED;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" id="lbl-rp-lead">—</span>
+            <span class="rp-summary-val"
+              style="color:#7C3AED;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px"
+              id="lbl-rp-lead">—</span>
           </div>
           <div class="kb-stat">
             <span class="rp-summary-label">Scope</span>
@@ -751,7 +759,7 @@
           <!-- Fully Clickable/Editable Demo Fields -->
           <!-- hidden: numeric credit days for calculateEngine() -->
           <input type="hidden" id="inp_cust_credit_days" value="">
-          <div class="grid-5" style="margin-bottom:16px">
+          <div class="grid-6" style="margin-bottom:16px">
             <div class="form-group">
               <label>Product Name</label>
               <select class="form-control" id="inp_product" onchange="fetchProductGrade(this.value)">
@@ -775,6 +783,11 @@
               <label>Lead</label>
               <input type="text" class="form-control" id="inp_lead" readonly
                 style="background:#F8FAFC;color:var(--color-text-muted)">
+            </div>
+            <div class="form-group" id="wrapper-lead-name" style="display:none">
+              <label>Lead Name</label>
+              <input type="text" class="form-control" id="inp_lead_name" readonly
+                style="background:#F8FAFC;color:var(--color-text-muted)" placeholder="Auto-fetched lead name…">
             </div>
             <div class="form-group" id="wrapper-prospect" style="display:none">
               <label>Prospect (L3/Qualified)</label>
@@ -813,45 +826,46 @@
                 <option value="" selected>Select Destination...</option>
               </select>
               <!-- Domestic/Lead mode: free-text delivery address (hidden by default) -->
-              <input type="text" class="form-control" id="inp_destination_text"
-                placeholder="Enter delivery address…" style="display:none">
+              <input type="text" class="form-control" id="inp_destination_text" placeholder="Enter delivery address…"
+                style="display:none">
             </div>
 
             <!-- Pincode & City fields (Domestic/Lead only) -->
             <div class="form-group d-none" id="wrapper-pincode">
-              <label>PIcode</label>
+              <label>Pincode</label>
               <input type="text" class="form-control" id="inp_pincode" placeholder="Enter Pincode...">
             </div>
             <div class="form-group d-none" id="wrapper-city">
               <label>City</label>
               <input type="text" class="form-control" id="inp_city" placeholder="Enter City...">
             </div>
-        
+
             <div class="form-group merchant-exw-hide domestic-exw-hide" style="display:none">
               <label>Final Country of Destination</label>
               <input type="text" class="form-control" id="inp_final_dest" placeholder="Enter Final Destination...">
             </div>
-            
+
             <div class="form-group domestic-hide exw-hide">
               <label>Port of Discharge</label>
               <select class="form-control" id="inp_pod">
                 <option value="" selected>Select Port...</option>
               </select>
             </div>
-        
+
             <div class="form-group" id="wrapper-pol">
               <label id="lbl-pol-label">Port of Loading</label>
               <select class="form-control" id="inp_pol">
                 <option value="" selected>Select Port...</option>
               </select>
             </div>
-            
+
             <!-- Loading Location free-text field (shown for Domestic/Repacking EXW) -->
             <div class="form-group d-none" id="wrapper-loading-loc">
               <label>Loading Location</label>
-              <input type="text" class="form-control manual-input" id="inp_loading_location" placeholder="Enter Loading Location...">
+              <input type="text" class="form-control manual-input" id="inp_loading_location"
+                placeholder="Enter Loading Location...">
             </div>
-            
+
             <div class="form-group">
               <label>Packing and Stuffing at <span class="req">*</span></label>
               <select class="form-control manual-input" id="inp_stuffing_at" onchange="updateStuffingLoc()">
@@ -866,7 +880,7 @@
                 <option value="">Select...</option>
               </select>
             </div>
-        </div>
+          </div>
 
           <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
@@ -898,7 +912,7 @@
                 oninput="calculateEngine()">
             </div>
 
-            
+
           </div>
           <div class="grid-4" style="margin-bottom:16px">
             <div class="form-group">
@@ -1212,7 +1226,7 @@
                   </td>
                 </tr>
                 <tr>
-                  <td id="lbl-labels-row-name">Any Other : Labels Charges</td>
+                  <td id="lbl-labels-row-name">Any Other :</td>
                   <td class="text-right font-mono" id="lbl-labels-rs-tot">3,405</td>
                   <td style="padding:4px 12px">
                     <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
@@ -1337,8 +1351,9 @@
                   </tr>
                   <tr>
                     <td>Sea Way BL Charges</td>
-                    <td class="text-right font-mono"><input type="number" step="100" class="cell-input cell-manual font-mono text-right"
-                        style="font-size:12px;padding:4px" id="inp_sea_way_bl_charges" oninput="calculateEngine()"></td>
+                    <td class="text-right font-mono"><input type="number" step="100"
+                        class="cell-input cell-manual font-mono text-right" style="font-size:12px;padding:4px"
+                        id="inp_sea_way_bl_charges" oninput="calculateEngine()"></td>
                     <td class="text-right font-mono" id="lbl-seaway-mt">—</td>
                     <td class="text-right font-mono" id="lbl-seaway-usd">—</td>
                     <td class="text-right font-mono" id="lbl-seaway-umt">—</td>
@@ -1630,7 +1645,9 @@
                         oninput="calculateEngine()">
                     </div>
                     <span style="font-size:9px;color:var(--color-text-subtle);display:block"></span>
-                    <span style="font-size:10px;color:var(--color-primary);font-weight:600" id="lbl-doc-helper-rate">BV/CRIA/PVOC/HC/Legalization ($/Container) <span style="display:inline-block;background:#D1FAE5;color:#065F46;border:1px solid #10B981;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:4px;vertical-align:middle;"></span></span>
+                    <span style="font-size:10px;color:var(--color-primary);font-weight:600"
+                      id="lbl-doc-helper-rate">($/Container) <span
+                        style="display:inline-block;background:#D1FAE5;color:#065F46;border:1px solid #10B981;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:4px;vertical-align:middle;"></span></span>
                   </td>
                 </tr>
 
@@ -1659,7 +1676,7 @@
                   <td class="text-right font-mono col-usd" id="lbl-marg-dbk-utot">—</td>
                   <td class="text-right font-mono col-usd" id="lbl-marg-dbk-umt">—</td>
                   <td style="padding-left:16px;"><input type="number" step="0.1" class="cell-input cell-manual"
-                      style="width:80px;display:inline-block" id="cell_dbk_pct"oninput="calculateEngine()">
+                      style="width:80px;display:inline-block" id="cell_dbk_pct" oninput="calculateEngine()">
                     % Claim</td>
                 </tr>
                 <tr class="tr-benefit col-benefits d-none" id="row-marg-rodtep">
@@ -1669,8 +1686,8 @@
                   <td class="text-right font-mono col-usd" id="lbl-marg-rod-utot">—</td>
                   <td class="text-right font-mono col-usd" id="lbl-marg-rod-umt">—</td>
                   <td style="padding-left:16px;"><input type="number" step="0.1" class="cell-input cell-manual"
-                      style="width:80px;display:inline-block" id="cell_rodtep_pct"
-                      oninput="calculateEngine()"> % Claim</td>
+                      style="width:80px;display:inline-block" id="cell_rodtep_pct" oninput="calculateEngine()"> % Claim
+                  </td>
                 </tr>
 
                 <!-- Net Accrued Cost -->
@@ -1732,7 +1749,7 @@
     "use strict";
 
     const $ = id => document.getElementById(id);
-    window.logDebug = function(msg) {
+    window.logDebug = function (msg) {
       console.log('IFRAME:', msg);
     };
     const v = id => parseFloat($(id)?.value) || 0;
@@ -2101,7 +2118,7 @@
 
       const isDomesticExw = isDom && isExw;
       document.querySelectorAll('.domestic-exw-hide').forEach(el => el.classList.toggle('d-none', isDomesticExw));
-      
+
       document.querySelectorAll('.merchant-only').forEach(el => el.classList.toggle('d-none', !isMer));
       document.querySelectorAll('.merchant-hide').forEach(el => el.classList.toggle('d-none', isMer));
       document.querySelectorAll('.repack-only').forEach(el => el.classList.toggle('d-none', !isRepack));
@@ -2172,8 +2189,8 @@
       if ($('lbl-destination-label')) $('lbl-destination-label').textContent = (isDom || isRepack) ? 'Final Customer Delivery at' : 'Country of Destination';
       // Toggle between select (export) and text input (domestic/lead) for the destination field
       {
-        const destSel  = $('inp_destination');
-        const destTxt  = $('inp_destination_text');
+        const destSel = $('inp_destination');
+        const destTxt = $('inp_destination_text');
         if (destSel && destTxt) {
           const isDomesticMode = isDom || isRepack;
           if (isDomesticMode) {
@@ -2252,7 +2269,7 @@
       if ($('lbl-helper-th')) $('lbl-helper-th').textContent = (isDom || isRepack) ? 'Rs/Tanker or Trucks' : 'Rs/FCL & Helper Inputs';
       if ($('lbl-vanning-row-name')) $('lbl-vanning-row-name').textContent = isRepack ? 'Chocking Belt' : 'Addl. Vanning Requirement (chocking/lashing)';
       if ($('lbl-vanning-helper-name')) $('lbl-vanning-helper-name').textContent = isRepack ? 'Chocking Belt' : 'Addl. Vanning Requirement (chocking/lashing)';
-      if ($('lbl-labels-row-name')) $('lbl-labels-row-name').textContent = (isDom || isRepack) ? 'Any Other : Inventory Holding Cost' : 'Any Other : Labels Charges';
+      if ($('lbl-labels-row-name')) $('lbl-labels-row-name').textContent = (isDom || isRepack) ? 'Any Other : Inventory Holding Cost' : 'Any Other :';
       if ($('lbl-labels-helper')) $('lbl-labels-helper').textContent = (isDom || isRepack) ? 'Any other cost - Specify with Remarks' : (isMer ? '' : ' ');
       if ($('lbl-comm-row-name')) $('lbl-comm-row-name').textContent = isExw ? 'Comission (Rs./MT)' : 'Comission';
       if ($('inp_rm_rs_mt')) $('inp_rm_rs_mt').readOnly = (isDom || isRepack);
@@ -2265,7 +2282,7 @@
       if ($('lbl-doc-helper-rate')) {
         const labelText = isMer
           ? 'Special Export Documents Required'
-          : 'BV/CRIA/PVOC/HC/Legalization ($/Container)';
+          : '($/Container)';
         $('lbl-doc-helper-rate').innerHTML = labelText + ' <span style="display:inline-block;background:#D1FAE5;color:#065F46;border:1px solid #10B981;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:4px;vertical-align:middle;">0</span>';
       }
 
@@ -2459,7 +2476,7 @@
         let plyUsdMt = 0;
         let plyTotalUsd = 0;
         if (isExw) {
-          plyRsMt = qtyFcl > 0 ? (plyRsFcl/ qtyFcl) : 0;
+          plyRsMt = qtyFcl > 0 ? (plyRsFcl / qtyFcl) : 0;
           plyUsdMt = plyRsMt / csExr;
           plyTotalUsd = plyUsdMt * totalMt;
         } else {
@@ -2746,7 +2763,7 @@
         const docPerFcl = totalFcl > 0 ? Math.round(docTotalUsd / totalFcl) : 0;
         const labelText = isMerchant
           ? 'Special Export Documents Required'
-          : 'BV/CRIA/PVOC/HC/Legalization ($/Container)';
+          : '($/Container)';
         $('lbl-doc-helper-rate').innerHTML = labelText + ' <span style="display:inline-block;background:#D1FAE5;color:#065F46;border:1px solid #10B981;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;margin-left:4px;vertical-align:middle;">' + docPerFcl + '</span>';
       }
       setTxt('lbl-marg-doc-tot', docTotalRs);
@@ -3459,7 +3476,7 @@
     }
 
     /* ─── SPECIAL EXPORT DOCUMENT TOGGLE ─── */
-    window.toggleSpecialDocOther = function(val) {
+    window.toggleSpecialDocOther = function (val) {
       const otherEl = document.getElementById('inp_doc_other');
       if (otherEl) {
         otherEl.style.display = val === 'Any Other' ? 'inline-block' : 'none';
@@ -3556,213 +3573,251 @@
       }
     }
 
+    /* Fetch lead_name from Lead and display it in a separate input field and top summary banner */
+    function fetchLeadName(leadId) {
+      logDebug('cost_sheet.html: fetchLeadName called with leadId: ' + leadId);
+      if (!leadId) {
+        if ($('wrapper-lead-name')) $('wrapper-lead-name').style.display = 'none';
+        if ($('inp_lead_name')) $('inp_lead_name').value = '';
+        return;
+      }
+      const nameInput = $('inp_lead_name');
+      const bannerEl = $('lbl-rp-lead');
+      const bannerStat = $('banner-lead-stat');
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        logDebug('cost_sheet.html: frappe.call available, fetching lead name directly');
+        frappe.call({
+          method: 'frappe.client.get_value',
+          args: {
+            doctype: 'Lead',
+            filters: { name: leadId },
+            fieldname: 'lead_name'
+          },
+          callback: (r) => {
+            logDebug('cost_sheet.html: direct lead name fetch response: ' + JSON.stringify(r.message));
+            const leadName = (r.message || {}).lead_name || '';
+            if (leadName) {
+              if (nameInput) nameInput.value = leadName;
+              if ($('wrapper-lead-name')) $('wrapper-lead-name').style.display = 'block';
+              if (bannerEl) bannerEl.textContent = leadName;
+              if (bannerStat) bannerStat.style.display = 'flex';
+            }
+          }
+        });
+      } else if (window.parent && window.parent !== window) {
+        logDebug('cost_sheet.html: posting fetch_lead_name message to parent');
+        window.parent.postMessage({ type: 'fetch_lead_name', lead: leadId }, '*');
+      }
+    }
+
     /* ─── PRODUCT GRADE AUTO-FETCH ─── */
     /* Fetches custom_item_grade from the Item doctype when a product is selected.
        Field seen in Item: custom_item_grade = "64%" */
     /* ─── PRODUCT GRADE AUTO-FETCH ─── */
-/* Fetches custom_item_grade, custom_duty_drawback_, custom_rodtep_ from Item doctype */
-/* ─── PRODUCT GRADE AUTO-FETCH ─── */
-/* Fetches custom_item_grade from the Item doctype when a product is selected.
-   Field seen in Item: custom_item_grade = "64%" */
-  /* ─── PRODUCT GRADE AUTO-FETCH ─── */
-function fetchProductGrade(itemCode) {
-  console.log('=== fetchProductGrade CALLED ===');
-  console.log('itemCode:', itemCode);
-  
-  const gradeEl = $('inp_grade');
-  const statusEl = $('lbl-grade-status');
-  if (!gradeEl) {
-    console.log('ERROR: gradeEl not found');
-    return;
-  }
+    /* Fetches custom_item_grade, custom_duty_drawback_, custom_rodtep_ from Item doctype */
+    /* ─── PRODUCT GRADE AUTO-FETCH ─── */
+    /* Fetches custom_item_grade from the Item doctype when a product is selected.
+       Field seen in Item: custom_item_grade = "64%" */
+    /* ─── PRODUCT GRADE AUTO-FETCH ─── */
+    function fetchProductGrade(itemCode) {
+      console.log('=== fetchProductGrade CALLED ===');
+      console.log('itemCode:', itemCode);
 
-  if (!itemCode) {
-    console.log('itemCode is empty, resetting');
-    gradeEl.value = '';
-    const pTypeEl = $('inp_packing_type');
-    if (pTypeEl) pTypeEl.innerHTML = '<option value="">Select...</option>';
-    if (statusEl) statusEl.textContent = '';
-    if ($('cell_dbk_pct')) $('cell_dbk_pct').value = '1.1';
-    if ($('cell_rodtep_pct')) $('cell_rodtep_pct').value = '0.7';
-    calculateEngine();
-    return;
-  }
-
-  if (statusEl) {
-    statusEl.textContent = '\u23F3 fetching…';
-    statusEl.style.color = 'var(--color-text-subtle)';
-  }
-
-  const applyDbkRodtep = (doc) => {
-    console.log('=== applyDbkRodtep called ===');
-    console.log('doc.custom_duty_drawback_:', doc.custom_duty_drawback_);
-    console.log('doc.custom_rodtep_:', doc.custom_rodtep_);
-    
-    let dbkValue = '';
-    let rodtepValue = '';
-
-    if (doc.custom_duty_drawback_ !== null && doc.custom_duty_drawback_ !== undefined && doc.custom_duty_drawback_ !== '') {
-      dbkValue = doc.custom_duty_drawback_;
-    }
-    if (doc.custom_rodtep_ !== null && doc.custom_rodtep_ !== undefined && doc.custom_rodtep_ !== '') {
-      rodtepValue = doc.custom_rodtep_;
-    }
-
-    console.log('dbkValue:', dbkValue, 'rodtepValue:', rodtepValue);
-
-    const dbkNum = dbkValue !== '' ? parseFloat(dbkValue) : NaN;
-    const rodtepNum = rodtepValue !== '' ? parseFloat(rodtepValue) : NaN;
-
-    console.log('dbkNum:', dbkNum, 'rodtepNum:', rodtepNum);
-    console.log('cell_dbk_pct element:', $('cell_dbk_pct'));
-    console.log('cell_rodtep_pct element:', $('cell_rodtep_pct'));
-
-    if (!isNaN(dbkNum) && dbkNum > 0 && $('cell_dbk_pct')) {
-      $('cell_dbk_pct').value = dbkNum.toFixed(1);
-      console.log('DBK SET TO:', $('cell_dbk_pct').value);
-    }
-    if (!isNaN(rodtepNum) && rodtepNum > 0 && $('cell_rodtep_pct')) {
-      $('cell_rodtep_pct').value = rodtepNum.toFixed(1);
-      console.log('RODTEP SET TO:', $('cell_rodtep_pct').value);
-    }
-    if (!isNaN(dbkNum) || !isNaN(rodtepNum)) {
-      // Ensure RoDTEP checkbox is checked so rows stay visible
-      const rodtepChk = $('chk_scheme_rodtep');
-      if (rodtepChk) {
-        rodtepChk.checked = true;
-        rodtepChk.dispatchEvent(new Event('change', { bubbles: true }));
+      const gradeEl = $('inp_grade');
+      const statusEl = $('lbl-grade-status');
+      if (!gradeEl) {
+        console.log('ERROR: gradeEl not found');
+        return;
       }
-      console.log('Triggering calculateEngine');
-      calculateEngine();
-    }
-  };
 
-  if (typeof frappe !== 'undefined' && frappe.call) {
-    console.log('Frappe is available, making API call');
-    frappe.call({
-      method: 'frappe.client.get',
-      args: {
-        doctype: 'Item',
-        name: itemCode
-      },
-      callback: (r) => {
-        console.log('=== API CALLBACK ===');
-        console.log('r.message exists:', !!r.message);
-        
-        const doc = r.message;
-        if (!doc) {
-          console.log('ERROR: doc is null');
-          if (statusEl) { statusEl.textContent = 'item not found'; statusEl.style.color = '#EF4444'; }
-          return;
+      if (!itemCode) {
+        console.log('itemCode is empty, resetting');
+        gradeEl.value = '';
+        const pTypeEl = $('inp_packing_type');
+        if (pTypeEl) pTypeEl.innerHTML = '<option value="">Select...</option>';
+        if (statusEl) statusEl.textContent = '';
+        if ($('cell_dbk_pct')) $('cell_dbk_pct').value = '1.1';
+        if ($('cell_rodtep_pct')) $('cell_rodtep_pct').value = '0.7';
+        calculateEngine();
+        return;
+      }
+
+      if (statusEl) {
+        statusEl.textContent = '\u23F3 fetching…';
+        statusEl.style.color = 'var(--color-text-subtle)';
+      }
+
+      const applyDbkRodtep = (doc) => {
+        console.log('=== applyDbkRodtep called ===');
+        console.log('doc.custom_duty_drawback_:', doc.custom_duty_drawback_);
+        console.log('doc.custom_rodtep_:', doc.custom_rodtep_);
+
+        let dbkValue = '';
+        let rodtepValue = '';
+
+        if (doc.custom_duty_drawback_ !== null && doc.custom_duty_drawback_ !== undefined && doc.custom_duty_drawback_ !== '') {
+          dbkValue = doc.custom_duty_drawback_;
+        }
+        if (doc.custom_rodtep_ !== null && doc.custom_rodtep_ !== undefined && doc.custom_rodtep_ !== '') {
+          rodtepValue = doc.custom_rodtep_;
         }
 
-        console.log('Item fetched successfully:', doc.name);
-        
-        // Apply DBK and RoDTEP from this item
-        applyDbkRodtep(doc);
+        console.log('dbkValue:', dbkValue, 'rodtepValue:', rodtepValue);
 
-        const grade = doc.custom_item_grade || '';
-        const parentItem = doc.variant_of || '';
+        const dbkNum = dbkValue !== '' ? parseFloat(dbkValue) : NaN;
+        const rodtepNum = rodtepValue !== '' ? parseFloat(rodtepValue) : NaN;
 
-        if (grade) {
-          if (!gradeEl.value) gradeEl.value = grade;
-          if (statusEl) {
-            statusEl.textContent = '\u2713 ' + grade;
-            statusEl.style.color = '#10B981';
+        console.log('dbkNum:', dbkNum, 'rodtepNum:', rodtepNum);
+        console.log('cell_dbk_pct element:', $('cell_dbk_pct'));
+        console.log('cell_rodtep_pct element:', $('cell_rodtep_pct'));
+
+        if (!isNaN(dbkNum) && dbkNum > 0 && $('cell_dbk_pct')) {
+          $('cell_dbk_pct').value = dbkNum.toFixed(1);
+          console.log('DBK SET TO:', $('cell_dbk_pct').value);
+        }
+        if (!isNaN(rodtepNum) && rodtepNum > 0 && $('cell_rodtep_pct')) {
+          $('cell_rodtep_pct').value = rodtepNum.toFixed(1);
+          console.log('RODTEP SET TO:', $('cell_rodtep_pct').value);
+        }
+        if (!isNaN(dbkNum) || !isNaN(rodtepNum)) {
+          // Ensure RoDTEP checkbox is checked so rows stay visible
+          const rodtepChk = $('chk_scheme_rodtep');
+          if (rodtepChk) {
+            rodtepChk.checked = true;
+            rodtepChk.dispatchEvent(new Event('change', { bubbles: true }));
           }
-        } else if (parentItem) {
-          if (statusEl) { statusEl.textContent = '\u23F3 fetching from parent…'; }
-          frappe.call({
-            method: 'frappe.client.get_value',
-            args: {
-              doctype: 'Item',
-              filters: { name: parentItem },
-              fieldname: ['custom_item_grade', 'custom_duty_drawback_', 'custom_rodtep_']
-            },
-            callback: (rp) => {
-              const parentDoc = rp.message || {};
-              const parentGrade = parentDoc.custom_item_grade || '';
-              if (!gradeEl.value) gradeEl.value = parentGrade;
+          console.log('Triggering calculateEngine');
+          calculateEngine();
+        }
+      };
+
+      if (typeof frappe !== 'undefined' && frappe.call) {
+        console.log('Frappe is available, making API call');
+        frappe.call({
+          method: 'frappe.client.get',
+          args: {
+            doctype: 'Item',
+            name: itemCode
+          },
+          callback: (r) => {
+            console.log('=== API CALLBACK ===');
+            console.log('r.message exists:', !!r.message);
+
+            const doc = r.message;
+            if (!doc) {
+              console.log('ERROR: doc is null');
+              if (statusEl) { statusEl.textContent = 'item not found'; statusEl.style.color = '#EF4444'; }
+              return;
+            }
+
+            console.log('Item fetched successfully:', doc.name);
+
+            // Apply DBK and RoDTEP from this item
+            applyDbkRodtep(doc);
+
+            const grade = doc.custom_item_grade || '';
+            const parentItem = doc.variant_of || '';
+
+            if (grade) {
+              if (!gradeEl.value) gradeEl.value = grade;
               if (statusEl) {
-                statusEl.textContent = parentGrade ? '\u2713 ' + parentGrade : 'no grade on parent';
-                statusEl.style.color = parentGrade ? '#10B981' : 'var(--color-text-subtle)';
+                statusEl.textContent = '\u2713 ' + grade;
+                statusEl.style.color = '#10B981';
               }
-              applyDbkRodtep(parentDoc);
+            } else if (parentItem) {
+              if (statusEl) { statusEl.textContent = '\u23F3 fetching from parent…'; }
+              frappe.call({
+                method: 'frappe.client.get_value',
+                args: {
+                  doctype: 'Item',
+                  filters: { name: parentItem },
+                  fieldname: ['custom_item_grade', 'custom_duty_drawback_', 'custom_rodtep_']
+                },
+                callback: (rp) => {
+                  const parentDoc = rp.message || {};
+                  const parentGrade = parentDoc.custom_item_grade || '';
+                  if (!gradeEl.value) gradeEl.value = parentGrade;
+                  if (statusEl) {
+                    statusEl.textContent = parentGrade ? '\u2713 ' + parentGrade : 'no grade on parent';
+                    statusEl.style.color = parentGrade ? '#10B981' : 'var(--color-text-subtle)';
+                  }
+                  applyDbkRodtep(parentDoc);
+                }
+              });
+            } else {
+              if (!gradeEl.value) gradeEl.value = '';
+              if (statusEl) { statusEl.textContent = 'no grade set on item'; statusEl.style.color = 'var(--color-text-subtle)'; }
             }
-          });
-        } else {
-          if (!gradeEl.value) gradeEl.value = '';
-          if (statusEl) { statusEl.textContent = 'no grade set on item'; statusEl.style.color = 'var(--color-text-subtle)'; }
-        }
 
-        // Populate Packing Type dropdown
-        const getPackingOptions = (itemDoc) => {
-          const seen = new Set();
-          const options = [];
-          const add = (packingType) => {
-            if (!packingType || seen.has(packingType)) return;
-            seen.add(packingType);
-            options.push({ packing_type: packingType });
-          };
+            // Populate Packing Type dropdown
+            const getPackingOptions = (itemDoc) => {
+              const seen = new Set();
+              const options = [];
+              const add = (packingType) => {
+                if (!packingType || seen.has(packingType)) return;
+                seen.add(packingType);
+                options.push({ packing_type: packingType });
+              };
 
-          (itemDoc.custom_packing_type || []).forEach(row => add(row.packing_type));
-          (itemDoc.custom_standard_packing || itemDoc.custom_std_pakcing || []).forEach(row => add(row.packing_type));
-          return options;
-        };
+              (itemDoc.custom_packing_type || []).forEach(row => add(row.packing_type));
+              (itemDoc.custom_standard_packing || itemDoc.custom_std_pakcing || []).forEach(row => add(row.packing_type));
+              return options;
+            };
 
-        const populatePackingOptions = (itemDoc) => {
-          const pTypeEl = $('inp_packing_type');
-          if (!pTypeEl) return;
+            const populatePackingOptions = (itemDoc) => {
+              const pTypeEl = $('inp_packing_type');
+              if (!pTypeEl) return;
 
-          const currentVal = pTypeEl.value;
-          const pTypes = getPackingOptions(itemDoc);
-          pTypeEl.innerHTML = '<option value="">Select...</option>';
-          pTypes.forEach(row => {
-            const opt = document.createElement('option');
-            opt.value = row.packing_type;
-            opt.textContent = row.packing_type;
-            pTypeEl.appendChild(opt);
-          });
-          if (currentVal) {
-            let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
-            if (!optionExists) {
-              const opt = document.createElement('option');
-              opt.value = currentVal;
-              opt.textContent = currentVal;
-              pTypeEl.appendChild(opt);
+              const currentVal = pTypeEl.value;
+              const pTypes = getPackingOptions(itemDoc);
+              pTypeEl.innerHTML = '<option value="">Select...</option>';
+              pTypes.forEach(row => {
+                const opt = document.createElement('option');
+                opt.value = row.packing_type;
+                opt.textContent = row.packing_type;
+                pTypeEl.appendChild(opt);
+              });
+              if (currentVal) {
+                let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
+                if (!optionExists) {
+                  const opt = document.createElement('option');
+                  opt.value = currentVal;
+                  opt.textContent = currentVal;
+                  pTypeEl.appendChild(opt);
+                }
+                pTypeEl.value = currentVal;
+              }
+            };
+
+            const hasItemPackings = getPackingOptions(doc).length > 0;
+            populatePackingOptions(doc);
+            if (!hasItemPackings && parentItem) {
+              frappe.call({
+                method: 'frappe.client.get',
+                args: {
+                  doctype: 'Item',
+                  name: parentItem
+                },
+                callback: (rp) => {
+                  populatePackingOptions(rp.message || {});
+                }
+              });
             }
-            pTypeEl.value = currentVal;
+          },
+          error: (err) => {
+            console.log('API ERROR:', err);
+            if (statusEl) { statusEl.textContent = 'fetch failed'; statusEl.style.color = '#EF4444'; }
           }
-        };
-
-        const hasItemPackings = getPackingOptions(doc).length > 0;
-        populatePackingOptions(doc);
-        if (!hasItemPackings && parentItem) {
-          frappe.call({
-            method: 'frappe.client.get',
-            args: {
-              doctype: 'Item',
-              name: parentItem
-            },
-            callback: (rp) => {
-              populatePackingOptions(rp.message || {});
-            }
-          });
+        });
+      } else {
+        console.log('Frappe NOT available, using postMessage');
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'fetch_product_grade', item: itemCode }, '*');
         }
-      },
-      error: (err) => {
-        console.log('API ERROR:', err);
-        if (statusEl) { statusEl.textContent = 'fetch failed'; statusEl.style.color = '#EF4444'; }
+        if (statusEl) { statusEl.textContent = 'loading…'; }
       }
-    });
-  } else {
-    console.log('Frappe NOT available, using postMessage');
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'fetch_product_grade', item: itemCode }, '*');
     }
-    if (statusEl) { statusEl.textContent = 'loading…'; }
-  }
-}
 
     /* Listen for responses from parent window (product grade, exchange rate) */
     window.addEventListener('message', (e) => {
@@ -3800,6 +3855,19 @@ function fetchProductGrade(itemCode) {
         }
       }
 
+      if (e.data.type === 'lead_name_response') {
+        const leadName = e.data.lead_name || '';
+        if (leadName) {
+          const nameInput = $('inp_lead_name');
+          if (nameInput) nameInput.value = leadName;
+          if ($('wrapper-lead-name')) $('wrapper-lead-name').style.display = 'block';
+          const bannerEl = $('lbl-rp-lead');
+          if (bannerEl) bannerEl.textContent = leadName;
+          const bannerStat = $('banner-lead-stat');
+          if (bannerStat) bannerStat.style.display = 'flex';
+        }
+      }
+
       if (e.data.type === 'product_grade_response') {
         const gradeEl = $('inp_grade');
         const statusEl = $('lbl-grade-status');
@@ -3812,23 +3880,23 @@ function fetchProductGrade(itemCode) {
         }
 
         // ── SET DBK AND RODTEP FROM PARENT RESPONSE ──
-  if (e.data.custom_duty_drawback_ !== undefined && e.data.custom_duty_drawback_ !== null && e.data.custom_duty_drawback_ !== '' && $('cell_dbk_pct')) {
-    const dbkNum = parseFloat(e.data.custom_duty_drawback_);
-    if (!isNaN(dbkNum) && dbkNum > 0) {
-      $('cell_dbk_pct').value = dbkNum.toFixed(1);
-    }
-  }
-  if (e.data.custom_rodtep_ !== undefined && e.data.custom_rodtep_ !== null && e.data.custom_rodtep_ !== '' && $('cell_rodtep_pct')) {
-    const rodtepNum = parseFloat(e.data.custom_rodtep_);
-    if (!isNaN(rodtepNum) && rodtepNum > 0) {
-      $('cell_rodtep_pct').value = rodtepNum.toFixed(1);
-    }
-  }
-  if ((e.data.custom_duty_drawback_ !== undefined && e.data.custom_duty_drawback_ !== null && e.data.custom_duty_drawback_ !== '') ||
-      (e.data.custom_rodtep_ !== undefined && e.data.custom_rodtep_ !== null && e.data.custom_rodtep_ !== '')) {
-    calculateEngine();
-  }
-  // ── END DBK/RODTEP ──
+        if (e.data.custom_duty_drawback_ !== undefined && e.data.custom_duty_drawback_ !== null && e.data.custom_duty_drawback_ !== '' && $('cell_dbk_pct')) {
+          const dbkNum = parseFloat(e.data.custom_duty_drawback_);
+          if (!isNaN(dbkNum) && dbkNum > 0) {
+            $('cell_dbk_pct').value = dbkNum.toFixed(1);
+          }
+        }
+        if (e.data.custom_rodtep_ !== undefined && e.data.custom_rodtep_ !== null && e.data.custom_rodtep_ !== '' && $('cell_rodtep_pct')) {
+          const rodtepNum = parseFloat(e.data.custom_rodtep_);
+          if (!isNaN(rodtepNum) && rodtepNum > 0) {
+            $('cell_rodtep_pct').value = rodtepNum.toFixed(1);
+          }
+        }
+        if ((e.data.custom_duty_drawback_ !== undefined && e.data.custom_duty_drawback_ !== null && e.data.custom_duty_drawback_ !== '') ||
+          (e.data.custom_rodtep_ !== undefined && e.data.custom_rodtep_ !== null && e.data.custom_rodtep_ !== '')) {
+          calculateEngine();
+        }
+        // ── END DBK/RODTEP ──
 
 
         // Populate Packing Type dropdown from parent response
@@ -4042,7 +4110,7 @@ function fetchProductGrade(itemCode) {
 
       const handleResponse = (doc) => {
         window._incotermCache = window._incotermCache || {};
-        window._incotermCache[incName => {}]; // just cache variable setup
+        window._incotermCache[incName => { }]; // just cache variable setup
         window._incotermCache[incotermName] = doc;
         if ($('inp_user_incoterm')?.value === incotermName) {
           window._currentIncotermDoc = doc;
@@ -4092,7 +4160,7 @@ function fetchProductGrade(itemCode) {
       if (!targetSubIncoTerm) return;
 
       const subIncoTerms = doc.custom_sub_incoterm || [];
-      const match = subIncoTerms.find(row => 
+      const match = subIncoTerms.find(row =>
         (row.sub_inco_term || '').trim().toLowerCase() === targetSubIncoTerm.trim().toLowerCase()
       );
 
@@ -4214,6 +4282,20 @@ function fetchProductGrade(itemCode) {
       // Sync premium hidden field on load
       if ($('inp_premium') && $('inp_exchange_premium')) {
         $('inp_exchange_premium').value = $('inp_premium').value;
+      }
+
+      // Fetch lead name on lead input changes
+      const leadEl = $('inp_lead');
+      if (leadEl) {
+        leadEl.addEventListener('change', (e) => {
+          fetchLeadName(e.target.value);
+        });
+        leadEl.addEventListener('input', (e) => {
+          fetchLeadName(e.target.value);
+        });
+        if (leadEl.value) {
+          fetchLeadName(leadEl.value);
+        }
       }
 
       // ─── POPULATE DOCTYPE DROPDOWNS ─────────────────────────────────────
@@ -4355,10 +4437,10 @@ function fetchProductGrade(itemCode) {
         if (oppFrom === 'Lead') {
           if ($('wrapper-customer')) $('wrapper-customer').style.display = 'none';
           if ($('wrapper-lead')) $('wrapper-lead').style.display = 'block';
-          if ($('inp_lead')) $('inp_lead').value = partyName || '';
-          // Show lead name in KPI banner
-          if ($('lbl-rp-lead')) $('lbl-rp-lead').textContent = partyName || '—';
-          if ($('banner-lead-stat')) $('banner-lead-stat').style.display = 'flex';
+          if ($('inp_lead')) {
+            $('inp_lead').value = partyName || '';
+            fetchLeadName(partyName);
+          }
           // For Lead, Final Customer Delivery at is always a plain text field
           window._isLeadMode = true;
           const destSel = $('inp_destination');
@@ -4444,23 +4526,23 @@ function fetchProductGrade(itemCode) {
         }
       };
       // Update cost sheet number display if loading existing document
-let csName = null;
-const loadName = localStorage.getItem('cost_sheet_load_data_name');
-if (loadName) {
-    try { csName = JSON.parse(loadName); } catch (e) {}
-}
-// Fallback: try to get name from the full data
-if (!csName) {
-    const loadData = localStorage.getItem('cost_sheet_load_data');
-    if (loadData) {
-        try { csName = JSON.parse(loadData).name; } catch (e) {}
-    }
-}
-const csNumEl = $('lbl-cs-number');
-if (csNumEl && csName) {
-    csNumEl.textContent = csName;
-    csNumEl.style.color = '#1B82EE'; // Use hardcoded brand color instead of CSS var
-}
+      let csName = null;
+      const loadName = localStorage.getItem('cost_sheet_load_data_name');
+      if (loadName) {
+        try { csName = JSON.parse(loadName); } catch (e) { }
+      }
+      // Fallback: try to get name from the full data
+      if (!csName) {
+        const loadData = localStorage.getItem('cost_sheet_load_data');
+        if (loadData) {
+          try { csName = JSON.parse(loadData).name; } catch (e) { }
+        }
+      }
+      const csNumEl = $('lbl-cs-number');
+      if (csNumEl && csName) {
+        csNumEl.textContent = csName;
+        csNumEl.style.color = '#1B82EE'; // Use hardcoded brand color instead of CSS var
+      }
       const runPopulate = () => {
         Promise.all([
           populateDropdown('inp_supplier', 'Supplier'),
@@ -4491,7 +4573,7 @@ if (csNumEl && csName) {
         });
       };
 
-      
+
       // Use Frappe.ready() if available, otherwise use retry mechanism
       const initializeDropdowns = () => {
         if (typeof frappe !== 'undefined' && frappe.call) {

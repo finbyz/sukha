@@ -6,6 +6,37 @@ from frappe import _
 from frappe.model.mapper import get_mapped_doc
 
 
+def get_dashboard_data(data=None):
+	"""Add a Connections tab on Prospect showing linked Opportunities (Inquiries).
+
+	Registered via the `override_doctype_dashboards` hook.
+
+	A Prospect associates its Opportunities through the standard `opportunities`
+	child table (Prospect Opportunity), so that is used as the primary link.
+	Opportunities created directly from a Prospect also carry the `party_name`
+	Dynamic Link with `opportunity_from = "Prospect"`; that is kept as a fallback
+	via `internal_and_external_links` (used only when the child table is empty).
+	"""
+	data = frappe._dict(data or {})
+
+	# Primary link: the `opportunities` child table (Prospect Opportunity),
+	# reading the `opportunity` Link field on each row. Falls back to the
+	# external dynamic link below when the child table has no rows.
+	data.setdefault("internal_and_external_links", {})["Opportunity"] = ["opportunities", "opportunity"]
+
+	# External fallback: Opportunity.party_name (Dynamic Link) restricted to
+	# rows where opportunity_from == "Prospect".
+	data.setdefault("fieldname", "party_name")
+	data.setdefault("non_standard_fieldnames", {})["Opportunity"] = "party_name"
+	data.setdefault("dynamic_links", {})["party_name"] = ["Prospect", "opportunity_from"]
+
+	data.setdefault("transactions", []).append(
+		{"label": _("Inquiry"), "items": ["Opportunity"]}
+	)
+
+	return data
+
+
 @frappe.whitelist()
 def make_opportunity(source_name, target_doc=None):
 	"""

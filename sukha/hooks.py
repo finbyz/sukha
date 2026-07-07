@@ -174,6 +174,11 @@ override_whitelisted_methods = {
     "erpnext.controllers.item_variant.enqueue_multiple_variant_creation": "sukha.override.item_varient.enqueue_multiple_variant_creation",
 }
 
+# Add a Connections tab on Prospect showing linked Opportunities (Inquiries)
+override_doctype_dashboards = {
+    "Prospect": "sukha.override.prospect_override.get_dashboard_data",
+}
+
 
 
 # Scheduled Tasks

@@ -1230,9 +1230,9 @@
                   <td id="lbl-labels-row-name">Any Other :</td>
                   <td class="text-right font-mono" id="lbl-labels-rs-tot">3,405</td>
                   <td style="padding:4px 12px">
-                    <input type="number" step="10" class="cell-input font-mono text-right"
-                      style="font-size:12px;padding:4px;background:var(--color-bg-subtle,#f3f4f6);color:var(--color-text-muted);cursor:not-allowed;"
-                      id="inp_labels_rs_mt" readonly tabindex="-1">
+                    <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
+                      style="font-size:12px;padding:4px"
+                      id="inp_labels_rs_mt" oninput="syncLabelsMt()">
                   </td>
                   <td class="text-right font-mono col-usd" id="lbl-labels-usd-tot">39</td>
                   <td class="text-right font-mono col-usd" id="lbl-labels-usd-mt">0.6</td>
@@ -2136,6 +2136,32 @@
       document.querySelectorAll('.merchant-exw-hide').forEach(el => el.classList.toggle('d-none', isMerchantExw));
       document.querySelectorAll('.merchant-exw-only').forEach(el => el.classList.toggle('d-none', !isMerchantExw));
       document.querySelectorAll('.col-usd').forEach(el => el.classList.toggle('d-none', isExw));
+
+      // "Any Other" Rs/MT: readonly when Domestic/Repack (per-FCL helper drives it),
+      // editable for FOB, CIF, and all non-domestic variants
+      const labelsRsMtEl = $('inp_labels_rs_mt');
+      if (labelsRsMtEl) {
+        const labelsReadonly = isDom || isRepack;
+        if (labelsReadonly) {
+          labelsRsMtEl.setAttribute('readonly', '');
+          labelsRsMtEl.readOnly = true;
+          labelsRsMtEl.tabIndex = -1;
+          labelsRsMtEl.style.background = 'var(--color-bg-subtle,#f3f4f6)';
+          labelsRsMtEl.style.color = 'var(--color-text-muted)';
+          labelsRsMtEl.style.cursor = 'not-allowed';
+          labelsRsMtEl.classList.remove('cell-manual');
+          labelsRsMtEl.oninput = null;
+        } else {
+          labelsRsMtEl.removeAttribute('readonly');
+          labelsRsMtEl.readOnly = false;
+          labelsRsMtEl.tabIndex = 0;
+          labelsRsMtEl.style.background = '';
+          labelsRsMtEl.style.color = '';
+          labelsRsMtEl.style.cursor = '';
+          labelsRsMtEl.classList.add('cell-manual');
+          labelsRsMtEl.oninput = syncLabelsMt;
+        }
+      }
 
       if (isMerchantExw) {
         const destinationEl = $('inp_destination');

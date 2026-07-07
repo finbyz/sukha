@@ -2137,11 +2137,13 @@
       document.querySelectorAll('.merchant-exw-only').forEach(el => el.classList.toggle('d-none', !isMerchantExw));
       document.querySelectorAll('.col-usd').forEach(el => el.classList.toggle('d-none', isExw));
 
-      // "Any Other" Rs/MT: readonly when Domestic/Repack (per-FCL helper drives it),
-      // editable for FOB, CIF, and all non-domestic variants
+      // "Any Other" Rs/MT: editable only when origin = India (Local Sourcing) AND not Domestic/Repack
+      // Readonly for TC (Third Country) origin, Domestic EXW, and Repacking Service
+      const originVal = $('inp_user_origin')?.value || '';
+      const isIndiaOrigin = originVal === 'India';
       const labelsRsMtEl = $('inp_labels_rs_mt');
       if (labelsRsMtEl) {
-        const labelsReadonly = isDom || isRepack;
+        const labelsReadonly = isDom || isRepack || !isIndiaOrigin;
         if (labelsReadonly) {
           labelsRsMtEl.setAttribute('readonly', '');
           labelsRsMtEl.readOnly = true;

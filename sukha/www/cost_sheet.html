@@ -2737,9 +2737,17 @@
       const creditPct = creditPctVal / 100;
       let creditTotalRs, creditMtRs, creditUsdMt, creditUsdTotal;
       if (isExw) {
-        // Use offered price per MT for credit cost Rs/MT so it reflects the offered rate
-        creditMtRs = offeredMtRs * creditPct;
-        creditTotalRs = creditMtRs * totalMt;
+        if (isRepack) {
+          // Repacking: Total based on EXW cost, Rs/MT pinned to offered price
+          creditTotalRs = exwCostRs * creditPct;
+          creditMtRs = offeredMtRs * creditPct;
+        } else {
+          // Domestic / Merchant EXW: Total based on EXW cost, Rs/MT back-derived
+          // e.g. 5,07,000 × 1% = 5,070 (not offeredPrice × totalMt = 5,865)
+          creditTotalRs = exwCostRs * creditPct;
+          creditMtRs = offeredMtRs * creditPct;
+          // creditMtRs = totalMt ? creditTotalRs / totalMt : 0;
+        }
         creditUsdTotal = csExr ? creditTotalRs / csExr : 0;
         creditUsdMt = creditUsdTotal ? creditUsdTotal / totalMt : 0;
       } else {

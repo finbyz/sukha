@@ -1539,7 +1539,8 @@ class CostSheetDashboard {
 
 				// Currency & Exchange
 				'currency': 'inp_cs_currency',
-				'exchange_premium': 'inp_exchange_premium',
+				'exchange_premium': 'inp_premium',
+				'shipping_premium': 'inp_ship_premium',
 				'exchange_rate': 'inp_base_rate',
 
 				// Cost Sheet Type & Incoterm
@@ -1548,6 +1549,7 @@ class CostSheetDashboard {
 				'origin_scope': 'inp_user_origin',
 				'type_of_sale': 'inp_type_of_sale',
 				'exw_sub_type': 'inp_exw_subtype',
+				'status': 'inp_status',
 
 				// Additional
 				'shipping_line': 'inp_shipping_line',
@@ -1758,9 +1760,14 @@ class CostSheetDashboard {
 				const margin = data.margin_analysis[0];
 				setInput('inp_internal_cost_pct', margin.internal_cost_percentage);
 				setInput('inp_doc_charges_usd', margin.document_charges_usd);
-				setInput('inp_commission_val', margin.commission_value);
-				setInput('inp_dbk_pct', margin.duty_drawback_percentage);
-				setInput('inp_rodtep_pct', margin.rodtep_percentage);
+				setInput('cell_comm_val', margin.commission_value);
+				setInput('cell_comm_val_exw', margin.commission_value);
+				setInput('cell_dbk_pct', margin.duty_drawback_percentage);
+				setInput('cell_rodtep_pct', margin.rodtep_percentage);
+			}
+
+			if (data.exchange_premium !== undefined) {
+				setInput('inp_exchange_premium', data.exchange_premium);
 			}
 
 			// Trigger calculation after a delay to ensure all fields are populated and events processed

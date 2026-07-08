@@ -3025,6 +3025,7 @@
         // Exchange Rate Details — read from the real visible inputs ()
         exchange_rate: parseFloat($('inp_base_rate')?.value || 0),
         exchange_premium: parseFloat($('inp_premium')?.value || 0),
+        shipping_premium: parseFloat($('inp_ship_premium')?.value || 0),
         effective_exchange_rate: parseFloat($('lbl-cs-exr')?.value || 0),
 
         // Final Offered Price — resolved from active variant input
@@ -3494,9 +3495,9 @@
         credit_days: $('inp_cust_terms')?.value || '',
         internal_cost_percentage: parseFloat($('inp_internal_cost_pct')?.value || 0),
         document_charges_usd: parseFloat($('inp_doc_charges_usd')?.value || 0),
-        commission_value: parseFloat($('inp_commission_val')?.value || 0),
-        duty_drawback_percentage: parseFloat($('inp_dbk_pct')?.value || 0),
-        rodtep_percentage: parseFloat($('inp_rodtep_pct')?.value || 0),
+        commission_value: parseFloat(($('inp_type_of_sale')?.value === 'Merchant Export EXW' ? $('cell_comm_val_exw')?.value : $('cell_comm_val')?.value) || 0),
+        duty_drawback_percentage: parseFloat($('cell_dbk_pct')?.value || 0),
+        rodtep_percentage: parseFloat($('cell_rodtep_pct')?.value || 0),
         base_cost: parseFloat($('lbl-margin-base')?.textContent?.replace(/,/g, '') || 0),
         net_cost_total_rs: parseFloat($('lbl-net-tot')?.textContent?.replace(/,/g, '') || 0),
         net_cost_per_mt_rs: parseFloat($('lbl-net-mt')?.textContent?.replace(/,/g, '') || 0),

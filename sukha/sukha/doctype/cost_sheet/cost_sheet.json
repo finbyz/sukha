@@ -40,6 +40,7 @@
   "col_break_currency",
   "exchange_premium",
   "effective_exchange_rate",
+  "shipping_premium",
   "section_break_logistics",
   "port_of_loading",
   "loading_location",
@@ -316,6 +317,12 @@
    "label": "Effective Exchange Rate",
    "precision": "4",
    "read_only": 1
+  },
+  {
+   "fieldname": "shipping_premium",
+   "fieldtype": "Currency",
+   "label": "Shipping Premium",
+   "precision": "4"
   },
   {
    "fieldname": "section_break_logistics",

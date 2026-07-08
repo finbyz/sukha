@@ -1231,8 +1231,7 @@
                   <td class="text-right font-mono" id="lbl-labels-rs-tot">3,405</td>
                   <td style="padding:4px 12px">
                     <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px"
-                      id="inp_labels_rs_mt" oninput="syncLabelsMt()">
+                      style="font-size:12px;padding:4px" id="inp_labels_rs_mt" oninput="syncLabelsMt()">
                   </td>
                   <td class="text-right font-mono col-usd" id="lbl-labels-usd-tot">39</td>
                   <td class="text-right font-mono col-usd" id="lbl-labels-usd-mt">0.6</td>
@@ -1507,6 +1506,12 @@
                     <td class="text-right font-mono" id="lbl-tc-tsf-rs-mt" style="font-weight:700">2,694</td>
                     <td class="text-right font-mono" id="lbl-tc-tsf-usd-tot" style="font-weight:700">2,100</td>
                     <td class="text-right font-mono" id="lbl-tc-tsf-usd-mt" style="font-weight:700">31</td>
+                  </tr>
+                  <tr style="background:#F0F8FF">
+                    <td style="color:var(--color-text-muted);font-style:italic;font-size:12px">With Premium Exchange
+                      Rate</td>
+                    <td class="text-right font-mono" id="lbl-tc-sf-with-premium"
+                      style="font-weight:600;color:var(--color-brand)">—</td>
                   </tr>
                 </tbody>
               </table>
@@ -2034,6 +2039,11 @@
       }
 
       onMasterVariantChange();
+      // Refresh Port of Loading filter whenever origin scope changes
+      // (populatePolByOrigin is assigned to window inside DOMContentLoaded after definition)
+      if (typeof window.populatePolByOrigin === 'function') {
+        window.populatePolByOrigin();
+      }
       if (window._lastFetchedIncoterm !== inc) {
         window._lastFetchedIncoterm = inc;
         fetchIncotermDetails(inc);
@@ -2507,12 +2517,13 @@
         let plyTotalUsd = 0;
         if (isExw) {
           plyRsMt = qtyFcl > 0 ? (plyRsFcl / qtyFcl) : 0;
-          plyUsdMt = plyRsMt / csExr;
-          plyTotalUsd = plyUsdMt * totalMt;
+          plyTotalUsd = totalMt > 0 ? (plyTotalRs / csExr) : 0;
+          plyUsdMt = totalMt > 0 ? (plyTotalUsd / totalMt) : 0;
         } else {
-          plyRsMt = qtyFcl > 0 ? (plyTotalRs / qtyFcl) : 0;
-          plyUsdMt = plyRsMt / csExr;
-          plyTotalUsd = plyUsdMt * totalMt;
+          // Correct: divide total Rs by total MT (not per-FCL qty)
+          plyRsMt = totalMt > 0 ? (plyTotalRs / totalMt) : 0;
+          plyTotalUsd = totalMt > 0 ? (plyTotalRs / csExr) : 0;
+          plyUsdMt = totalMt > 0 ? (plyTotalUsd / totalMt) : 0;
         }
 
         let repackTotalRs = 0;
@@ -2647,12 +2658,14 @@
         const blCharges = v('inp_bl_charges');
         const seaWayBl = v('inp_sea_way_bl_charges');
         const cnfBaseRs = totalCostFcl * totalFcl;
-        const cnfBaseMtRs = cnfBaseRs / totalMt;
-        const cnfBaseUsd = totalCostFcl / csExr;
-        const cnfBaseUsdMt = cnfBaseMtRs / csExr;
+        const cnfBaseMtRs = totalMt > 0 ? cnfBaseRs / totalMt : 0;
+        // $ Total = Rs Total ÷ Effective Exchange Rate (Rate + Premium)
+        const cnfBaseUsd = csExr > 0 ? cnfBaseRs / csExr : 0;
+        const cnfBaseUsdMt = totalMt > 0 ? cnfBaseUsd / totalMt : 0;
 
         const blMtRs = blCharges / totalMt;
         const blUsdTotal = blCharges / csExr;
+        
         const blUsdMt = blMtRs / csExr;
 
         const seaWayMtRs = seaWayBl / totalMt;
@@ -2708,27 +2721,41 @@
         const shipExr = csExr + shipPremium;
         if ($('lbl_tc_ship_exr')) $('lbl_tc_ship_exr').value = shipExr;
 
+        // Sea freight inputs are in $/FCL
         const sfFclUsd = v('inp_tc_sf_fcl') + v('inp_tc_sf_haz');
-        const sfTotalUsd = sfFclUsd * totalFcl;
-        const sfUsdMt = sfTotalUsd / totalMt;
-        const sfTotalRs = sfTotalUsd * shipExr;
-        const sfRsMt = sfTotalRs / totalMt;
+        
+        // Rs Total = $/FCL * totalFcl * Shipping Exchange Rate
+        const sfTotalRs = sfFclUsd * totalFcl * shipExr;
+        const sfRsMt = totalMt > 0 ? sfTotalRs / totalMt : 0;
+        
+        // $ Total formula as requested by user: (Sea Freight + Haz Surcharge) / Effective Exchange Rate * Total FCL
+        const sfTotalUsdDisplay = csExr > 0 ? (sfFclUsd / csExr) * totalFcl : 0;
+        const sfUsdMtDisplay = totalMt > 0 ? sfTotalUsdDisplay / totalMt : 0;
+
         const vanTotalUsd = v('inp_tc_van_usd');
         const vanTotalRs = vanTotalUsd * shipExr;
         seaFreightTotalRs = sfTotalRs + vanTotalRs;
-        seaFreightTotalUsd = sfTotalUsd + vanTotalUsd;
+        seaFreightTotalUsd = sfTotalUsdDisplay + vanTotalUsd;
+
+        // With Premium Exchange Rate (non-editable computed row)
+        const sfWithPremium = baseRate > 0 ? sfFclUsd * shipExr / baseRate : 0;
 
         setTxt('lbl-tc-sf-rs-tot', sfTotalRs);
         setTxt('lbl-tc-sf-rs-mt', sfRsMt);
-        setTxt('lbl-tc-sf-usd-tot', sfTotalUsd);
-        setTxt('lbl-tc-sf-usd-mt', sfTotalUsd / totalMt, 1);
+        // $ Total using the specific formula
+        setTxt('lbl-tc-sf-usd-tot', sfTotalUsdDisplay);
+        setTxt('lbl-tc-sf-usd-mt', sfUsdMtDisplay, 1);
+        
         setTxt('lbl-tc-van-rs-tot', vanTotalRs);
-        setTxt('lbl-tc-van-rs-mt', vanTotalRs / totalMt);
-        setTxt('lbl-tc-van-usd-mt', vanTotalUsd / totalMt, 1);
+        setTxt('lbl-tc-van-rs-mt', totalMt > 0 ? vanTotalRs / totalMt : 0);
+        setTxt('lbl-tc-van-usd-mt', totalMt > 0 ? vanTotalUsd / totalMt : 0, 1);
+        
         setTxt('lbl-tc-tsf-rs-tot', seaFreightTotalRs);
-        setTxt('lbl-tc-tsf-rs-mt', seaFreightTotalRs / totalMt);
-        setTxt('lbl-tc-tsf-usd-tot', sfTotalUsd + vanTotalUsd);
-        setTxt('lbl-tc-tsf-usd-mt', (sfTotalUsd + vanTotalUsd) / totalMt, 0);
+        setTxt('lbl-tc-tsf-rs-mt', totalMt > 0 ? seaFreightTotalRs / totalMt : 0);
+        setTxt('lbl-tc-tsf-usd-tot', seaFreightTotalUsd);
+        setTxt('lbl-tc-tsf-usd-mt', totalMt > 0 ? seaFreightTotalUsd / totalMt : 0, 0);
+        
+        if ($('lbl-tc-sf-with-premium')) $('lbl-tc-sf-with-premium').textContent = fmt(sfWithPremium, 3);
       }
 
       const offInputVal = isExw ? v('inp_offered_price_exw') : v('inp_offered_price');
@@ -3788,47 +3815,83 @@
               if (statusEl) { statusEl.textContent = 'no grade set on item'; statusEl.style.color = 'var(--color-text-subtle)'; }
             }
 
-            // Populate Packing Type dropdown
+            // Populate Packing Type and Std Packing dropdowns
             const getPackingOptions = (itemDoc) => {
-              const seen = new Set();
-              const options = [];
-              const add = (packingType) => {
-                if (!packingType || seen.has(packingType)) return;
-                seen.add(packingType);
-                options.push({ packing_type: packingType });
+              const seenTypes = new Set();
+              const types = [];
+              const addType = (val) => {
+                if (!val || seenTypes.has(val)) return;
+                seenTypes.add(val);
+                types.push({ packing_type: val });
               };
 
-              (itemDoc.custom_packing_type || []).forEach(row => add(row.packing_type));
-              (itemDoc.custom_standard_packing || itemDoc.custom_std_pakcing || []).forEach(row => add(row.packing_type));
-              return options;
+              const seenStd = new Set();
+              const stds = [];
+              const addStd = (val) => {
+                if (!val || seenStd.has(val)) return;
+                seenStd.add(val);
+                stds.push({ std_packing: val });
+              };
+
+              (itemDoc.custom_packing_type || []).forEach(row => addType(row.packing_type));
+              (itemDoc.custom_standard_packing || itemDoc.custom_std_pakcing || []).forEach(row => {
+                addType(row.packing_type);
+                addStd(row.std_packing);
+              });
+              
+              return { types, stds };
             };
 
             const populatePackingOptions = (itemDoc) => {
               const pTypeEl = $('inp_packing_type');
-              if (!pTypeEl) return;
+              const stdPackEl = $('inp_std_packing');
+              const opts = getPackingOptions(itemDoc);
 
-              const currentVal = pTypeEl.value;
-              const pTypes = getPackingOptions(itemDoc);
-              pTypeEl.innerHTML = '<option value="">Select...</option>';
-              pTypes.forEach(row => {
-                const opt = document.createElement('option');
-                opt.value = row.packing_type;
-                opt.textContent = row.packing_type;
-                pTypeEl.appendChild(opt);
-              });
-              if (currentVal) {
-                let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
-                if (!optionExists) {
+              if (pTypeEl) {
+                const currentVal = pTypeEl.value;
+                pTypeEl.innerHTML = '<option value="">Select...</option>';
+                opts.types.forEach(row => {
                   const opt = document.createElement('option');
-                  opt.value = currentVal;
-                  opt.textContent = currentVal;
+                  opt.value = row.packing_type;
+                  opt.textContent = row.packing_type;
                   pTypeEl.appendChild(opt);
+                });
+                if (currentVal) {
+                  let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
+                  if (!optionExists) {
+                    const opt = document.createElement('option');
+                    opt.value = currentVal;
+                    opt.textContent = currentVal;
+                    pTypeEl.appendChild(opt);
+                  }
+                  pTypeEl.value = currentVal;
                 }
-                pTypeEl.value = currentVal;
+              }
+
+              if (stdPackEl) {
+                const currentVal = stdPackEl.value;
+                stdPackEl.innerHTML = '<option value="">Select...</option>';
+                opts.stds.forEach(row => {
+                  const opt = document.createElement('option');
+                  opt.value = row.std_packing;
+                  opt.textContent = row.std_packing;
+                  stdPackEl.appendChild(opt);
+                });
+                if (currentVal) {
+                  let optionExists = Array.from(stdPackEl.options).some(opt => opt.value === currentVal);
+                  if (!optionExists) {
+                    const opt = document.createElement('option');
+                    opt.value = currentVal;
+                    opt.textContent = currentVal;
+                    stdPackEl.appendChild(opt);
+                  }
+                  stdPackEl.value = currentVal;
+                }
               }
             };
 
-            const hasItemPackings = getPackingOptions(doc).length > 0;
+            const opts = getPackingOptions(doc);
+            const hasItemPackings = opts.types.length > 0 || opts.stds.length > 0;
             populatePackingOptions(doc);
             if (!hasItemPackings && parentItem) {
               frappe.call({
@@ -4225,61 +4288,44 @@
       const statusEl = $('lbl-rate-fetch-status');
       const btnEl = $('btn_fetch_rate');
 
-      if (statusEl) { statusEl.textContent = '\u23F3 Fetching rate from Currency Exchange...'; statusEl.style.color = 'var(--color-text-subtle)'; }
-      if (btnEl) { btnEl.disabled = true; btnEl.textContent = '\u23F3 Fetching'; }
+      if (statusEl) { statusEl.textContent = '⏳ Fetching rate from Currency Exchange...'; statusEl.style.color = 'var(--color-text-subtle)'; }
+      if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳ Fetching'; }
 
       const doFetch = () => {
+        // Use get_list + order_by date desc + limit 1 to get the LATEST record for the selected currency
         frappe.call({
-          method: 'frappe.client.get_value',
+          method: 'frappe.client.get_list',
           args: {
             doctype: 'Currency Exchange',
             filters: [
               ['from_currency', '=', fromCcy],
               ['to_currency', '=', toCcy],
             ],
-            fieldname: 'exchange_rate',
-            order_by: 'date desc'
+            fields: ['exchange_rate', 'date', 'from_currency'],
+            order_by: 'date desc',
+            limit_page_length: 1
           },
           callback: (r) => {
-            if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\u21BB Fetch'; }
-            if (r.message && r.message.exchange_rate) {
-              const rate = parseFloat(r.message.exchange_rate);
-              if ($('inp_base_rate')) {
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = '↻ Fetch'; }
+
+            if (r.message && Array.isArray(r.message) && r.message.length > 0) {
+              const row = r.message[0];
+              const rate = parseFloat(row.exchange_rate);
+              if ($('inp_base_rate') && !isNaN(rate) && rate > 0) {
                 $('inp_base_rate').value = rate.toFixed(4);
+                const dateStr = row.date ? ` (as of ${row.date})` : '';
                 if (statusEl) {
-                  statusEl.textContent = `\u2713 Rate fetched: 1 ${fromCcy} = ${rate.toFixed(4)} INR`;
+                  statusEl.textContent = `\u2713 Rate fetched: 1 ${fromCcy} = ${rate.toFixed(4)} INR${dateStr}`;
                   statusEl.style.color = '#10B981';
                 }
               }
               calculateEngine();
             } else {
-              // Try reverse: no record found for selling, try buying
-              frappe.call({
-                method: 'frappe.client.get_value',
-                args: {
-                  doctype: 'Currency Exchange',
-                  filters: [['from_currency', '=', fromCcy], ['to_currency', '=', toCcy]],
-                  fieldname: 'exchange_rate',
-                  order_by: 'date desc'
-                },
-                callback: (r2) => {
-                  if (btnEl) { btnEl.disabled = false; btnEl.textContent = '\u21BB Fetch'; }
-                  if (r2.message && r2.message.exchange_rate) {
-                    const rate = parseFloat(r2.message.exchange_rate);
-                    if ($('inp_base_rate')) $('inp_base_rate').value = rate.toFixed(4);
-                    if (statusEl) {
-                      statusEl.textContent = `\u2713 Rate fetched: 1 ${fromCcy} = ${rate.toFixed(4)} INR`;
-                      statusEl.style.color = '#10B981';
-                    }
-                    calculateEngine();
-                  } else {
-                    if (statusEl) {
-                      statusEl.textContent = `No Currency Exchange record found for ${fromCcy}\u2192INR. Please enter manually.`;
-                      statusEl.style.color = '#EF4444';
-                    }
-                  }
-                }
-              });
+              // No matching Currency Exchange record found for this currency
+              if (statusEl) {
+                statusEl.textContent = `No Currency Exchange record found for ${fromCcy} → INR. Please enter rate manually.`;
+                statusEl.style.color = '#EF4444';
+              }
             }
           },
           error: () => {
@@ -4401,6 +4447,68 @@
           });
         });
       };
+
+      // ─── PORT OF LOADING — FILTERED BY ORIGIN ────────────────────────────
+      // When Sourcing Origin Scope = India, only show ports where country = India.
+      // Otherwise show all Port Details records.
+      const populatePolByOrigin = () => {
+        const sel = $('inp_pol');
+        if (!sel || typeof frappe === 'undefined' || !frappe.call) return Promise.resolve();
+
+        const origin = $('inp_user_origin')?.value || '';
+        const isIndia = origin === 'India';
+        const currentVal = sel.value;
+
+        return new Promise((resolve) => {
+          let resolved = false;
+          const done = () => { if (!resolved) { resolved = true; resolve(); } };
+          setTimeout(done, 3000);
+
+          const args = {
+            doctype: 'Port Details',
+            fields: ['name'],
+            limit_page_length: 9999,
+            order_by: 'name asc'
+          };
+          if (isIndia) {
+            // Filter to only Indian ports
+            args.filters = { country: 'India' };
+          }
+
+          frappe.call({
+            method: 'frappe.client.get_list',
+            args: args,
+            callback: function (r) {
+              if (r.message && Array.isArray(r.message)) {
+                const firstOpt = document.createElement('option');
+                firstOpt.value = '';
+                firstOpt.textContent = 'Select Port...';
+                sel.innerHTML = '';
+                sel.appendChild(firstOpt);
+                r.message.forEach(row => {
+                  if (!row.name) return;
+                  const opt = document.createElement('option');
+                  opt.value = row.name;
+                  opt.textContent = row.name;
+                  sel.appendChild(opt);
+                });
+                // Restore previously selected value if still valid
+                if (currentVal && Array.from(sel.options).some(o => o.value === currentVal)) {
+                  sel.value = currentVal;
+                } else if (currentVal) {
+                  // Previously selected port is not in filtered list — clear selection
+                  sel.value = '';
+                }
+              }
+              done();
+            },
+            error: function () { done(); }
+          });
+        });
+      };
+
+      // Expose on window so deriveMasterVariantFromFields (outer scope) can call it on origin change
+      window.populatePolByOrigin = populatePolByOrigin;
 
       // Apply URL parameters AFTER all doctypes are loaded
       const applyUrlParams = () => {
@@ -4589,7 +4697,7 @@
           populateDropdown('inp_destination', 'Port Details'),
           populateDropdown('inp_pod', 'Port Details'),
 
-          populateDropdown('inp_pol', 'Port Details'),
+          populatePolByOrigin(),  // Port of Loading — filtered by Sourcing Origin Scope
           populateDropdown('inp_shipping_line', 'Preferred Shipping Line'),
           populateDropdown('inp_cs_currency', 'Currency'),
           populateDropdown('inp_cust_terms', 'Payment Terms Template'),

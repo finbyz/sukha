@@ -47,6 +47,7 @@ required_apps = ["Chemical"]
 
 # include js in doctype views
 doctype_js = {
+    "Blanket Order": "public/js/blanket_order.js",
     "Opportunity": "public/js/opportunity.js",
     "Lead": "public/js/lead.js",
     "Prospect": "public/js/prospect.js",

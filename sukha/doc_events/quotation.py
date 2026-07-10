@@ -2,7 +2,15 @@ from frappe.model.mapper import get_mapped_doc
 import frappe
 from frappe.utils import flt
 
-
+def on_submit(doc, method):
+    """Set the status of the linked Cost Sheet to 'Quotation Submitted' when a Quotation is submitted."""
+    for item in doc.items:
+        if item.custom_cost_sheet:
+            cost_sheet = frappe.get_doc("Cost Sheet", item.custom_cost_sheet)
+            if not cost_sheet.docstatus == 1:  # Ensure the Cost Sheet is submitted
+                frappe.throw(
+                    f"Cannot submit Quotation because linked Cost Sheet {cost_sheet.name} is not submitted."
+                )
 @frappe.whitelist()
 def make_quotation(source_name, target_doc=None):
     # Prevent duplicate quotation for same Cost Sheet

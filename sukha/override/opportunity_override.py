@@ -279,3 +279,35 @@ def create_contact_from_lead(lead):
     contact.insert(ignore_permissions=True)
     contact.reload()
     return contact.name
+  
+@frappe.whitelist()
+def get_filtered_lost_reasons(doctype, txt, searchfield, start, page_len, filters):
+    """
+    Custom Link query for the 'Lost Reasons' Table MultiSelect.
+    Filters the target doctype (Opportunity Lost Reason / Quotation Lost Reason)
+    directly by custom_primary_category if available.
+    """
+    primary_category = filters.get("primary_category")
+    if not primary_category:
+        return []
+
+    meta = frappe.get_meta(doctype)
+    if meta.has_field("custom_primary_category"):
+        reasons = frappe.get_list(
+            doctype,
+            filters={
+                "custom_primary_category": primary_category,
+                "name": ["like", f"%{txt}%"]
+            },
+            pluck="name"
+        )
+    else:
+        reasons = frappe.get_list(
+            doctype,
+            filters={
+                "name": ["like", f"%{txt}%"]
+            },
+            pluck="name"
+        )
+
+    return [(r,) for r in reasons]

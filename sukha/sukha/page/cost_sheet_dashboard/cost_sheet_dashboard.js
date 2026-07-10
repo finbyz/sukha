@@ -570,6 +570,11 @@ class CostSheetDashboard {
 				});
 			}
 
+			// Port of Loading fetch request from iframe, filtered by Country Origin
+			if (event.data.type === 'fetch_pol_ports') {
+				this.populate_pol_ports(event.data.country || '');
+			}
+
 			// Incoterm details fetch request from iframe
 			if (event.data.type === 'fetch_incoterm_details') {
 				const iframe = document.getElementById('cost-sheet-iframe');
@@ -2117,10 +2122,12 @@ class CostSheetDashboard {
 				'Port Details'
 			);
 
-			this.populate_select(doc,
-				['#inp_pol', 'select[id*="pol"]'],
-				'Port Details'
-			);
+			// Country Origin — the iframe has no Frappe desk JS, so it cannot fill this itself
+			this.populate_select(doc, ['#inp_country'], 'Country');
+
+			// Port of Loading is NOT populated here. There are ~87k Port Details rows, so it is
+			// only ever loaded filtered by Country Origin. The iframe asks for it via the
+			// 'fetch_pol_ports' message whenever the origin or country changes.
 
 			// Product Grade will be populated based on selected Product
 			// Setup change event on product field
@@ -2151,11 +2158,9 @@ class CostSheetDashboard {
 			// Packing Type is populated dynamically by the iframe based on the selected Item
 			// and its custom_packing_type child table. We do NOT populate it here to avoid overwriting the filtered options.
 
-			// Std. Packing should load all Standard Packing options
-			this.populate_select(doc,
-				['#inp_std_packing', 'select[id*="std_packing"]'],
-				'Standard Packing'
-			);
+			// Std. Packing is populated dynamically by the iframe from the selected Item's
+			// custom_standard_packing rows, filtered by the chosen Packing Type. We do NOT
+			// populate it here to avoid overwriting the filtered options.
 
 
 
@@ -2206,6 +2211,38 @@ class CostSheetDashboard {
 		} catch (e) {
 			console.error('Dynamic link field setup error:', e);
 		}
+	}
+
+	// ─────────────────────────────────────────────────────────────
+	// PORT OF LOADING — FILTERED BY COUNTRY ORIGIN
+	// ─────────────────────────────────────────────────────────────
+
+	send_pol_ports(country, ports) {
+		const iframe = document.getElementById('cost-sheet-iframe');
+		if (!iframe || !iframe.contentWindow) return;
+		iframe.contentWindow.postMessage({
+			type: 'pol_ports_response',
+			country: country,
+			ports: ports
+		}, '*');
+	}
+
+	populate_pol_ports(country) {
+		// Port Details has ~87k rows. Never load it unfiltered — with no country
+		// selected the user gets an empty list rather than a truncated one.
+		if (!country) {
+			this.send_pol_ports('', []);
+			return Promise.resolve();
+		}
+
+		return frappe.db.get_list('Port Details', {
+			filters: { country: country },
+			fields: ['name'],
+			limit: 5000,
+			order_by: 'name asc'
+		}).then(records => {
+			this.send_pol_ports(country, (records || []).map(r => r.name));
+		});
 	}
 
 	// ─────────────────────────────────────────────────────────────

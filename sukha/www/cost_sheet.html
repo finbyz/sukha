@@ -819,6 +819,12 @@
                 <option value="">Select terms...</option>
               </select>
             </div>
+            <div class="form-group exw-hide">
+              <label>Country Origin</label>
+              <select class="form-control" id="inp_country" onchange="window.populatePolByOrigin && window.populatePolByOrigin()">
+                <option value="" selected>Select Country Origin...</option>
+              </select>
+            </div>
             <div class="form-group merchant-exw-hide" id="wrapper-destination">
               <label id="lbl-destination-label">Country of Destination</label>
               <!-- Export mode: country dropdown -->
@@ -895,7 +901,8 @@
             </div>
             <div class="form-group">
               <label>Packing type</label>
-              <select class="form-control" style="font-size:11px" id="inp_packing_type">
+              <select class="form-control" style="font-size:11px" id="inp_packing_type"
+                onchange="onPackingTypeChange()">
                 <option value="" selected>Select...</option>
               </select>
             </div>
@@ -1985,6 +1992,35 @@
       calculateEngine();
     }
 
+    function updateCountryFieldFromOrigin() {
+      const origin = $('inp_user_origin')?.value || '';
+      const countryEl = $('inp_country');
+      if (!countryEl) return;
+
+      if (origin === 'India') {
+        const optionExists = Array.from(countryEl.options).some(opt => opt.value === 'India');
+        if (!optionExists) {
+          const opt = document.createElement('option');
+          opt.value = 'India';
+          opt.textContent = 'India';
+          countryEl.appendChild(opt);
+        }
+        countryEl.value = 'India';
+        countryEl.disabled = true;
+      } else {
+        if (countryEl.disabled) {
+          countryEl.disabled = false;
+        }
+        if (countryEl.value === 'India') {
+          countryEl.value = '';
+        }
+      }
+
+      if (typeof window.populatePolByOrigin === 'function') {
+        window.populatePolByOrigin();
+      }
+    }
+
     /* Derive underlying Master Variant ID automatically from sequential user input fields */
     function deriveMasterVariantFromFields() {
       const inc = $('inp_user_incoterm')?.value || '';
@@ -2039,6 +2075,7 @@
       }
 
       onMasterVariantChange();
+      updateCountryFieldFromOrigin();
       // Refresh Port of Loading filter whenever origin scope changes
       // (populatePolByOrigin is assigned to window inside DOMContentLoaded after definition)
       if (typeof window.populatePolByOrigin === 'function') {
@@ -2727,9 +2764,12 @@
         // Rs Total = $/FCL * totalFcl * Shipping Exchange Rate
         const sfTotalRs = sfFclUsd * totalFcl * shipExr;
         const sfRsMt = totalMt > 0 ? sfTotalRs / totalMt : 0;
+
+        // With Premium Exchange Rate (non-editable computed row) -->
+        const sfWithPremium = baseRate > 0 ? sfFclUsd * shipExr / baseRate : 0;
         
         // $ Total formula as requested by user: (Sea Freight + Haz Surcharge) / Effective Exchange Rate * Total FCL
-        const sfTotalUsdDisplay = csExr > 0 ? (sfFclUsd / csExr) * totalFcl : 0;
+        const sfTotalUsdDisplay = csExr > 0 ? (sfWithPremium * totalFcl) : 0;
         const sfUsdMtDisplay = totalMt > 0 ? sfTotalUsdDisplay / totalMt : 0;
 
         const vanTotalUsd = v('inp_tc_van_usd');
@@ -2737,8 +2777,6 @@
         seaFreightTotalRs = sfTotalRs + vanTotalRs;
         seaFreightTotalUsd = sfTotalUsdDisplay + vanTotalUsd;
 
-        // With Premium Exchange Rate (non-editable computed row)
-        const sfWithPremium = baseRate > 0 ? sfFclUsd * shipExr / baseRate : 0;
 
         setTxt('lbl-tc-sf-rs-tot', sfTotalRs);
         setTxt('lbl-tc-sf-rs-mt', sfRsMt);
@@ -3685,6 +3723,62 @@
     /* ─── PRODUCT GRADE AUTO-FETCH ─── */
     /* Fetches custom_item_grade from the Item doctype when a product is selected.
        Field seen in Item: custom_item_grade = "64%" */
+    /* ─── PACKING TYPE → STD. PACKING (dependent dropdowns) ─── */
+    /* Rows of the Item's custom_standard_packing child table, each mapping
+       packing_type → std_packing → weight. Std. Packing only ever lists the
+       rows whose packing_type matches the one currently selected. */
+    window._stdPackingRows = [];
+
+    function rebuildSelect(el, values, keepValue) {
+      const currentVal = keepValue ? el.value : '';
+      el.innerHTML = '<option value="">Select...</option>';
+      values.forEach(val => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        el.appendChild(opt);
+      });
+      if (currentVal) {
+        if (!Array.from(el.options).some(opt => opt.value === currentVal)) {
+          const opt = document.createElement('option');
+          opt.value = currentVal;
+          opt.textContent = currentVal;
+          el.appendChild(opt);
+        }
+        el.value = currentVal;
+      }
+    }
+
+    function populateStdPackingByType() {
+      const stdPackEl = $('inp_std_packing');
+      if (!stdPackEl) return;
+
+      const packingType = $('inp_packing_type')?.value || '';
+      const seen = new Set();
+      const stds = [];
+      (window._stdPackingRows || []).forEach(row => {
+        if (packingType && row.packing_type !== packingType) return;
+        if (seen.has(row.std_packing)) return;
+        seen.add(row.std_packing);
+        stds.push(row.std_packing);
+      });
+
+      // Drop the current selection when it does not belong to the chosen packing type.
+      const keep = stds.includes(stdPackEl.value);
+      rebuildSelect(stdPackEl, stds, keep);
+      if (!keep) stdPackEl.value = '';
+    }
+
+    function setStdPackingRows(rows) {
+      window._stdPackingRows = (rows || []).filter(row => row && row.std_packing);
+      populateStdPackingByType();
+    }
+
+    function onPackingTypeChange() {
+      populateStdPackingByType();
+      fetchStdPackingWeight();
+    }
+
     /* ─── PRODUCT GRADE AUTO-FETCH ─── */
     function fetchProductGrade(itemCode) {
       console.log('=== fetchProductGrade CALLED ===');
@@ -3823,76 +3917,27 @@
               const addType = (val) => {
                 if (!val || seenTypes.has(val)) return;
                 seenTypes.add(val);
-                types.push({ packing_type: val });
+                types.push(val);
               };
 
-              const seenStd = new Set();
-              const stds = [];
-              const addStd = (val) => {
-                if (!val || seenStd.has(val)) return;
-                seenStd.add(val);
-                stds.push({ std_packing: val });
-              };
+              const stdRows = (itemDoc.custom_standard_packing || itemDoc.custom_std_pakcing || [])
+                .filter(row => row && row.std_packing);
 
               (itemDoc.custom_packing_type || []).forEach(row => addType(row.packing_type));
-              (itemDoc.custom_standard_packing || itemDoc.custom_std_pakcing || []).forEach(row => {
-                addType(row.packing_type);
-                addStd(row.std_packing);
-              });
-              
-              return { types, stds };
+              stdRows.forEach(row => addType(row.packing_type));
+
+              return { types, stdRows };
             };
 
             const populatePackingOptions = (itemDoc) => {
               const pTypeEl = $('inp_packing_type');
-              const stdPackEl = $('inp_std_packing');
               const opts = getPackingOptions(itemDoc);
-
-              if (pTypeEl) {
-                const currentVal = pTypeEl.value;
-                pTypeEl.innerHTML = '<option value="">Select...</option>';
-                opts.types.forEach(row => {
-                  const opt = document.createElement('option');
-                  opt.value = row.packing_type;
-                  opt.textContent = row.packing_type;
-                  pTypeEl.appendChild(opt);
-                });
-                if (currentVal) {
-                  let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
-                  if (!optionExists) {
-                    const opt = document.createElement('option');
-                    opt.value = currentVal;
-                    opt.textContent = currentVal;
-                    pTypeEl.appendChild(opt);
-                  }
-                  pTypeEl.value = currentVal;
-                }
-              }
-
-              if (stdPackEl) {
-                const currentVal = stdPackEl.value;
-                stdPackEl.innerHTML = '<option value="">Select...</option>';
-                opts.stds.forEach(row => {
-                  const opt = document.createElement('option');
-                  opt.value = row.std_packing;
-                  opt.textContent = row.std_packing;
-                  stdPackEl.appendChild(opt);
-                });
-                if (currentVal) {
-                  let optionExists = Array.from(stdPackEl.options).some(opt => opt.value === currentVal);
-                  if (!optionExists) {
-                    const opt = document.createElement('option');
-                    opt.value = currentVal;
-                    opt.textContent = currentVal;
-                    stdPackEl.appendChild(opt);
-                  }
-                  stdPackEl.value = currentVal;
-                }
-              }
+              if (pTypeEl) rebuildSelect(pTypeEl, opts.types, true);
+              setStdPackingRows(opts.stdRows);
             };
 
             const opts = getPackingOptions(doc);
-            const hasItemPackings = opts.types.length > 0 || opts.stds.length > 0;
+            const hasItemPackings = opts.types.length > 0 || opts.stdRows.length > 0;
             populatePackingOptions(doc);
             if (!hasItemPackings && parentItem) {
               frappe.call({
@@ -4004,28 +4049,14 @@
         // Populate Packing Type dropdown from parent response
         const pTypeEl = $('inp_packing_type');
         if (pTypeEl) {
-          const currentVal = pTypeEl.value;
-          const pTypes = e.data.packings || [];
-          pTypeEl.innerHTML = '<option value="">Select...</option>';
-          pTypes.forEach(row => {
-            if (row.packing_type) {
-              const opt = document.createElement('option');
-              opt.value = row.packing_type;
-              opt.textContent = row.packing_type;
-              pTypeEl.appendChild(opt);
-            }
-          });
-          if (currentVal) {
-            let optionExists = Array.from(pTypeEl.options).some(opt => opt.value === currentVal);
-            if (!optionExists) {
-              const opt = document.createElement('option');
-              opt.value = currentVal;
-              opt.textContent = currentVal;
-              pTypeEl.appendChild(opt);
-            }
-            pTypeEl.value = currentVal;
-          }
+          const types = (e.data.packings || [])
+            .map(row => row.packing_type)
+            .filter((val, i, arr) => val && arr.indexOf(val) === i);
+          rebuildSelect(pTypeEl, types, true);
         }
+
+        // Std. Packing is derived from the same rows, filtered by the selected packing type
+        setStdPackingRows(e.data.stdPackings || []);
       }
 
       if (e.data.type === 'std_packing_weight_response') {
@@ -4066,6 +4097,13 @@
         if ($('inp_user_incoterm')?.value === incName) {
           window._currentIncotermDoc = doc;
           updateTotalInternalCostFromIncoterm();
+        }
+      }
+
+      if (e.data.type === 'pol_ports_response') {
+        // Ignore stale responses for a country the user has already navigated away from
+        if ((e.data.country || '') === getPolFilterCountry()) {
+          fillPolOptions(e.data.ports || []);
         }
       }
 
@@ -4163,6 +4201,19 @@
     function fetchStdPackingWeight() {
       const stdPacking = $('inp_std_packing')?.value;
       if (!stdPacking) return;
+
+      const packingType = $('inp_packing_type')?.value || '';
+      const cachedRow = (window._stdPackingRows || []).find(row =>
+        row.std_packing === stdPacking && (!packingType || row.packing_type === packingType)
+      );
+      if (cachedRow && cachedRow.weight) {
+        const unitSizeEl = $('inp_unit_size');
+        if (unitSizeEl) {
+          unitSizeEl.value = cachedRow.weight;
+          calculateEngine();
+        }
+        return;
+      }
 
       if (typeof frappe !== 'undefined' && frappe.call) {
         frappe.call({
@@ -4274,6 +4325,38 @@
           calculateEngine();
         }
       }
+    }
+
+    /* Country used to filter Port of Loading: India origin pins to India,
+       otherwise the user-selected Country Origin. Empty = show all ports. */
+    function getPolFilterCountry() {
+      const origin = $('inp_user_origin')?.value || '';
+      if (origin === 'India') return 'India';
+      return $('inp_country')?.value || '';
+    }
+
+    /* Rebuild the Port of Loading dropdown, preserving the selection when still valid */
+    function fillPolOptions(portNames) {
+      const sel = $('inp_pol');
+      if (!sel) return;
+      const currentVal = sel.value;
+
+      sel.innerHTML = '';
+      const firstOpt = document.createElement('option');
+      firstOpt.value = '';
+      firstOpt.textContent = 'Select Port...';
+      sel.appendChild(firstOpt);
+
+      (portNames || []).forEach(name => {
+        if (!name) return;
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+
+      // Drop the previous selection when the port is not valid for the new country
+      sel.value = (currentVal && Array.from(sel.options).some(o => o.value === currentVal)) ? currentVal : '';
     }
 
     function syncPremiumAndRecalc() {
@@ -4449,16 +4532,22 @@
         });
       };
 
-      // ─── PORT OF LOADING — FILTERED BY ORIGIN ────────────────────────────
-      // When Sourcing Origin Scope = India, only show ports where country = India.
-      // Otherwise show all Port Details records.
+      // ─── PORT OF LOADING — FILTERED BY COUNTRY ────────────────────────────
+      // When Sourcing Origin = India, filter ports by country = India.
+      // When Sourcing Origin = TC, filter ports by the selected Country Origin.
       const populatePolByOrigin = () => {
         const sel = $('inp_pol');
-        if (!sel || typeof frappe === 'undefined' || !frappe.call) return Promise.resolve();
+        if (!sel) return Promise.resolve();
 
-        const origin = $('inp_user_origin')?.value || '';
-        const isIndia = origin === 'India';
-        const currentVal = sel.value;
+        const filterCountry = getPolFilterCountry();
+
+        // The iframe has no Frappe desk JS, so ask the parent dashboard for the ports.
+        if (typeof frappe === 'undefined' || !frappe.call) {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'fetch_pol_ports', country: filterCountry }, '*');
+          }
+          return Promise.resolve();
+        }
 
         return new Promise((resolve) => {
           let resolved = false;
@@ -4471,35 +4560,14 @@
             limit_page_length: 9999,
             order_by: 'name asc'
           };
-          if (isIndia) {
-            // Filter to only Indian ports
-            args.filters = { country: 'India' };
-          }
+          if (filterCountry) args.filters = { country: filterCountry };
 
           frappe.call({
             method: 'frappe.client.get_list',
             args: args,
             callback: function (r) {
               if (r.message && Array.isArray(r.message)) {
-                const firstOpt = document.createElement('option');
-                firstOpt.value = '';
-                firstOpt.textContent = 'Select Port...';
-                sel.innerHTML = '';
-                sel.appendChild(firstOpt);
-                r.message.forEach(row => {
-                  if (!row.name) return;
-                  const opt = document.createElement('option');
-                  opt.value = row.name;
-                  opt.textContent = row.name;
-                  sel.appendChild(opt);
-                });
-                // Restore previously selected value if still valid
-                if (currentVal && Array.from(sel.options).some(o => o.value === currentVal)) {
-                  sel.value = currentVal;
-                } else if (currentVal) {
-                  // Previously selected port is not in filtered list — clear selection
-                  sel.value = '';
-                }
+                fillPolOptions(r.message.map(row => row.name));
               }
               done();
             },
@@ -4623,6 +4691,9 @@
         const incoterm = urlParams.get('incoterm');
         if (incoterm) setDropdownValue('inp_user_incoterm', incoterm, true);
 
+        const origin = urlParams.get('origin') || urlParams.get('origin_scope');
+        if (origin) setDropdownValue('inp_user_origin', origin, true);
+
         const supplier = urlParams.get('supplier');
         if (supplier) setDropdownValue('inp_supplier', supplier, true);
 
@@ -4631,6 +4702,9 @@
 
         const destination = urlParams.get('destination');
         if (destination) setDropdownValue('inp_destination', destination, true);
+
+        const country = urlParams.get('country');
+        if (country) setDropdownValue('inp_country', country, true);
 
         const pod = urlParams.get('pod');
         if (pod) setDropdownValue('inp_pod', pod, true);
@@ -4664,6 +4738,11 @@
 
         // Mark that URL params have been applied
         window._urlParamsApplied = true;
+        
+        // Sync country field based on origin after URL params are loaded
+        if (typeof updateCountryFieldFromOrigin === 'function') {
+          updateCountryFieldFromOrigin();
+        }
       };
 
       // Expose function to re-apply URL params (called by dashboard after populating dropdowns)
@@ -4695,6 +4774,7 @@
           populateDropdown('inp_supplier', 'Supplier'),
           populateDropdown('inp_customer', 'Customer'),
           populateDropdown('inp_product', 'Item', 'name'),
+          populateDropdown('inp_country', 'Country', 'country_name'),
           populateDropdown('inp_destination', 'Port Details'),
           populateDropdown('inp_pod', 'Port Details'),
 
@@ -4702,8 +4782,9 @@
           populateDropdown('inp_shipping_line', 'Preferred Shipping Line'),
           populateDropdown('inp_cs_currency', 'Currency'),
           populateDropdown('inp_cust_terms', 'Payment Terms Template'),
-          populateDropdown('inp_supp_terms', 'Payment Terms Template'),
-          populateDropdown('inp_std_packing', 'Standard Packing')
+          populateDropdown('inp_supp_terms', 'Payment Terms Template')
+          // Std. Packing is NOT loaded here: it is derived from the selected Item's
+          // custom_standard_packing rows, filtered by the chosen Packing Type.
         ]).then(() => {
           const currencyField = document.getElementById('inp_cs_currency');
           if (currencyField) {

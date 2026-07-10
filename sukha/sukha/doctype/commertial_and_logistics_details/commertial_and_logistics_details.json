@@ -11,7 +11,7 @@
   "country_of_destination",
   "port_destination",
   "final_destination",
-  "desired_buying_region_country"
+  "quantity_mtpa"
  ],
  "fields": [
   {
@@ -33,7 +33,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Port Destination",
-   "options": "Port of Destinations"
+   "options": "Port Details"
   },
   {
    "fieldname": "country_of_destination",
@@ -60,7 +60,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-14 12:34:42.993638",
+ "modified": "2026-07-10 13:59:33.408341",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Commertial and Logistics Details",

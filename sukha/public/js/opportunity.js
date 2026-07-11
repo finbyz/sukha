@@ -520,7 +520,7 @@ function show_custom_lost_dialog(frm) {
             query: "sukha.override.opportunity_override.get_filtered_lost_reasons",
             filters: {
                 primary_category: primary_category || "",
-                // child_doctype: child_doctype,
+                child_doctype: child_doctype,
             },
         };
     });

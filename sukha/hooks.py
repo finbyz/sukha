@@ -29,7 +29,7 @@ required_apps = ["Chemical"]
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/sukha/css/sukha.css"
-# app_include_js = "/assets/sukha/js/sukha.js"
+# app_include_js = "/assets/sukha/js/utils/sales_common.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/sukha/css/sukha.css"
@@ -156,7 +156,10 @@ doc_events = {
     "Contact": {
         "on_update": "sukha.doc_events.contact.on_update",
         "validate": "sukha.doc_events.contact.validate",
-    }
+    },
+    "Quotation": {
+        "on_submit": "sukha.doc_events.quotation.on_submit",
+    },
 }
 # Override standard ERPNext methods
 override_doctype_class = {

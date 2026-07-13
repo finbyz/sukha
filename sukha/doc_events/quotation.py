@@ -100,6 +100,7 @@ def make_quotation(source_name, target_doc=None):
         # ---------------------------------
         target.append("items", {
             "item_code": source.product,
+            "item_name": frappe.db.get_value("Item", source.product, "item_name") or source.product,
             "qty": flt(source.total_quantity) or flt(source.total_weight_mt) or 1,
             "uom": frappe.db.get_value("Item", source.product, "stock_uom") or "MT",
             "rate": source.final_offered_price or 0,

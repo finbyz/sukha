@@ -4,7 +4,7 @@
 frappe.ui.form.on("Cost Sheet", {
 	refresh(frm) {
 		// Add custom button to open Cost Sheet Dashboard with current values
-		if (frm.doc.name) {
+		if (frm.doc.name && frm.doc.docstatus === 1) {
 			var btn = frm.add_custom_button(__('Open in Dashboard'), function() {
 				const params = new URLSearchParams({
 					source_doctype: 'Cost Sheet',

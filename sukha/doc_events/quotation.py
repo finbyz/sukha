@@ -153,9 +153,11 @@ def make_blanket_order(source_name, target_doc=None):
         target.blanket_order_type = "Selling"
 
         if source.quotation_to == "Customer":
-            target.customer = source.party_name
+            target.customer = source.party_name or source.custom_new_customer
             target.customer_name = source.customer_name
-
+        else:
+            target.customer = source.custom_new_customer
+            target.customer_name = source.customer_name
         target.company = source.company
         target.tc_name = source.tc_name
         target.terms = source.terms
@@ -177,7 +179,13 @@ def make_blanket_order(source_name, target_doc=None):
         target_item.custom_packing_type = source_item.custom_packing_type
         target_item.custom_standard_packing = source_item.custom_standard_packing
         target_item.custom_packing_unit_size_kg = source_item.custom_packing_unit_size
-
+    def update_item_payment_schedule(source_item, target_item, source_parent):
+        target_item.due_date = source_item.due_date
+        target_item.invoice_portion = source_item.invoice_portion
+        target_item.due_date_based_on = source_item.due_date_based_on
+        target_item.payment_amount = source_item.payment_amount
+        target_item.description = source_item.description
+        
     doclist = get_mapped_doc(
         "Quotation",
         source_name,
@@ -191,6 +199,11 @@ def make_blanket_order(source_name, target_doc=None):
                 "field_no_map": ["name"],
                 "postprocess": update_item,
             },
+            "Payment Schedule": {
+                "doctype": "Payment Schedule",
+                "field_no_map": ["name"],
+                "postprocess": update_item_payment_schedule,
+            }
         },
         target_doc,
         set_missing_values,

@@ -1533,7 +1533,7 @@
    "columns": 0,
    "creation": "2026-07-13 14:08:52.218772",
    "default": null,
-   "depends_on": "eval:doc.custom_self_life ==Yeseval:doc.custom_self_life ==Yes",
+   "depends_on": "eval:doc.custom_self_life ==Yes",
    "description": null,
    "docstatus": 0,
    "dt": "Sales Order Item",

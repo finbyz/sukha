@@ -110,7 +110,7 @@ def make_quotation(source_name, target_doc=None):
             "custom_packing_type": source.packing_type,
             "custom_standard_packing": source.custom_std_pakcing,
             "custom_packing_unit_size": source.packing_unit_size,
-            "custom_final_country_of_destination": source.final_country_of_destination,
+            "custom_final_country_of_destination": source.country_of_destination or source.final_country_of_destination,
         })
 
     return get_mapped_doc(

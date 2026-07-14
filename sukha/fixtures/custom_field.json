@@ -11042,7 +11042,7 @@
   "collapsible_depends_on": null,
   "columns": 0,
   "default": null,
-  "depends_on": "eval:doc.custom_self_life ==Yeseval:doc.custom_self_life ==Yes",
+  "depends_on": "eval:doc.custom_self_life ==Yes",
   "description": null,
   "docstatus": 0,
   "doctype": "Custom Field",

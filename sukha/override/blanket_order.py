@@ -23,7 +23,8 @@ def make_order(source_name, target_doctype=None, selected_items=None):
 		if doctype == "Quotation":
 			target_doc.quotation_to = "Customer"
 			target_doc.party_name = source_doc.customer
-
+		if not target_doc.payment_terms_template:
+			target_doc.payment_terms_template = source_doc.payment_terms_template
 	def update_item(source, target, source_parent):
 		target_qty = source.get("qty") - source.get("ordered_qty")
 		target.qty = target_qty if flt(target_qty) >= 0 else 0
@@ -35,11 +36,18 @@ def make_order(source_name, target_doctype=None, selected_items=None):
 			target.uom = item.get("stock_uom")
 			target.against_blanket_order = 1
 			target.blanket_order = source_name
-
+	
 	def item_condition(item):
 		if selected_items is not None and item.name not in selected_items:
 			return False
 		return not (flt(item.qty)) or (flt(item.qty) - flt(item.ordered_qty)) > 0
+
+	def update_item_payment_schedule(source_item, target_item, source_parent):
+		target_item.due_date = source_item.due_date
+		target_item.invoice_portion = source_item.invoice_portion
+		target_item.due_date_based_on = source_item.due_date_based_on
+		target_item.payment_amount = source_item.payment_amount
+		target_item.description = source_item.description
 
 	target_doc = get_mapped_doc(
 		"Blanket Order",
@@ -48,10 +56,15 @@ def make_order(source_name, target_doctype=None, selected_items=None):
 			"Blanket Order": {"doctype": doctype, "postprocess": update_doc},
 			"Blanket Order Item": {
 				"doctype": doctype + " Item",
-				"field_map": {"rate": "blanket_order_rate", "parent": "blanket_order"},
+				"field_map": {"rate": "blanket_order_rate", "parent": "blanket_order","custom_cost_sheet":"custom_cost_sheet"},
 				"postprocess": update_item,
 				"condition": item_condition,
 			},
+			"Payment Schedule": {
+				"doctype": "Payment Schedule",
+				"field_no_map": ["name"],
+				"postprocess": update_item_payment_schedule,
+			}
 		},
 	)
 

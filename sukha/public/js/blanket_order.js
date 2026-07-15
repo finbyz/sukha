@@ -47,7 +47,7 @@ erpnext.blanket_order_custom.show_item_selection_dialog = function (frm, target_
 				fieldtype: "Select",
 				fieldname: "country_filter",
 				label: __("Final Country of Destination"),
-				reqd: 1,
+				reqd: 0,
 				options: [""].concat(countries),
 				onchange: function () {
 					erpnext.blanket_order_custom.render_item_table(
@@ -64,15 +64,22 @@ erpnext.blanket_order_custom.show_item_selection_dialog = function (frm, target_
 		],
 		primary_action_label: __("Create"),
 		primary_action: function () {
-			let selected = dialog.selected_items || [];
-			if (!selected.length) {
-				frappe.msgprint(__("Please select at least one item"));
-				return;
-			}
+	let selected = dialog.selected_items || [];
 
-			dialog.hide();
-			erpnext.blanket_order_custom.create_order(frm, target_doctype, selected);
-		},
+	if (!selected.length) {
+		frappe.msgprint(__("Please select at least one item"));
+		return;
+	}
+
+	dialog.hide();
+
+	erpnext.blanket_order_custom.create_order(
+		frm,
+		target_doctype,
+		selected,
+		dialog.get_value("country_filter")
+	);
+},
 	});
 
 	dialog.selected_items = [];
@@ -141,13 +148,19 @@ erpnext.blanket_order_custom.render_item_table = function (dialog, frm, country_
 	});
 };
 
-erpnext.blanket_order_custom.create_order = function (frm, target_doctype, selected_items) {
+erpnext.blanket_order_custom.create_order = function (
+	frm,
+	target_doctype,
+	selected_items,
+	country
+) {
 	frappe.call({
 		method: "sukha.override.blanket_order.make_order",
 		args: {
 			source_name: frm.doc.name,
 			target_doctype: target_doctype,
 			selected_items: selected_items,
+			country: country,
 		},
 		freeze: true,
 		freeze_message: __("Creating {0}...", [target_doctype]),

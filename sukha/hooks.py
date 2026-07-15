@@ -160,6 +160,9 @@ doc_events = {
     "Quotation": {
         "on_submit": "sukha.doc_events.quotation.on_submit",
     },
+    "Sales Order":{
+        "validate": "sukha.doc_events.sales_order.validate"
+    }
 }
 # Override standard ERPNext methods
 override_doctype_class = {

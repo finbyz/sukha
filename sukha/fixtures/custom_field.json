@@ -24938,7 +24938,7 @@
   "name": "Sales Order-custom_container_type",
   "no_copy": 0,
   "non_negative": 0,
-  "options": null,
+  "options": "\n20' FCL\n40' FCL\n20' ISO\n",
   "permlevel": 0,
   "placeholder": null,
   "precision": "",

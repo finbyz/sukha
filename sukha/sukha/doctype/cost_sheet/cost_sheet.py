@@ -139,9 +139,10 @@ class CostSheet(Document):
             self.exchange_premium
         )
 
-        # use + because your doctype description uses +
+        # Effective rate = base - premium, matching the frontend engine
+        # (cost_sheet.html: csExr = baseRate - premium)
         self.effective_exchange_rate = (
-            base + premium
+            base - premium
         )
 
 
@@ -181,17 +182,19 @@ class CostSheet(Document):
 
         for row in self.product_cost_details:
 
+            if flt(row.quantity):
 
-            row.amount=(
+                row.amount=(
 
-                flt(row.quantity)
+                    flt(row.quantity)
 
-                *
+                    *
 
-                flt(row.rate)
+                    flt(row.rate)
 
-            )
+                )
 
+            row.amount=flt(row.amount)
 
             row.amount_per_mt=(
                 row.amount/mt
@@ -232,23 +235,25 @@ class CostSheet(Document):
 
         for row in self.cnf_charges:
 
+            if flt(row.quantity):
 
-            row.amount=(
+                row.amount=(
 
-                flt(row.quantity)
+                    flt(row.quantity)
 
-                *
+                    *
 
-                flt(row.rate)
+                    flt(row.rate)
 
-            )
+                )
 
+            row.amount=flt(row.amount)
 
             if row.bl_charges_total:
 
-                row.amount += flt(
-                    row.bl_charges_total
-                )
+                # row.amount += flt(
+                #     row.bl_charges_total
+                # )
 
 
                 row.bl_charges_per_mt=(
@@ -300,71 +305,65 @@ class CostSheet(Document):
 
         mt=self.total_weight_mt or 1
 
-        base_exr=self.exchange_rate or 1
+        base_exr=self.effective_exchange_rate or 1
+
+        # Doc-level shipping premium is the canonical source; the per-row
+        # field is a fallback for rows that override it individually.
+        doc_ship_premium = flt(self.shipping_premium)
 
 
         for row in self.sea_freight_details:
 
-
+            # Fix 2: fall back to doc-level shipping_premium when row has none
             ship_exr=(
-
                 base_exr
-
                 +
-
-                flt(
-                    row.shipping_premium
-                )
+                (flt(row.shipping_premium) or doc_ship_premium)
             )
 
 
-            row.shipping_exchange_rate=(
-                ship_exr
-            )
+            row.shipping_exchange_rate = ship_exr
 
 
-            row.freight_amount=(
+            # Fix 1: Vanning rows arrive already in Rs from the frontend.
+            # Do NOT apply the (rate + haz) × containers × ship_exr formula
+            # to them – that would inflate by ~84×.
+            # We use the freight_amount sent by the frontend when it is set;
+            # otherwise fall back to the formula (handles manual-only entries).
+            if (
+                cstr(row.freight_type).lower() == "vanning"
+                and flt(row.freight_amount)
+            ):
+                # Preserve the Rs value sent by the frontend; recalc USD only.
+                row.freight_amount = flt(row.freight_amount)
 
-                (
+            else:
+                row.freight_amount=(
 
-                    flt(
-                        row.freight_rate
+                    (
+                        flt(row.freight_rate)
+                        +
+                        flt(row.haz_surcharge)
                     )
 
-                    +
+                    *
 
-                    flt(
-                        row.haz_surcharge
-                    )
+                    flt(row.number_of_containers)
+
+                    *
+
+                    ship_exr
 
                 )
-
-                *
-
-                flt(
-                    row.number_of_containers
-                )
-
-                *
-
-                ship_exr
-
-            )
 
 
             row.freight_per_mt=(
-
-                row.freight_amount/mt
-
+                row.freight_amount / mt
             )
 
 
             row.usd_amount=(
-
-                row.freight_amount
-                /
-                ship_exr
-
+                row.freight_amount / ship_exr
             )
 
 
@@ -412,22 +411,25 @@ class CostSheet(Document):
         row.base_cost=base_cost
 
 
-        credit_days=CREDIT_DAYS_MAP.get(
-            cstr(
-                row.credit_days
-            ),
-            0
-        )
+        # ── Credit cost ──────────────────────────────────────────────────────
+        # Fix 3: For EXW/Domestic variants the frontend sends a plain
+        # domestic_credit_percentage (%) at doc level, not a credit-days key.
+        # For export variants, map the Payment Terms Template label via
+        # CREDIT_DAYS_MAP → 1% per 30 days.
+        if is_exw:
+            credit_pct = flt(self.domestic_credit_percentage)
+        else:
+            credit_days = CREDIT_DAYS_MAP.get(
+                cstr(row.credit_days),
+                0
+            )
+            credit_pct = credit_days / 30   # gives 0, 1, 2 or 3 (%)
 
 
-        credit_pct=(
-            credit_days/30
-        )
+        row.credit_cost_percentage = credit_pct
 
 
-        row.credit_cost_percentage=(
-            credit_pct
-        )
+        credit_cost = base_cost * credit_pct / 100
 
 
         internal_cost=(
@@ -439,18 +441,6 @@ class CostSheet(Document):
             flt(
                 row.internal_cost_percentage
             )
-
-            /100
-        )
-
-
-        credit_cost=(
-
-            base_cost
-
-            *
-
-            credit_pct
 
             /100
         )
@@ -499,20 +489,17 @@ class CostSheet(Document):
             )
 
 
-        offered=flt(
-            self.final_offered_price
-        )
-
-
-        if not is_exw:
-
-            offered=(
-                offered
-                *
-                exr
-                *
-                mt
-            )
+        # ── Offered price ────────────────────────────────────────────────────
+        # Fix 4: Prefer the row-level offered_price (total Rs) that the
+        # frontend always sets on the margin_analysis child row.  Fall back
+        # to doc-level final_offered_price (per-MT USD) and scale it.
+        if flt(row.offered_price):
+            offered = flt(row.offered_price)
+        else:
+            offered = flt(self.final_offered_price)
+            if not is_exw:
+                # doc-level is per-MT USD; convert to total Rs
+                offered = offered * exr * mt
 
 
         dbk=0
@@ -528,9 +515,15 @@ class CostSheet(Document):
         ):
 
 
+            dbk_base=(
+                offered
+                -
+                flt(self.total_freight_cost)
+            )
+
             dbk=(
 
-                offered
+                dbk_base
 
                 *
 
@@ -544,7 +537,7 @@ class CostSheet(Document):
 
             rodtep=(
 
-                offered
+                dbk_base
 
                 *
 
@@ -597,18 +590,9 @@ class CostSheet(Document):
             net/mt
         )
 
-        row.net_cost_total_usd=(
-            net/exr
-        )
-
-        row.net_cost_per_mt_usd=(
-
-            net
-            /
-            mt
-            /
-            exr
-        )
+        # Fix 5: net_cost_total_usd / net_cost_per_mt_usd are not in the
+        # Cost Sheet Margin Analysis DocType schema, so those assignments
+        # were silently dropped.  Removed to avoid confusion.
 
 
         profit=(
@@ -656,32 +640,26 @@ class CostSheet(Document):
         )
 
 
-        self.profit_amount=(
+        # Fix 6: final_offered_price is per-MT USD; net_cost is total Rs.
+        # Mixing them directly produces a meaningless profit figure.
+        # When a margin_analysis row exists its profit fields have already
+        # been computed in the correct unit/scale — copy them here instead.
+        if self.margin_analysis:
 
-            flt(
-                self.final_offered_price
+            row = self.margin_analysis[0]
+
+            self.profit_amount = flt(row.profit_amount)
+
+            self.profit_margin_percentage = flt(
+                row.profit_margin_percentage
             )
 
-            -
+        else:
 
-            flt(
-                self.net_cost
-            )
-
-        )
-
-
-        if self.final_offered_price:
-
-            self.profit_margin_percentage=(
-
-                self.profit_amount
-
-                /
-
-                self.final_offered_price
-
-            ) * 100
+            # No margin row – we cannot scale correctly without is_exw;
+            # leave profit fields at zero so they don't show garbage.
+            self.profit_amount = 0
+            self.profit_margin_percentage = 0
 
 
 

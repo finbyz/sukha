@@ -311,7 +311,7 @@
    "precision": "4"
   },
   {
-   "description": "Exchange Rate + Exchange Premium",
+   "description": "Exchange Rate - Exchange Premium",
    "fieldname": "effective_exchange_rate",
    "fieldtype": "Currency",
    "label": "Effective Exchange Rate",
@@ -800,7 +800,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-07-06 14:59:12.739948",
+ "modified": "2026-07-21 15:54:30.532289",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

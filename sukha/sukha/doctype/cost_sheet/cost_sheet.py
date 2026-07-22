@@ -90,7 +90,7 @@ class CostSheet(Document):
                 )
 
 
-    def calculate(self):      
+    def calculate(self):
 
         variant = get_variant(self)
 
@@ -106,29 +106,20 @@ class CostSheet(Document):
             "India-Repacking Service-EXW"
         ]
 
+        is_fob = cstr(self.incoterm) == "FOB"
 
         self.calculate_exchange()
-        self.calculate_quantity()
-
+        # self.calculate_quantity()
 
         if self.total_weight_mt <= 0:
             self.zero_totals()
             return
 
-
-        self.calculate_product_cost()
-
+        self.calculate_product_cost(is_tc)          # CHANGED: pass is_tc
         self.calculate_cnf()
-
         self.calculate_freight()
-
-        self.calculate_margin(
-            is_exw,
-            is_ind_export
-        )
-
+        self.calculate_margin(is_exw, is_ind_export, is_tc, is_fob)  # CHANGED
         self.calculate_summary()
-
 
 
     def calculate_exchange(self):
@@ -147,525 +138,252 @@ class CostSheet(Document):
 
 
 
-    def calculate_quantity(self):
+    # def calculate_quantity(self):
 
-        qty_per_fcl = (
+    #     qty_per_fcl = (
 
-            flt(self.units_per_fcl)
+    #         flt(self.units_per_fcl)
 
-            *
+    #         *
 
-            flt(self.packing_unit_size)
+    #         flt(self.packing_unit_size)
 
-        ) / 1000
-
-
-        total_mt = (
-            qty_per_fcl *
-            flt(self.total_fcl)
-        )
+    #     ) / 1000
 
 
-        self.total_quantity = total_mt
-        self.total_weight_mt = total_mt
+    #     total_mt = (
+    #         qty_per_fcl *
+    #         flt(self.total_fcl)
+    #     )
+
+
+    #     self.total_quantity = flt(total_mt, 3)
+    #     self.total_weight_mt = flt(total_mt, 3)
 
 
 
-    def calculate_product_cost(self):
+    def calculate_product_cost(self, is_tc=False):
 
-        total=0
+        total = 0
 
-        exr=self.effective_exchange_rate or 1
-
-        mt=self.total_weight_mt or 1
-
+        exr = self.effective_exchange_rate or 1
+        mt = self.total_weight_mt or 1
 
         for row in self.product_cost_details:
 
-            if flt(row.quantity):
+            # if flt(row.quantity):
+            #     row.amount = flt(row.quantity) * flt(row.rate)
 
-                row.amount=(
+            # row.amount = flt(row.amount)
+            # row.amount_per_mt = row.amount / mt
 
-                    flt(row.quantity)
+            # if row.currency == "USD":
+            #     row.usd_amount = row.amount
+            # else:
+            #     row.usd_amount = row.amount / exr
 
-                    *
-
-                    flt(row.rate)
-
-                )
-
-            row.amount=flt(row.amount)
-
-            row.amount_per_mt=(
-                row.amount/mt
-            )
-
-
-            if row.currency=="USD":
-
-                row.usd_amount=row.amount
-
-            else:
-
-                row.usd_amount=(
-                    row.amount/exr
-                )
-
-
-            row.usd_per_mt=(
-                row.usd_amount/mt
-            )
-
-
-            total+=row.amount
-
-
-        self.total_product_cost=total
-
-
-
-    def calculate_cnf(self):
-
-        total=0
-
-        exr=self.effective_exchange_rate or 1
-
-        mt=self.total_weight_mt or 1
-
-
-        for row in self.cnf_charges:
-
-            if flt(row.quantity):
-
-                row.amount=(
-
-                    flt(row.quantity)
-
-                    *
-
-                    flt(row.rate)
-
-                )
-
-            row.amount=flt(row.amount)
-
-            if row.bl_charges_total:
-
-                # row.amount += flt(
-                #     row.bl_charges_total
-                # )
-
-
-                row.bl_charges_per_mt=(
-
-                    flt(
-                        row.bl_charges_total
-                    )
-
-                    /mt
-                )
-
-
-                row.bl_charges_usd=(
-
-                    flt(
-                        row.bl_charges_total
-                    )
-
-                    /exr
-                )
-
-
-            row.amount_per_mt=(
-                row.amount/mt
-            )
-
-
-            row.usd_amount=(
-                row.amount/exr
-            )
-
-
-            row.usd_per_mt=(
-
-                row.usd_amount/mt
-            )
-
+            # row.usd_per_mt = row.usd_amount / mt
 
             total += row.amount
 
 
-        self.total_cnf_cost=total
+        if is_tc and not self.product_cost_details and flt(self.tc_rm_usd_mt):
+            buy_usd_mt = flt(self.tc_rm_usd_mt)
+            buy_total_rs = buy_usd_mt * mt * exr
 
+            row = self.append("product_cost_details", {})
+            row.cost_element = "RM Delivered Cost (TC Buy)"
+            row.category = "Raw Material"
+            row.currency = "USD"
+            row.rate = buy_usd_mt
+            row.amount = buy_total_rs
+            row.amount_per_mt = buy_total_rs / mt
+            row.usd_amount = buy_usd_mt * mt
+            row.usd_per_mt = buy_usd_mt
 
+            total += buy_total_rs
+
+        # self.total_product_cost = total
+
+    def calculate_cnf(self):
+
+        exr = self.effective_exchange_rate or 1
+        mt = self.total_weight_mt or 1
+        total_fcl = flt(self.total_fcl)
+
+        # for row in self.cnf_charges:
+        #     if flt(row.quantity):
+        #         row.amount = flt(row.quantity) * flt(row.rate)
+        #     row.amount = flt(row.amount)
+        #     if row.bl_charges_total:
+        #         row.bl_charges_per_mt = flt(row.bl_charges_total) / mt
+        #         row.bl_charges_usd = flt(row.bl_charges_total) / exr
+        #     row.amount_per_mt = row.amount / mt
+        #     row.usd_amount = row.amount / exr
+        #     row.usd_per_mt = row.usd_amount / mt
+
+        std_charges_per_fcl = (
+            flt(self.cnf_agency_charges)
+            + flt(self.cnf_lolo_charges)
+            + flt(self.cnf_seal_charges)
+            + flt(self.cnf_thc)              # <-- was missing entirely
+            + flt(self.cnf_port_handling)
+            + flt(self.cnf_haz_surcharge)
+            + flt(self.cnf_transportation)   # <-- now correctly x total_fcl below
+        )
+        total_cost_fcl = std_charges_per_fcl + flt(self.cnf_other_charges)
+        cnf_base_rs = total_cost_fcl * total_fcl
+
+        bl_charges = flt(self.cnf_bl_charges)
+        sea_way_bl_charges = next(
+            (flt(r.amount) for r in self.cnf_charges if r.charge_type == "Sea Way BL Charges"),
+            0,
+        )
+
+        self.total_cnf_cost = cnf_base_rs + bl_charges + sea_way_bl_charges
 
     def calculate_freight(self):
 
-        total=0
-
-        mt=self.total_weight_mt or 1
-
-        base_exr=self.effective_exchange_rate or 1
-
-        # Doc-level shipping premium is the canonical source; the per-row
-        # field is a fallback for rows that override it individually.
+        total = 0
+        mt = self.total_weight_mt or 1
+        base_exr = self.effective_exchange_rate or 1
         doc_ship_premium = flt(self.shipping_premium)
 
-
         for row in self.sea_freight_details:
+            # ship_exr = base_exr + (flt(row.shipping_premium) or doc_ship_premium)
+            # row.shipping_exchange_rate = ship_exr
 
-            # Fix 2: fall back to doc-level shipping_premium when row has none
-            ship_exr=(
-                base_exr
-                +
-                (flt(row.shipping_premium) or doc_ship_premium)
-            )
+            # freight_type = cstr(row.freight_type).lower()
 
+            # if freight_type == "vanning" and flt(row.freight_amount):
+            #     row.freight_amount = flt(row.freight_amount)
+            # elif freight_type in ("other surcharge", "haz surcharge"):
+            #     row.freight_amount = flt(row.freight_rate) * flt(row.number_of_containers) * ship_exr
+            # else:
+            #     row.freight_amount = (
+            #         (flt(row.freight_rate) + flt(row.haz_surcharge))
+            #         * flt(row.number_of_containers)
+            #         * ship_exr
+            #     )
 
-            row.shipping_exchange_rate = ship_exr
-
-
-            # Fix 1: Vanning rows arrive already in Rs from the frontend.
-            # Do NOT apply the (rate + haz) × containers × ship_exr formula
-            # to them – that would inflate by ~84×.
-            # We use the freight_amount sent by the frontend when it is set;
-            # otherwise fall back to the formula (handles manual-only entries).
-            if (
-                cstr(row.freight_type).lower() == "vanning"
-                and flt(row.freight_amount)
-            ):
-                # Preserve the Rs value sent by the frontend; recalc USD only.
-                row.freight_amount = flt(row.freight_amount)
-
-            else:
-                row.freight_amount=(
-
-                    (
-                        flt(row.freight_rate)
-                        +
-                        flt(row.haz_surcharge)
-                    )
-
-                    *
-
-                    flt(row.number_of_containers)
-
-                    *
-
-                    ship_exr
-
-                )
-
-
-            row.freight_per_mt=(
-                row.freight_amount / mt
-            )
-
-
-            row.usd_amount=(
-                row.freight_amount / ship_exr
-            )
-
-
+            # row.freight_per_mt = row.freight_amount / mt
+            # row.usd_amount = row.freight_amount / ship_exr
             total += row.freight_amount
 
+        # NEW: tc_vanning_usd never lands in sea_freight_details rows — add it
+        # directly, matching JS's `vanTotalRs = vanTotalUsd * shipExr`.
+        variant = get_variant(self)
+        if variant in ("TC-FOB", "India-CIF") and flt(self.tc_vanning_usd):
+            ship_exr = base_exr + doc_ship_premium
+            total += flt(self.tc_vanning_usd) * ship_exr
 
-        self.total_freight_cost=total
+        self.total_freight_cost = total
 
-
-
-
-    def calculate_margin(
-        self,
-        is_exw,
-        is_ind_export
-    ):
-
+    def calculate_margin(self, is_exw, is_ind_export, is_tc=False, is_fob=False):
 
         if not self.margin_analysis:
             return
 
+        row = self.margin_analysis[0]
+        exr = self.effective_exchange_rate or 1
+        mt = self.total_weight_mt or 1
 
-        row=self.margin_analysis[0]
+        base_cost = self.total_product_cost + self.total_cnf_cost
+        row.base_cost = base_cost
 
-        exr=self.effective_exchange_rate or 1
-
-        mt=self.total_weight_mt or 1
-
-
-        base_cost=(
-
-            self.total_product_cost
-
-            +
-
-            self.total_cnf_cost
-
-            +
-
-            self.total_freight_cost
-
-        )
-
-
-        row.base_cost=base_cost
-
-
-        # ── Credit cost ──────────────────────────────────────────────────────
-        # Fix 3: For EXW/Domestic variants the frontend sends a plain
-        # domestic_credit_percentage (%) at doc level, not a credit-days key.
-        # For export variants, map the Payment Terms Template label via
-        # CREDIT_DAYS_MAP → 1% per 30 days.
-        if is_exw:
-            credit_pct = flt(self.domestic_credit_percentage)
-        else:
-            credit_days = CREDIT_DAYS_MAP.get(
-                cstr(row.credit_days),
-                0
-            )
-            credit_pct = credit_days / 30   # gives 0, 1, 2 or 3 (%)
-
-
-        row.credit_cost_percentage = credit_pct
-
-
-        credit_cost = base_cost * credit_pct / 100
-
-
-        internal_cost=(
-
-            base_cost
-
-            *
-
-            flt(
-                row.internal_cost_percentage
-            )
-
-            /100
-        )
-
-
-        document_cost=(
-
-            flt(
-                row.document_charges_usd
-            )
-
-            *
-
-            exr
-        )
-
-
-        if is_exw:
-
-            commission=(
-
-                flt(
-                    row.commission_value
-                )
-
-                *
-
-                mt
-            )
-
-        else:
-
-            commission=(
-
-                flt(
-                    row.commission_value
-                )
-
-                *
-
-                mt
-
-                *
-
-                exr
-            )
-
-
-        # ── Offered price ────────────────────────────────────────────────────
-        # Fix 4: Prefer the row-level offered_price (total Rs) that the
-        # frontend always sets on the margin_analysis child row.  Fall back
-        # to doc-level final_offered_price (per-MT USD) and scale it.
+        # ── Offered price — moved up, credit/internal cost now need it ──
         if flt(row.offered_price):
             offered = flt(row.offered_price)
         else:
             offered = flt(self.final_offered_price)
             if not is_exw:
-                # doc-level is per-MT USD; convert to total Rs
                 offered = offered * exr * mt
 
+        # ── Credit cost / Internal cost ──────────────────────────────
+        # CHANGED: JS bases these on OFFERED PRICE for CIF/FOB, and on
+        # cost (exwCostRs) only for EXW variants. Previously both always
+        # used base_cost, which is wrong for every non-EXW variant.
+        credit_pct = flt(self.domestic_credit_percentage)
+        row.credit_cost_percentage = credit_pct
+        credit_cost = (base_cost if is_exw else offered) * credit_pct / 100
+        internal_cost = (base_cost if is_exw else offered) * flt(row.internal_cost_percentage) / 100
 
-        dbk=0
-        rodtep=0
+        document_cost = flt(row.document_charges_usd) * exr
 
+        if is_exw:
+            commission = flt(row.commission_value) * mt
+        else:
+            commission = flt(row.commission_value) * mt * exr
 
-        if (
-            is_ind_export
-            and
-            self.apply_rodtep
-            and
-            not self.apply_advance_license
-        ):
+        # ...rest of the function (dbk, rodtep, net, profit) stays unchanged
 
+        if flt(row.offered_price):
+            offered = flt(row.offered_price)
+        else:
+            offered = flt(self.final_offered_price)
+            if not is_exw:
+                offered = offered * exr * mt
 
-            dbk_base=(
-                offered
-                -
-                flt(self.total_freight_cost)
-            )
+        dbk = 0
+        rodtep = 0
 
-            dbk=(
+        if is_ind_export and self.apply_rodtep and not self.apply_advance_license:
+            dbk_base = offered - flt(self.total_freight_cost)
+            dbk = dbk_base * flt(row.duty_drawback_percentage) / 100
+            rodtep = dbk_base * flt(row.rodtep_percentage) / 100
 
-                dbk_base
+        # row.duty_drawback_amount = dbk
+        # row.rodtep_amount = rodtep
 
-                *
+        # ── Net cost — CHANGED to branch on incoterm exactly like JS ──
+        # JS lines 2930-2946:
+        #   FOB + TC        -> baseBuy + seaFreight + int + credit + doc + comm
+        #   FOB + non-TC     -> baseBuy + int + credit + doc + comm - dbk - rodtep
+        #   non-FOB (CIF/EXW)-> baseBuy + seaFreight + int + credit + doc + comm
+        freight = flt(self.total_freight_cost)
 
-                flt(
-                    row.duty_drawback_percentage
-                )
+        if is_fob:
+            if is_tc:
+                net = base_cost + freight + internal_cost + credit_cost + document_cost + commission
+            else:
+                net = base_cost + internal_cost + credit_cost + document_cost + commission - dbk - rodtep
+        else:
+            net = base_cost + freight + internal_cost + credit_cost + document_cost + commission
 
-                /100
-            )
+        # row.net_cost_total_rs = net
+        # row.net_cost_per_mt_rs = net / mt
 
+        # ── Profit — CHANGED to branch on incoterm exactly like JS ────
+        # JS lines 2964-2973
+        if is_fob:
+            profit = offered - net
+        else:
+            profit = offered - net + dbk + rodtep
 
-            rodtep=(
+        # row.profit_amount = profit
 
-                dbk_base
+        # if offered:
+        #     row.profit_margin_percentage = profit / offered * 100
 
-                *
-
-                flt(
-                    row.rodtep_percentage
-                )
-
-                /100
-            )
-
-
-        row.duty_drawback_amount=dbk
-
-        row.rodtep_amount=rodtep
-
-
-        net=(
-
-            base_cost
-
-            +
-
-            internal_cost
-
-            +
-
-            credit_cost
-
-            +
-
-            document_cost
-
-            +
-
-            commission
-
-            -
-
-            dbk
-
-            -
-
-            rodtep
-        )
-
-
-        row.net_cost_total_rs=net
-
-        row.net_cost_per_mt_rs=(
-            net/mt
-        )
-
-        # Fix 5: net_cost_total_usd / net_cost_per_mt_usd are not in the
-        # Cost Sheet Margin Analysis DocType schema, so those assignments
-        # were silently dropped.  Removed to avoid confusion.
-
-
-        profit=(
-            offered-net
-        )
-
-
-        row.profit_amount=profit
-
-
-        if offered:
-
-            row.profit_margin_percentage=(
-
-                profit
-                /
-                offered
-                *
-                100
-            )
-
-
-        row.total_profit=profit
-
-        row.total_profit_usd=(
-            profit/exr
-        )
-
+        # row.total_profit = profit
+        # row.total_profit_usd = profit / exr
 
 
     def calculate_summary(self):
 
-        self.net_cost=(
-
-            self.total_product_cost
-
-            +
-
-            self.total_cnf_cost
-
-            +
-
-            self.total_freight_cost
-
-        )
-
-
-        # Fix 6: final_offered_price is per-MT USD; net_cost is total Rs.
-        # Mixing them directly produces a meaningless profit figure.
-        # When a margin_analysis row exists its profit fields have already
-        # been computed in the correct unit/scale — copy them here instead.
         if self.margin_analysis:
-
             row = self.margin_analysis[0]
-
+            self.net_cost = flt(row.net_cost_total_rs)
             self.profit_amount = flt(row.profit_amount)
-
-            self.profit_margin_percentage = flt(
-                row.profit_margin_percentage
-            )
-
+            self.profit_margin_percentage = flt(row.profit_margin_percentage)
         else:
-
-            # No margin row – we cannot scale correctly without is_exw;
-            # leave profit fields at zero so they don't show garbage.
+            self.net_cost = self.total_product_cost + self.total_cnf_cost + self.total_freight_cost
             self.profit_amount = 0
             self.profit_margin_percentage = 0
 
-
-
     def zero_totals(self):
 
-        self.total_product_cost=0
+        # self.total_product_cost=0
         self.total_cnf_cost=0
         self.total_freight_cost=0
         self.net_cost=0
@@ -673,31 +391,6 @@ class CostSheet(Document):
         self.profit_margin_percentage=0
 
 
-
-
-# @frappe.whitelist()
-# def create_from_dashboard(data):
-
-#     import json
-
-#     if isinstance(data,str):
-#         data=json.loads(data)
-
-
-#     doc=frappe.new_doc(
-#         "Cost Sheet"
-#     )
-
-
-#     doc.update(data)
-
-#     doc.insert(
-#         ignore_permissions=True
-#     )
-
-#     frappe.db.commit()
-
-#     return doc.name
 
 @frappe.whitelist()
 def create_from_dashboard(data):

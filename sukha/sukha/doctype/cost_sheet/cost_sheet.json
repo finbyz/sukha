@@ -96,6 +96,8 @@
   "vanning_rs_fcl",
   "labels_rs_mt",
   "labels_remarks",
+  "total_warehouse_rent_considered",
+  "special_export_documentation_cost",
   "col_break_cnf_tc",
   "cnf_transportation",
   "cnf_thc",
@@ -794,13 +796,23 @@
    "options": "Opportunity",
    "read_only": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "total_warehouse_rent_considered",
+   "fieldtype": "Float",
+   "label": "Total Warehouse Rent Considered"
+  },
+  {
+   "fieldname": "special_export_documentation_cost",
+   "fieldtype": "Float",
+   "label": "Special Export Documentation Cost"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-07-21 15:54:30.532289",
+ "modified": "2026-07-22 20:11:25.660382",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

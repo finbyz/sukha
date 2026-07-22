@@ -98,6 +98,8 @@
   "labels_remarks",
   "total_warehouse_rent_considered",
   "special_export_documentation_cost",
+  "comission_rsmt",
+  "any_other_cost",
   "col_break_cnf_tc",
   "cnf_transportation",
   "cnf_thc",
@@ -112,6 +114,8 @@
   "tc_vanning_usd",
   "tc_ocean_freight_fcl",
   "tc_haz_surcharge_fcl",
+  "handling_cost",
+  "warehouse_rentstorage_charges",
   "col_break_dom_calc",
   "dom_basic_price",
   "dom_freight_inward",
@@ -124,6 +128,7 @@
   "internal_cost_percentage",
   "domestic_credit_percentage",
   "document_charges_usd",
+  "freight_charges",
   "merchant_document_charges",
   "amended_from"
  ],
@@ -806,13 +811,38 @@
    "fieldname": "special_export_documentation_cost",
    "fieldtype": "Float",
    "label": "Special Export Documentation Cost"
+  },
+  {
+   "fieldname": "comission_rsmt",
+   "fieldtype": "Float",
+   "label": "Comission (Rs./MT)"
+  },
+  {
+   "fieldname": "any_other_cost",
+   "fieldtype": "Float",
+   "label": "Any other cost"
+  },
+  {
+   "fieldname": "handling_cost",
+   "fieldtype": "Float",
+   "label": "Handling (Loading+Unloading) Cost"
+  },
+  {
+   "fieldname": "freight_charges",
+   "fieldtype": "Float",
+   "label": "Freight Charges"
+  },
+  {
+   "fieldname": "warehouse_rentstorage_charges",
+   "fieldtype": "Float",
+   "label": "Warehouse Rent/Storage Charges"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-07-22 20:11:25.660382",
+ "modified": "2026-07-22 23:36:28.189670",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

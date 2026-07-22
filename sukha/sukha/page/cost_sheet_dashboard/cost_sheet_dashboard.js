@@ -728,7 +728,6 @@ class CostSheetDashboard {
 			}
 			// Customer name fetch request from iframe
 			if (event.data.type === 'fetch_customer_name') {
-				console.log('dashboard: received fetch_customer_name request for:', event.data.customer);
 				const iframe = document.getElementById('cost-sheet-iframe');
 				if (!iframe || !iframe.contentWindow) return;
 				frappe.call({
@@ -739,8 +738,7 @@ class CostSheetDashboard {
 						fieldname: ['customer_name', 'custom_stuffing_address']
 					},
 					callback: (r) => {
-						console.log('dashboard: frappe.client.get_value (name & stuffing) response:', r.message);
-						const customer_name = (r.message || {}).customer_name || '';
+					const customer_name = (r.message || {}).customer_name || '';
 						const stuffing_address = (r.message || {}).custom_stuffing_address || '';
 						iframe.contentWindow.postMessage({
 							type: 'customer_name_response',
@@ -753,8 +751,6 @@ class CostSheetDashboard {
 
 			// Customer stuffing address fetch request from iframe (domestic mode)
 			if (event.data.type === 'fetch_customer_stuffing_address') {
-				console.log('dashboard: received fetch_customer_stuffing_address request for:', event.data.customer);
-				this.log_debug('received fetch_customer_stuffing_address request for ' + event.data.customer);
 				const iframe = document.getElementById('cost-sheet-iframe');
 				if (!iframe || !iframe.contentWindow) return;
 				frappe.call({
@@ -765,8 +761,6 @@ class CostSheetDashboard {
 						fieldname: 'custom_stuffing_address'
 					},
 					callback: (r) => {
-						console.log('dashboard: frappe.client.get_value (stuffing only) response:', r.message);
-						this.log_debug('frappe.client.get_value stuffing response: ' + JSON.stringify(r.message));
 						const stuffing_address = (r.message || {}).custom_stuffing_address || '';
 						iframe.contentWindow.postMessage({
 							type: 'customer_stuffing_address_response',
@@ -778,7 +772,6 @@ class CostSheetDashboard {
 
 			// Lead name fetch request from iframe
 			if (event.data.type === 'fetch_lead_name') {
-				console.log('dashboard: received fetch_lead_name request for:', event.data.lead);
 				const iframe = document.getElementById('cost-sheet-iframe');
 				if (!iframe || !iframe.contentWindow) return;
 				frappe.call({
@@ -789,7 +782,6 @@ class CostSheetDashboard {
 						fieldname: 'lead_name'
 					},
 					callback: (r) => {
-						console.log('dashboard: frappe.client.get_value (lead_name) response:', r.message);
 						const lead_name = (r.message || {}).lead_name || '';
 						iframe.contentWindow.postMessage({
 							type: 'lead_name_response',
@@ -801,9 +793,7 @@ class CostSheetDashboard {
 		});
 	}
 
-	log_debug(msg) {
-		console.log('DASHBOARD:', msg);
-	}
+
 
 
 	call_frappe(method, args = {}) {
@@ -1386,6 +1376,7 @@ class CostSheetDashboard {
 									me.render_actions();
 								});
 								me.pending_load_data = r.message;
+								console.log(r.message)
 								me.replace_dashboard_route({
 									source_doctype: 'Cost Sheet',
 									source_name: r.message.name
@@ -1442,7 +1433,6 @@ class CostSheetDashboard {
 					el.dispatchEvent(new Event('change', { bubbles: true }));
 				}
 			};
-			console.log('Loading Cost Sheet data:', data);
 
 			// Handle Lead/Prospect/Customer conditional display
 			const oppFrom = data.opportunity_from;
@@ -1468,7 +1458,7 @@ class CostSheetDashboard {
 			// Show the appropriate one based on opportunity_from or direct cost sheet data
 			if ((oppFrom === 'Lead' && partyName) || data.lead) {
 				const val = (oppFrom === 'Lead' ? partyName : data.lead);
-				console.log('Showing Lead field with:', val);
+
 				if (leadWrapper) leadWrapper.style.display = 'block';
 				if (leadNameWrapper) leadNameWrapper.style.display = 'block';
 				if (leadInput) {
@@ -1481,7 +1471,6 @@ class CostSheetDashboard {
 				delete data.customer;
 			} else if ((((oppFrom === 'Prospect' || oppFrom === 'Prospect (L3/Qualified)') && partyName)) || data.prospect) {
 				const val = ((oppFrom === 'Prospect' || oppFrom === 'Prospect (L3/Qualified)') && partyName ? partyName : data.prospect);
-				console.log('Showing Prospect field with:', val);
 				if (prospectWrapper) prospectWrapper.style.display = 'block';
 				if (prospectInput) {
 					prospectInput.value = val;
@@ -1493,13 +1482,11 @@ class CostSheetDashboard {
 				delete data.customer;
 			} else if ((oppFrom === 'Customer' && partyName) || data.customer) {
 				const val = (oppFrom === 'Customer' ? partyName : data.customer);
-				console.log('Showing Customer field with:', val);
 				if (customerWrapper) customerWrapper.style.display = 'block';
 				// Set customer in data so it gets populated by field mapping
 				data.customer = val;
 			} else {
 				// Default: show customer dropdown
-				console.log('Showing default Customer field');
 				if (customerWrapper) customerWrapper.style.display = 'block';
 			}
 
@@ -1530,6 +1517,16 @@ class CostSheetDashboard {
 				'stuffing_at': 'inp_stuffing_at',
 				'stuffing_location': 'inp_stuffing_loc',
 				'stuffing_warehouse': 'inp_stuffing_loc',
+				'packing_unit_size': 'inp_unit_size',
+				'units_per_fcl': 'inp_units_per_fcl',
+				'total_fcl': 'inp_total_fcl',
+				'special_export_documentation_cost':'inp_doc_usd_tot',
+				'total_warehouse_rent_considered':'inp_dom_warehouse_tot_input',
+				'comission_rsmt':'cell_comm_val_exw',
+				'any_other_cost':'inp_dom_labels_fcl',
+				'handling_cost':'inp_dom_handling_mt',
+				'internal_cost_percentage':'inp_int_cost_pct',
+				'freight_charges': 'inp_dom_freight_out_mt',
 
 				// Container & Packing
 				'container_type': 'inp_container',
@@ -1550,8 +1547,8 @@ class CostSheetDashboard {
 
 				// Cost Sheet Type & Incoterm
 				'cost_sheet_type': 'inp_master_cs_type',
-				'incoterm': 'inp_user_incoterm',
 				'origin_scope': 'inp_user_origin',
+				'incoterm': 'inp_user_incoterm',
 				'type_of_sale': 'inp_type_of_sale',
 				'exw_sub_type': 'inp_exw_subtype',
 				'status': 'inp_status',
@@ -1605,7 +1602,13 @@ class CostSheetDashboard {
 
 			// Fields that should be set AFTER product change events settle
 			// (because the iframe repopulates these dropdowns when product changes)
-			const deferredFields = ['packing_type', 'custom_packing_type', 'custom_packing_type_with_unit_size_kg', 'std_packing', "custom_std_pakcing"];
+			const deferredFields = [
+				'packing_type',
+				'custom_packing_type',
+				'custom_packing_type_with_unit_size_kg',
+				'std_packing',
+				'custom_std_pakcing'
+			];
 			const deferredValues = {};
 
 			// Populate main fields
@@ -1676,10 +1679,7 @@ class CostSheetDashboard {
 							element.dispatchEvent(changeEvent);
 						}
 
-						console.log(`Loaded ${docField}: ${valueToSet} into ${inputId}, value now: ${element.value}`);
-					} else {
-						console.log(`Element not found: ${inputId} for ${docField}`);
-					}
+					} 
 				}
 			});
 
@@ -1707,6 +1707,36 @@ class CostSheetDashboard {
 			if (data.final_offered_price) {
 				setInput('inp_offered_price_exw', data.final_offered_price);
 			}
+			if (data.special_export_documentation_cost){
+				setInput('inp_doc_usd_tot', data.special_export_documentation_cost);
+			}
+			if (data.total_warehouse_rent_considered){
+				setInput('inp_dom_warehouse_tot_input', data.total_warehouse_rent_considered);
+			}
+			if (data.comission_rsmt){
+				setInput('cell_comm_val_exw', data.comission_rsmt);
+			}
+			if (data.any_other_cost){
+				setInput('inp_dom_labels_fcl', data.any_other_cost);
+			}
+			if (data.handling_cost){
+				setInput('inp_dom_handling_mt', data.handling_cost);
+			}
+			if (data.internal_cost_percentage){
+				setInput('inp_int_cost_pct', data.internal_cost_percentage);
+			}
+			if (data.dom_loading_cost){
+				setInput('inp_dom_loading_tot', data.dom_loading_cost);
+			}
+			if (data.dom_unloading_cost){
+				setInput('inp_dom_unloading_tot', data.dom_unloading_cost);
+			}
+			if (data.freight_charges){
+				setInput('inp_dom_freight_out_mt', data.freight_charges);
+			}
+			if (data.shipping_premium){
+				setInput('inp_ship_premium', data.shipping_premium);
+			}
 			if (data.name) {
 				setInput('inp_doc_name', data.name);
 				this.set_iframe_doc_name(data.name, data.cost_sheet_name || data.name);
@@ -1714,7 +1744,6 @@ class CostSheetDashboard {
 
 			// Populate child table data if available
 			if (data.product_cost_details && data.product_cost_details.length > 0) {
-				console.log('Loading product cost details:', data.product_cost_details);
 				data.product_cost_details.forEach(row => {
 					switch (row.cost_element) {
 						case 'Basic Price': setInput('inp_dom_basic_rs_mt', row.rate); break;
@@ -1739,7 +1768,6 @@ class CostSheetDashboard {
 			}
 
 			if (data.cnf_charges && data.cnf_charges.length > 0) {
-				console.log('Loading CNF charges:', data.cnf_charges);
 				data.cnf_charges.forEach(row => {
 					switch (row.charge_type) {
 						case 'Transportation': setInput('inp_cnf_trans', row.rate); break;
@@ -1751,7 +1779,6 @@ class CostSheetDashboard {
 			}
 
 			if (data.sea_freight_details && data.sea_freight_details.length > 0) {
-				console.log('Loading sea freight details:', data.sea_freight_details);
 				data.sea_freight_details.forEach(row => {
 					switch (row.freight_type) {
 						case 'Sea Freight': setInput('inp_tc_sf_fcl', row.freight_rate); break;
@@ -1766,7 +1793,6 @@ class CostSheetDashboard {
 				setInput('inp_internal_cost_pct', margin.internal_cost_percentage);
 				setInput('inp_doc_charges_usd', margin.document_charges_usd);
 				setInput('cell_comm_val', margin.commission_value);
-				setInput('cell_comm_val_exw', margin.commission_value);
 				setInput('cell_dbk_pct', margin.duty_drawback_percentage);
 				setInput('cell_rodtep_pct', margin.rodtep_percentage);
 			}
@@ -1784,7 +1810,6 @@ class CostSheetDashboard {
 						const inputId = fieldMapping[field];
 						const element = doc.getElementById(inputId);
 						if (element && !element.value) {
-							console.log(`Re-setting ${field} to ${data[field]}`);
 							element.value = data[field];
 							const inputEvent = new Event('input', { bubbles: true });
 							element.dispatchEvent(inputEvent);
@@ -1798,7 +1823,6 @@ class CostSheetDashboard {
 					if (gradeEl) {
 						gradeEl.value = data.product_grade;
 						gradeEl.dispatchEvent(new Event('change', { bubbles: true }));
-						console.log('Re-applied product grade:', data.product_grade);
 					}
 				}
 
@@ -1839,7 +1863,6 @@ class CostSheetDashboard {
 						element.onchange();
 					}
 
-					console.log(`Applied deferred ${docField}: ${valueToSet} into ${inputId}, value now: ${element.value}`);
 					return element.tagName !== 'SELECT' || element.value === valueToSet;
 				};
 
@@ -1860,7 +1883,6 @@ class CostSheetDashboard {
 
 				const calculateAndFinishLoad = () => {
 					if (iframe.contentWindow && typeof iframe.contentWindow.calculateEngine === 'function') {
-						console.log('Triggering calculateEngine after data load');
 						iframe.contentWindow.calculateEngine();
 					}
 
@@ -2660,7 +2682,6 @@ class CostSheetDashboard {
 				}
 			});
 
-			console.log("Missing Fields:", missing);
 
 			if (!valid) {
 

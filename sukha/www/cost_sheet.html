@@ -1763,9 +1763,7 @@
     "use strict";
 
     const $ = id => document.getElementById(id);
-    window.logDebug = function (msg) {
-      console.log('IFRAME:', msg);
-    };
+
     const v = id => parseFloat($(id)?.value) || 0;
     const fmt = (num, decimals = 3) => {
       if (isNaN(num) || !isFinite(num)) return '—';
@@ -2272,9 +2270,7 @@
           const isDomesticMode = isDom || isRepack;
           if (isDomesticMode) {
             // Switch to text input; carry over any existing select value if set
-            logDebug('cost_sheet.html: applyScopeLogic - domestic mode destination switch');
             if (!destTxt.value && destSel.value) {
-              logDebug('cost_sheet.html: carrying over destSel.value to destTxt.value: ' + destSel.value);
               destTxt.value = destSel.value;
             }
             destSel.style.display = 'none';
@@ -2283,7 +2279,6 @@
             if ($('wrapper-city')) $('wrapper-city').classList.remove('d-none');
             // Auto-fill from customer stuffing address if a customer is selected
             const custId = $('inp_customer')?.value;
-            logDebug('cost_sheet.html: applyScopeLogic custId: ' + custId + ' wrapper-customer display: ' + ($('wrapper-customer') ? $('wrapper-customer').style.display : 'not found'));
             if (custId && $('wrapper-customer')?.style.display !== 'none') {
               fetchCustomerStuffingAddress(custId);
             }
@@ -2627,6 +2622,8 @@
         if (isDomestic || isRepack) {
           labelsTotalRs = v('inp_dom_labels_fcl') * totalFcl;
           labelsRsMt = labelsTotalRs / totalMt;
+          
+          if ($('inp_labels_rs_mt')) setVal('inp_labels_rs_mt', labelsRsMt.toFixed(3));
         } else {
           labelsRsMt = v('inp_labels_rs_mt');
           labelsTotalRs = labelsRsMt * totalMt;
@@ -2666,7 +2663,9 @@
         setTxt('lbl-labels-rs-tot', labelsTotalRs);
         setTxt('lbl-labels-usd-tot', labelsTotalUsd);
         setTxt('lbl-labels-usd-mt', labelsUsdMt, 1);
-
+        if ($('inp_dom_freight_out_mt')) setVal('inp_dom_freight_out_mt', domesticFreightRsMt.toFixed(3));
+        if ($('inp_dom_handling_mt')) setVal('inp_dom_handling_mt', domesticHandlingRsMt.toFixed(3));
+        if ($('inp_dom_warehouse_rs_mt')) setVal('inp_dom_warehouse_rs_mt', domesticWarehouseRsMt.toFixed(3));
         exwCostRs = rmTotalRs + pmTotalRs + plyTotalRs + repackTotalRs + vanningTotalRs + domesticFreightTotalRs + domesticHandlingTotalRs + domesticWarehouseTotalRs + labelsTotalRs + qcTotalRs + stickersTotalRs;
         exwCostMtRs = rmDisplayRsMt + pmRsMt + plyRsMt + repackRsMt + vanningRsMt + domesticFreightRsMt + domesticHandlingRsMt + domesticWarehouseRsMt + labelsRsMt + qcRsMt + (stickersTotalRs / totalMt || 0);
 
@@ -2988,9 +2987,7 @@
     }
 
     function saveCostSheet() {
-      console.log('saveCostSheet called');
-      console.log('Frappe available:', typeof frappe !== 'undefined');
-      console.log('frappe.call available:', typeof frappe !== 'undefined' && typeof frappe.call === 'function');
+
 
       // Sync alias hidden inputs before reading
       syncAliasFields();
@@ -3059,7 +3056,11 @@
         port_of_loading: $('inp_pol')?.value || '',
         port_of_discharge: $('inp_pod')?.value || '',
         shipping_line: $('inp_shipping_line')?.value || '',
-
+        comission_rsmt:parseFloat($('cell_comm_val_exw')?.value || 0),
+        any_other_cost:parseFloat($('inp_dom_labels_fcl')?.value || 0),
+        internal_cost_percentage:parseFloat($('inp_int_cost_pct')?.value || 0),
+        handling_cost:parseFloat($('inp_dom_handling_mt')?.value || 0),
+        freight_charges:parseFloat($('inp_dom_freight_out_mt')?.value || 0),
         // Exchange Rate Details — read from the real visible inputs ()
         exchange_rate: parseFloat($('inp_base_rate')?.value || 0),
         exchange_premium: parseFloat($('inp_premium')?.value || 0),
@@ -3120,6 +3121,7 @@
         dom_handling_cost: parseFloat($('inp_dom_handling_mt')?.value || 0),
         dom_loading_cost: parseFloat($('inp_dom_loading_tot')?.value || 0),
         dom_unloading_cost: parseFloat($('inp_dom_unloading_tot')?.value || 0),
+        warehouse_rentstorage_charges: parseFloat($('inp_dom_warehouse_rs_mt')?.value || 0),
         dom_ply_price: parseFloat($('inp_dom_ply_price')?.value || 0),
         dom_ply_units: parseFloat($('inp_dom_ply_units')?.value || 0),
 
@@ -3138,7 +3140,6 @@
 
       // Since we're in an iframe, use postMessage to communicate with parent
       // The parent page has Frappe available and will handle the save
-      console.log('Sending data to parent window via postMessage');
 
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({
@@ -3177,7 +3178,6 @@
     // Helper functions to collect child table data
     function collectProductCostDetails() {
       const rows = [];
-      console.log('Collecting Product Cost Details...');
 
       const totalMt = parseFloat($('lbl-total-mt-box')?.value || 0);
       const totalFcl = parseFloat($('inp_total_fcl')?.value || 0);
@@ -3189,9 +3189,7 @@
       const isExw = csType.includes('EXW');
       const isRepack = exwSubType === 'Repacking Service';
 
-      console.log('Cost Sheet Type:', csType, 'Type of Sale:', typeOfSale, 'EXW Sub-Type:', exwSubType);
-      console.log('Flags - Domestic:', isDomestic, 'EXW:', isExw, 'Repacking:', isRepack);
-      console.log('Total MT:', totalMt, 'Total FCL:', totalFcl);
+
 
       // Domestic: Basic Price
       if (isDomestic) {
@@ -3379,20 +3377,17 @@
         }
       }
 
-      console.log('Product Cost Details collected:', rows.length, 'rows');
       return rows;
     }
 
     function collectCNFCharges() {
       const rows = [];
-      console.log('Collecting CNF Charges...');
 
       const totalFcl = parseFloat($('inp_total_fcl')?.value || 0);
       const totalMt = parseFloat($('lbl-total-mt-box')?.value || 0);
 
       // Collect Transportation
       const trans = parseFloat($('inp_cnf_trans')?.value || 0);
-      console.log('Transportation:', trans);
 
       if (trans !== 0 && totalFcl > 0) {
         const transRsMt = totalMt > 0 ? trans / totalMt : 0;
@@ -3408,7 +3403,6 @@
 
       // Collect BL Charges
       const blCharges = parseFloat($('inp_bl_charges')?.value || 0);
-      console.log('BL Charges:', blCharges);
 
       if (blCharges !== 0) {
         const blRsMt = totalMt > 0 ? blCharges / totalMt : 0;
@@ -3425,7 +3419,6 @@
 
       // Collect Sea Way BL Charges
       const seaWayBlCharges = parseFloat($('inp_sea_way_bl_charges')?.value || 0);
-      console.log('Sea Way BL Charges:', seaWayBlCharges);
 
       if (seaWayBlCharges !== 0) {
         const seaWayRsMt = totalMt > 0 ? seaWayBlCharges / totalMt : 0;
@@ -3441,7 +3434,6 @@
 
       // Collect Any Other Charges
       const otherCharges = parseFloat($('inp_cnf_other')?.value || 0);
-      console.log('Other Charges:', otherCharges);
 
       if (otherCharges !== 0 && totalFcl > 0) {
         const otherRsMt = totalMt > 0 ? otherCharges / totalMt : 0;
@@ -3455,20 +3447,17 @@
         });
       }
 
-      console.log('CNF Charges collected:', rows.length, 'rows');
       return rows;
     }
 
     function collectSeaFreightDetails() {
       const rows = [];
-      console.log('Collecting Sea Freight Details...');
 
       const totalFcl = parseFloat($('inp_total_fcl')?.value || 0);
       const totalMt = parseFloat($('lbl-total-mt-box')?.value || 0);
 
       // Collect Sea Freight
       const seaFreightFcl = parseFloat($('inp_tc_sf_fcl')?.value || 0);
-      console.log('Sea Freight FCL:', seaFreightFcl);
 
       if (seaFreightFcl !== 0 && totalFcl > 0) {
         const sfTotalUsd = seaFreightFcl * totalFcl;
@@ -3486,7 +3475,6 @@
 
       // Collect Haz Surcharge
       const hazSurcharge = parseFloat($('inp_tc_sf_haz')?.value || 0);
-      console.log('Haz Surcharge:', hazSurcharge);
 
       if (hazSurcharge !== 0 && totalFcl > 0) {
         const hazTotalUsd = hazSurcharge * totalFcl;
@@ -3504,7 +3492,6 @@
 
       // Collect Vanning Charges (if in freight context)
       const vanningFcl = parseFloat($('inp_vanning_rs_fcl')?.value || 0);
-      console.log('Vanning FCL:', vanningFcl);
 
       if (vanningFcl !== 0 && totalFcl > 0) {
         const vanningTotalRs = vanningFcl * totalFcl;
@@ -3519,13 +3506,11 @@
         });
       }
 
-      console.log('Sea Freight Details collected:', rows.length, 'rows');
       return rows;
     }
 
 
     function collectMarginAnalysis() {
-      console.log('Collecting Margin Analysis...');
       const rows = [];
 
       // Collect margin analysis data - typically one row
@@ -3545,14 +3530,12 @@
         offered_price: parseFloat($('inp_final_offered_price')?.value || 0)
       };
 
-      console.log('Margin Analysis data:', row);
 
       // Only add if there's meaningful data
       if (row.net_cost_total_rs !== 0 || row.profit_amount !== 0) {
         rows.push(row);
       }
 
-      console.log('Margin Analysis collected:', rows.length, 'rows');
       return rows;
     }
 
@@ -3596,7 +3579,6 @@
     window._stuffingAddressCache = window._stuffingAddressCache || {};
 
     function fetchCustomerName(customer) {
-      logDebug('cost_sheet.html: fetchCustomerName called with customer: ' + customer);
       const partyNameEl = $('inp_party_name');
       if (!partyNameEl) return;
 
@@ -3606,7 +3588,6 @@
       }
 
       if (typeof frappe !== 'undefined' && frappe.call) {
-        logDebug('cost_sheet.html: frappe.call available, fetching customer name directly');
         frappe.call({
           method: 'frappe.client.get_value',
           args: {
@@ -3615,7 +3596,6 @@
             fieldname: ['customer_name', 'custom_stuffing_address']
           },
           callback: (r) => {
-            logDebug('cost_sheet.html: direct customer name fetch response: ' + JSON.stringify(r.message));
             if (r.message && r.message.customer_name) {
               partyNameEl.value = r.message.customer_name;
             }
@@ -3624,10 +3604,8 @@
             window._stuffingAddressCache[customer] = addr;
             // Fill immediately if the delivery text field is already visible
             const destTxt = $('inp_destination_text');
-            logDebug('cost_sheet.html: destTxt visibility: ' + (destTxt ? destTxt.style.display : 'no element'));
             if (destTxt && destTxt.style.display !== 'none') {
               if (addr) {
-                logDebug('cost_sheet.html: setting destTxt.value to: ' + addr);
                 destTxt.value = addr;
               }
             }
@@ -3635,7 +3613,6 @@
         });
       } else {
         if (window.parent && window.parent !== window) {
-          logDebug('cost_sheet.html: posting fetch_customer_name message to parent');
           window.parent.postMessage({ type: 'fetch_customer_name', customer: customer }, '*');
         }
       }
@@ -3643,7 +3620,6 @@
 
     /* Fetch custom_stuffing_address from Customer and fill the domestic delivery field */
     function fetchCustomerStuffingAddress(customer) {
-      logDebug('cost_sheet.html: fetchCustomerStuffingAddress called with customer: ' + customer);
       if (!customer) return;
       const destTxt = $('inp_destination_text');
       if (!destTxt) return;
@@ -3651,13 +3627,11 @@
       // Use cache if available (avoids extra round-trip)
       if (window._stuffingAddressCache && customer in window._stuffingAddressCache) {
         const cached = window._stuffingAddressCache[customer];
-        logDebug('cost_sheet.html: found cached stuffing address: ' + cached);
         if (cached) destTxt.value = cached;
         return;
       }
 
       if (typeof frappe !== 'undefined' && frappe.call) {
-        logDebug('cost_sheet.html: frappe.call available, fetching stuffing address directly');
         frappe.call({
           method: 'frappe.client.get_value',
           args: {
@@ -3666,21 +3640,18 @@
             fieldname: 'custom_stuffing_address'
           },
           callback: (r) => {
-            logDebug('cost_sheet.html: direct stuffing address fetch response: ' + JSON.stringify(r.message));
             const addr = (r.message && r.message.custom_stuffing_address) || '';
             window._stuffingAddressCache[customer] = addr;
             if (addr) destTxt.value = addr;
           }
         });
       } else if (window.parent && window.parent !== window) {
-        logDebug('cost_sheet.html: posting fetch_customer_stuffing_address message to parent');
         window.parent.postMessage({ type: 'fetch_customer_stuffing_address', customer: customer }, '*');
       }
     }
 
     /* Fetch lead_name from Lead and display it in a separate input field and top summary banner */
     function fetchLeadName(leadId) {
-      logDebug('cost_sheet.html: fetchLeadName called with leadId: ' + leadId);
       if (!leadId) {
         if ($('wrapper-lead-name')) $('wrapper-lead-name').style.display = 'none';
         if ($('inp_lead_name')) $('inp_lead_name').value = '';
@@ -3691,7 +3662,6 @@
       const bannerStat = $('banner-lead-stat');
 
       if (typeof frappe !== 'undefined' && frappe.call) {
-        logDebug('cost_sheet.html: frappe.call available, fetching lead name directly');
         frappe.call({
           method: 'frappe.client.get_value',
           args: {
@@ -3700,7 +3670,6 @@
             fieldname: 'lead_name'
           },
           callback: (r) => {
-            logDebug('cost_sheet.html: direct lead name fetch response: ' + JSON.stringify(r.message));
             const leadName = (r.message || {}).lead_name || '';
             if (leadName) {
               if (nameInput) nameInput.value = leadName;
@@ -3711,7 +3680,6 @@
           }
         });
       } else if (window.parent && window.parent !== window) {
-        logDebug('cost_sheet.html: posting fetch_lead_name message to parent');
         window.parent.postMessage({ type: 'fetch_lead_name', lead: leadId }, '*');
       }
     }
@@ -3782,18 +3750,12 @@
 
     /* ─── PRODUCT GRADE AUTO-FETCH ─── */
     function fetchProductGrade(itemCode) {
-      console.log('=== fetchProductGrade CALLED ===');
-      console.log('itemCode:', itemCode);
 
       const gradeEl = $('inp_grade');
       const statusEl = $('lbl-grade-status');
-      if (!gradeEl) {
-        console.log('ERROR: gradeEl not found');
-        return;
-      }
+
 
       if (!itemCode) {
-        console.log('itemCode is empty, resetting');
         gradeEl.value = '';
         const pTypeEl = $('inp_packing_type');
         if (pTypeEl) pTypeEl.innerHTML = '<option value="">Select...</option>';
@@ -3810,9 +3772,7 @@
       }
 
       const applyDbkRodtep = (doc) => {
-        console.log('=== applyDbkRodtep called ===');
-        console.log('doc.custom_duty_drawback_:', doc.custom_duty_drawback_);
-        console.log('doc.custom_rodtep_:', doc.custom_rodtep_);
+
 
         let dbkValue = '';
         let rodtepValue = '';
@@ -3824,22 +3784,16 @@
           rodtepValue = doc.custom_rodtep_;
         }
 
-        console.log('dbkValue:', dbkValue, 'rodtepValue:', rodtepValue);
 
         const dbkNum = dbkValue !== '' ? parseFloat(dbkValue) : NaN;
         const rodtepNum = rodtepValue !== '' ? parseFloat(rodtepValue) : NaN;
 
-        console.log('dbkNum:', dbkNum, 'rodtepNum:', rodtepNum);
-        console.log('cell_dbk_pct element:', $('cell_dbk_pct'));
-        console.log('cell_rodtep_pct element:', $('cell_rodtep_pct'));
 
         if (!isNaN(dbkNum) && dbkNum > 0 && $('cell_dbk_pct')) {
           $('cell_dbk_pct').value = dbkNum.toFixed(1);
-          console.log('DBK SET TO:', $('cell_dbk_pct').value);
         }
         if (!isNaN(rodtepNum) && rodtepNum > 0 && $('cell_rodtep_pct')) {
           $('cell_rodtep_pct').value = rodtepNum.toFixed(1);
-          console.log('RODTEP SET TO:', $('cell_rodtep_pct').value);
         }
         if (!isNaN(dbkNum) || !isNaN(rodtepNum)) {
           // Ensure RoDTEP checkbox is checked so rows stay visible
@@ -3848,13 +3802,11 @@
             rodtepChk.checked = true;
             rodtepChk.dispatchEvent(new Event('change', { bubbles: true }));
           }
-          console.log('Triggering calculateEngine');
           calculateEngine();
         }
       };
 
       if (typeof frappe !== 'undefined' && frappe.call) {
-        console.log('Frappe is available, making API call');
         frappe.call({
           method: 'frappe.client.get',
           args: {
@@ -3862,17 +3814,14 @@
             name: itemCode
           },
           callback: (r) => {
-            console.log('=== API CALLBACK ===');
-            console.log('r.message exists:', !!r.message);
+
 
             const doc = r.message;
             if (!doc) {
-              console.log('ERROR: doc is null');
               if (statusEl) { statusEl.textContent = 'item not found'; statusEl.style.color = '#EF4444'; }
               return;
             }
 
-            console.log('Item fetched successfully:', doc.name);
 
             // Apply DBK and RoDTEP from this item
             applyDbkRodtep(doc);
@@ -3954,12 +3903,10 @@
             }
           },
           error: (err) => {
-            console.log('API ERROR:', err);
             if (statusEl) { statusEl.textContent = 'fetch failed'; statusEl.style.color = '#EF4444'; }
           }
         });
       } else {
-        console.log('Frappe NOT available, using postMessage');
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'fetch_product_grade', item: itemCode }, '*');
         }
@@ -3971,7 +3918,6 @@
     window.addEventListener('message', (e) => {
       if (!e.data) return;
 
-      logDebug('cost_sheet.html: received message from parent: ' + e.data.type + ' ' + JSON.stringify(e.data));
 
       if (e.data.type === 'customer_name_response') {
         const partyNameEl = $('inp_party_name');
@@ -3986,19 +3932,15 @@
           window._stuffingAddressCache[custId] = addr;
         }
         const destTxt = $('inp_destination_text');
-        logDebug('cost_sheet.html: customer_name_response destTxt visibility: ' + (destTxt ? destTxt.style.display : 'none'));
         if (destTxt && destTxt.style.display !== 'none' && addr) {
-          logDebug('cost_sheet.html: setting destTxt.value to: ' + addr);
           destTxt.value = addr;
         }
       }
 
       if (e.data.type === 'customer_stuffing_address_response') {
         const destTxt = $('inp_destination_text');
-        logDebug('cost_sheet.html: customer_stuffing_address_response destTxt visibility: ' + (destTxt ? destTxt.style.display : 'none'));
         if (destTxt && destTxt.style.display !== 'none') {
           const addr = e.data.stuffing_address || '';
-          logDebug('cost_sheet.html: setting destTxt.value to: ' + addr);
           if (addr) destTxt.value = addr;
         }
       }
@@ -4490,8 +4432,8 @@
             return;
           }
 
-          console.log(`populateDropdown: Fetching ${doctype} for ${id}...`);
 
+          
           const fields = [fieldname];
           if (doctype === 'Item' && fieldname === 'name') {
             fields.push('item_name');
@@ -4507,7 +4449,6 @@
             },
             callback: function (r) {
               if (r.message && Array.isArray(r.message)) {
-                console.log(`populateDropdown: Got ${r.message.length} ${doctype} records for ${id}`);
                 const firstOpt = sel.options.length > 0 ? sel.options[0].cloneNode(true) : null;
                 sel.innerHTML = '';
                 if (firstOpt) sel.appendChild(firstOpt);
@@ -4519,7 +4460,6 @@
                   opt.textContent = doctype === 'Item' && fieldname === 'name' ? (row.item_name || val) : val;
                   sel.appendChild(opt);
                 });
-                console.log(`populateDropdown: Successfully populated ${id} with ${sel.options.length} options`);
               } else {
                 console.warn(`populateDropdown: No data received for ${doctype}`);
               }
@@ -4806,7 +4746,6 @@
       // Use Frappe.ready() if available, otherwise use retry mechanism
       const initializeDropdowns = () => {
         if (typeof frappe !== 'undefined' && frappe.call) {
-          console.log('Frappe is ready, populating dropdowns');
           runPopulate();
         } else {
           console.warn('Frappe not available in ready callback');

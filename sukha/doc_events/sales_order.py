@@ -9,6 +9,7 @@ def validate(self, method):
             "custom_container_type": "container_type",
             "payment_terms_template": "customer_payment_terms",
             "shipping_terms": "incoterm",
+            "incoterm": "incoterm",
             "port_of_loading": "port_of_loading",
             "port_of_discharge": "port_of_discharge",
             "country_of_destination": "country_of_destination",

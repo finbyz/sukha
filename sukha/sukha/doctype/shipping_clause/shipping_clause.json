@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-07-21 14:28:41.048794",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "document",
+  "requirement",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "document",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Lable",
+   "options": "SI Documents"
+  },
+  {
+   "fieldname": "requirement",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Requirement",
+   "options": "\nYes\nNo\nNot Required\nRequired"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "in_list_view": 1,
+   "label": "Description"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-21 15:13:52.745726",
+ "modified_by": "Administrator",
+ "module": "Sukha",
+ "name": "Shipping Clause",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1339,7 +1339,7 @@
    "description": null,
    "docstatus": 0,
    "dt": "Sales Order Item",
-   "fetch_from": "custom_cost_sheet.shipping_line",
+   "fetch_from": null,
    "fetch_if_empty": 0,
    "fieldname": "custom_shelf_life",
    "fieldtype": "Select",

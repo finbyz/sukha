@@ -1,4 +1,58 @@
 frappe.ui.form.on("Blanket Order", {
+	customer_address:function(frm){
+		if (frm.doc.customer_address) {
+			frappe.call({
+				method: "frappe.contacts.doctype.address.address.get_address_display",
+				args: { address_dict: frm.doc.customer_address },
+				callback: function (r) {
+					if (r.message) {
+						frm.set_value(
+							"address",
+							frappe.utils.html2text(r.message)
+						);
+					}
+				},
+			});
+		} else {
+			frm.set_value("address", "");
+		}
+	},
+	shipping_address_name:function(frm){
+		if (frm.doc.shipping_address_name) {
+			frappe.call({
+				method: "frappe.contacts.doctype.address.address.get_address_display",
+				args: { address_dict: frm.doc.shipping_address_name },
+				callback: function (r) {
+					if (r.message) {
+						frm.set_value(
+							"custom_shipping_address",
+							frappe.utils.html2text(r.message)
+						);
+					}
+				},
+			});
+		} else {
+			frm.set_value("custom_shipping_address", "");
+		}
+	},
+	notify_address_name:function(frm){
+		if (frm.doc.notify_address_name) {
+			frappe.call({
+				method: "frappe.contacts.doctype.address.address.get_address_display",
+				args: { address_dict: frm.doc.notify_address_name },
+				callback: function (r) {
+					if (r.message) {
+						frm.set_value(
+							"notify_company_address",
+							frappe.utils.html2text(r.message)
+						);
+					}
+				},
+			});
+		} else {
+			frm.set_value("notify_company_address", "");
+		}
+	},
 	setup: function (frm) {
 		// Remove "Sales Order" from the standard custom_make_buttons so the
 		// framework doesn't re-add the ERPNext standard button after our refresh.
@@ -6,8 +60,10 @@ frappe.ui.form.on("Blanket Order", {
 			delete frm.custom_make_buttons["Sales Order"];
 		}
 	},
-
 	refresh: function (frm) {
+		set_customer_address_query(frm);
+		set_shipping_address_name_query(frm);
+		set_notify_address_name_query(frm);
 		// Use setTimeout(0) so this runs after ALL registered refresh handlers
 		// (including ERPNext's standard blanket_order.js refresh) have completed.
 		setTimeout(function () {
@@ -172,3 +228,37 @@ erpnext.blanket_order_custom.create_order = function (
 		},
 	});
 };
+
+function set_shipping_address_name_query(frm) {
+	frm.set_query("shipping_address_name", () => {
+		return {
+			query: "frappe.contacts.doctype.address.address.address_query",
+			filters: {
+				link_doctype: "Customer",
+				link_name: frm.doc.customer
+			}
+		};
+	});
+}
+function set_customer_address_query(frm) {
+	frm.set_query("customer_address", () => {
+		return {
+			query: "frappe.contacts.doctype.address.address.address_query",
+			filters: {
+				link_doctype: "Customer",
+				link_name: frm.doc.customer
+			}
+		};
+	});
+}
+function set_notify_address_name_query(frm) {
+	frm.set_query("notify_address_name", () => {
+		return {
+			query: "frappe.contacts.doctype.address.address.address_query",
+			filters: {
+				link_doctype: "Customer",
+				link_name: frm.doc.customer
+			}
+		};
+	});
+}

@@ -40,7 +40,7 @@ frappe.ui.form.on("Quotation", {
 
         // Buttons for Submitted Documents
         if (frm.doc.docstatus === 1) {
-            
+
             // 1. Button to Create Customer (Only show if customer is missing)
             if (frm.doc.quotation_to !=="Customer" && !frm.doc.custom_new_customer) {
                 frm.add_custom_button(__("Customer"), () => {
@@ -58,7 +58,7 @@ frappe.ui.form.on("Quotation", {
                     });
                     return;
                 }
-                
+
                 frappe.model.open_mapped_doc({
                     method: "sukha.doc_events.quotation.make_blanket_order",
                     frm: frm,
@@ -70,123 +70,142 @@ frappe.ui.form.on("Quotation", {
 
 
 function show_customer_creation_dialog(frm) {
-    let dialog = new frappe.ui.Dialog({
-        title: __("Create Customer"),
-        fields: [
-            {
-                fieldtype: "Select",
-                label: __("Customer Profile Type"),
-                fieldname: "custom_customer_profile_type",
-                reqd: 1,
-                options: "\nExport\nDomestic / Merchant"
-            },
-            {
-                fieldtype: "Select",
-                label: __("Customer Type"),
-                fieldname: "custom_customer_type",
-                options: "\nCompany\nIndividual\nPartnership",
-                default: "Company",
-                reqd: 1
-            },
-            {
-                fieldtype: "Data",
-                label: __("Customer Name"),
-                fieldname: "customer_name",
-                reqd: 1
-            },
-            {
-                fieldtype: "Select",
-                label: __("Type of Buyer"),
-                fieldname: "custom_type_of_buyer",
-                options: "\nStockiest/Distributer\nEnd User\nTrader\nAgent",
-                reqd: 1
-            },
-            {
-                fieldtype: "Select",
-                label: __("Buying Type"),
-                fieldname: "custom_buying_type",
-                options: "\nSpot\nContractual",
-                reqd: 1
-            },
-            {
-                fieldtype: "Select",
-                label: __("GST Category"),
-                fieldname: "gst_category",
-                options: "\nRegistered Regular\nRegistered Composition\nUnregistered\nSEZ\nOverseas\nDeemed Export\nUIN Holders\nTax Deductor\nTax Collector\nInput Service Distributor",
-                reqd: 1
-            },
-        ],
+    let lead_promise = frm.doc.party_name
+        ? frappe.db.get_doc("Lead", frm.doc.party_name)
+        : Promise.resolve({});
 
-        primary_action_label: __("Create Customer"),
-
-        primary_action() {
-            let values = dialog.get_values();
-            if (!values) return;
-
-            dialog.get_primary_btn().prop("disabled", true);
-            dialog.get_primary_btn().text(__("Creating..."));
-
-            frappe.call({
-                method: "frappe.client.insert",
-                args: {
-                    doc: {
-                        doctype: "Customer",
-                        customer_profile_type: values.custom_customer_profile_type,
-                        custom_customer_type: values.custom_customer_type,
-                        customer_name: values.customer_name,
-                        gst_category: values.gst_category,
-                        custom_type_of_buyer: values.custom_type_of_buyer,
-                        custom_buying_type: values.custom_buying_type
-                    }
+    lead_promise.then((lead) => {
+        let dialog = new frappe.ui.Dialog({
+            title: __("Create Customer"),
+            fields: [
+                {
+                    fieldtype: "Select",
+                    label: __("Customer Profile Type"),
+                    fieldname: "custom_customer_profile_type",
+                    reqd: 1,
+                    options: "\nDirect Export Sales\nDomestic / Merchant",
+                    default: lead.custom_sales_type || "",
                 },
-                callback(r) {
-                    if (!r.exc && r.message) {
+                {
+                    fieldtype: "Select",
+                    label: __("Specific Customer Category"),
+                    fieldname: "custom_specific_customer_category",
+                    options: "\nDomestic\nMerchant",
+                    depends_on: 'eval:doc.custom_customer_profile_type=="Domestic / Merchant"',
+                    mandatory_depends_on: 'eval:doc.custom_customer_profile_type=="Domestic / Merchant"',
+                    default: lead.custom_buyer_type || "",
+                },
+                {
+                    fieldtype: "Select",
+                    label: __("Customer Type"),
+                    fieldname: "custom_customer_type",
+                    options: "\nCompany\nIndividual\nPartnership",
+                    default: "Company",
+                    reqd: 1
+                },
+                {
+                    fieldtype: "Data",
+                    label: __("Customer Name"),
+                    fieldname: "customer_name",
+                    default: frm.doc.customer_name,
+                    reqd: 1
+                },
+                {
+                    fieldtype: "Select",
+                    label: __("Type of Buyer"),
+                    fieldname: "custom_type_of_buyer",
+                    options: "\nStockiest/Distributer\nEnd User\nTrader\nAgent",
+                    reqd: 1
+                },
+                {
+                    fieldtype: "Select",
+                    label: __("Buying Type"),
+                    fieldname: "custom_buying_type",
+                    options: "\nSpot\nContractual",
+                    reqd: 1
+                },
+                {
+                    fieldtype: "Select",
+                    label: __("GST Category"),
+                    fieldname: "gst_category",
+                    options: "\nRegistered Regular\nRegistered Composition\nUnregistered\nSEZ\nOverseas\nDeemed Export\nUIN Holders\nTax Deductor\nTax Collector\nInput Service Distributor",
+                    reqd: 1
+                },
+            ],
 
-                        frappe.call({
-                            method: "frappe.client.set_value",
-                            args: {
-                                doctype: "Quotation",
-                                name: frm.doc.name,
-                                fieldname: "custom_new_customer",
-                                value: r.message.name
-                            },
-                            callback() {
+            primary_action_label: __("Create Customer"),
 
-                                frm.reload_doc().then(() => {
+            primary_action() {
+                let values = dialog.get_values();
+                if (!values) return;
 
-                                    dialog.hide();
+                dialog.get_primary_btn().prop("disabled", true);
+                dialog.get_primary_btn().text(__("Creating..."));
 
-                                    frappe.show_alert({
-                                        message: __("Customer Created Successfully"),
-                                        indicator: "green"
+                frappe.call({
+                    method: "frappe.client.insert",
+                    args: {
+                        doc: {
+                            doctype: "Customer",
+                            customer_profile_type: values.custom_customer_profile_type === "Direct Export Sales"
+                                ? "Export"
+                                : values.custom_customer_profile_type,
+                            custom_customer_type: values.custom_customer_type,
+                            customer_name: values.customer_name,
+                            gst_category: values.gst_category,
+                            custom_type_of_buyer: values.custom_type_of_buyer,
+                            custom_buying_type: values.custom_buying_type
+                        }
+                    },
+                    callback(r) {
+                        if (!r.exc && r.message) {
+
+                            frappe.call({
+                                method: "frappe.client.set_value",
+                                args: {
+                                    doctype: "Quotation",
+                                    name: frm.doc.name,
+                                    fieldname: "custom_new_customer",
+                                    value: r.message.name
+                                },
+                                callback() {
+
+                                    frm.reload_doc().then(() => {
+
+                                        dialog.hide();
+
+                                        frappe.show_alert({
+                                            message: __("Customer Created Successfully"),
+                                            indicator: "green"
+                                        });
+
+                                        frappe.model.open_mapped_doc({
+                                            method: "sukha.doc_events.quotation.make_blanket_order",
+                                            frm: frm
+                                        });
+
                                     });
 
-                                    frappe.model.open_mapped_doc({
-                                        method: "sukha.doc_events.quotation.make_blanket_order",
-                                        frm: frm
-                                    });
+                                }
+                            });
 
-                                });
-
-                            }
-                        });
-
-                    } else {
+                        } else {
+                            dialog.get_primary_btn().prop("disabled", false);
+                            dialog.get_primary_btn().text(__("Create Customer"));
+                        }
+                    },
+                    error() {
                         dialog.get_primary_btn().prop("disabled", false);
                         dialog.get_primary_btn().text(__("Create Customer"));
+
+                        frappe.msgprint(__("Unable to create Customer."));
                     }
-                },
-                error() {
-                    dialog.get_primary_btn().prop("disabled", false);
-                    dialog.get_primary_btn().text(__("Create Customer"));
+                });
+            }
+        });
 
-                    frappe.msgprint(__("Unable to create Customer."));
-                }
-            });
-        }
+        dialog.show();
     });
-
-    dialog.show();
 }
 
 

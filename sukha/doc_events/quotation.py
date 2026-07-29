@@ -47,7 +47,10 @@ def make_quotation(source_name, target_doc=None):
         elif source.lead:
             quotation_to = "Lead"
             party_name = source.lead
-
+        target.custom_quotation = source.name
+        if source.currency:
+            target.currency = source.currency
+            target.conversion_rate = source.exchange_rate
         # ---------------------------------
         # Validate against existing quotation
         # ---------------------------------

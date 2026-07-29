@@ -1037,7 +1037,7 @@
    "name": "Sales Order-custom_container_type",
    "no_copy": 0,
    "non_negative": 0,
-   "options": "\n20' FCL\n40' FCL\n20' ISO\n",
+   "options": "\n20' FCL\n40' FCL\n20' ISO\nLCL\nOpen Truck\nContainer\nTempo\n", 
    "owner": "Administrator",
    "permlevel": 0,
    "placeholder": null,

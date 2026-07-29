@@ -1,5 +1,12 @@
 import frappe
 
+def before_insert(self,method):
+    if self.items and self.items[0].blanket_order:
+        cs = frappe.get_doc("Blanket Order", self.items[0].blanket_order)
+        self.selling_price_list = frappe.db.get_value("Quotation",cs.custom_quotation,"selling_price_list")
+        self.price_list_currency = frappe.db.get_value("Quotation",cs.custom_quotation,"price_list_currency")
+        self.plc_conversion_rate = frappe.db.get_value("Quotation",cs.custom_quotation,"plc_conversion_rate")
+
 def validate(self, method):
     # Update Sales Order header fields from first item's Cost Sheet
     if self.items and self.items[0].custom_cost_sheet:
@@ -15,6 +22,7 @@ def validate(self, method):
             "country_of_destination": "country_of_destination",
             "pre_carriage_by": "loading_location",
             "custom_std_pakcing": "custom_std_pakcing",
+            "custom_number_of_containers":"total_fcl"
         }
         
         for so_field, cs_field in field_map.items():

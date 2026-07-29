@@ -161,7 +161,8 @@ doc_events = {
         "on_submit": "sukha.doc_events.quotation.on_submit",
     },
     "Sales Order":{
-        "validate": "sukha.doc_events.sales_order.validate"
+        "validate": "sukha.doc_events.sales_order.validate",
+        "before_insert":"sukha.doc_events.sales_order.before_insert"
     }
 }
 # Override standard ERPNext methods

@@ -54,23 +54,24 @@ frappe.ui.form.on("Blanket Order", {
 		}
 	},
 	setup: function (frm) {
-		// Remove "Sales Order" from the standard custom_make_buttons so the
-		// framework doesn't re-add the ERPNext standard button after our refresh.
 		if (frm.custom_make_buttons) {
 			delete frm.custom_make_buttons["Sales Order"];
 		}
 	},
 	refresh: function (frm) {
+		if (frm.doc.__islocal) {
+            if (!frm.doc.currency) {
+                frm.set_value('currency', frappe.defaults.get_user_default('currency'));
+            }
+            if (!frm.doc.conversion_rate) {
+                frm.set_value('conversion_rate', 1.0);
+            }
+        }
 		set_customer_address_query(frm);
 		set_shipping_address_name_query(frm);
 		set_notify_address_name_query(frm);
-		// Use setTimeout(0) so this runs after ALL registered refresh handlers
-		// (including ERPNext's standard blanket_order.js refresh) have completed.
 		setTimeout(function () {
-			// Remove the standard "Sales Order" button added by core blanket_order.js
 			frm.remove_custom_button("Sales Order", "Create");
-
-			// Add our custom Sales Order button with item selection
 			if (frm.doc.customer && frm.doc.docstatus === 1 && frm.doc.to_date > frappe.datetime.get_today()) {
 				frm.add_custom_button(
 					__("Sales Order"),
@@ -82,7 +83,87 @@ frappe.ui.form.on("Blanket Order", {
 			}
 		}, 0);
 	},
+	currency: function(frm) {
+        if (frm.doc.currency && frm.doc.company) {
+            const company_currency = frappe.get_doc(':Company', frm.doc.company).default_currency;
+            if (frm.doc.currency !== company_currency) {
+                frm.call({
+                    method: 'erpnext.setup.utils.get_exchange_rate',
+                    args: {
+                        from_currency: frm.doc.currency,
+                        to_currency: company_currency,
+                        transaction_date: frm.doc.transaction_date || frappe.datetime.get_today()
+                    },
+                    callback: function(r) {
+                        if (r.message) {
+                            frm.set_value('conversion_rate', r.message);
+                            calculate_base_rate(frm);
+                        }
+                    }
+                });
+            } else {
+                frm.set_value('conversion_rate', 1.0);
+                calculate_base_rate(frm);
+            }
+        }
+    },
+	conversion_rate: function(frm) {
+        calculate_base_rate(frm);
+    },
+	transaction_date: function(frm) {
+        if (frm.doc.currency && frm.doc.company) {
+            const company_currency = frappe.get_doc(':Company', frm.doc.company).default_currency;
+            if (frm.doc.currency !== company_currency) {
+                frm.trigger('currency');
+            }
+        }
+    },
+	company: function(frm) {
+        if (frm.doc.__islocal || frm.doc.currency) {
+            frm.trigger('currency');
+        }
+    }
 });
+
+frappe.ui.form.on('Blanket Order Item', {
+    rate: function(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        if (frm.doc.conversion_rate && row.rate) {
+            const base_rate = flt(row.rate) * flt(frm.doc.conversion_rate);
+            frappe.model.set_value(cdt, cdn, 'base_rate', base_rate);
+            frappe.model.set_value(cdt, cdn, 'base_amount', base_rate * flt(row.qty));
+        }
+        frappe.model.set_value(cdt, cdn, 'amount', flt(row.rate) * flt(row.qty));
+    },
+
+    qty: function(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        if (frm.doc.conversion_rate && row.rate) {
+            const base_rate = flt(row.rate) * flt(frm.doc.conversion_rate);
+            frappe.model.set_value(cdt, cdn, 'base_rate', base_rate);
+            frappe.model.set_value(cdt, cdn, 'base_amount', base_rate * flt(row.qty));
+        }
+        frappe.model.set_value(cdt, cdn, 'amount', flt(row.rate) * flt(row.qty));
+    }
+});
+
+function calculate_base_rate(frm) {
+    if (!frm.doc.conversion_rate || !frm.doc.items) return;
+
+    frm.doc.items.forEach(function(item) {
+        if (item.rate) {
+            const base_rate = flt(item.rate) * flt(frm.doc.conversion_rate);
+            const base_amount = base_rate * flt(item.qty);
+            const amount = flt(item.rate) * flt(item.qty);
+            
+            frappe.model.set_value(item.doctype, item.name, 'base_rate', base_rate);
+            frappe.model.set_value(item.doctype, item.name, 'base_amount', base_amount);
+            frappe.model.set_value(item.doctype, item.name, 'amount', amount);
+        }
+    });
+
+    frm.refresh_field('items');
+}
 
 erpnext.blanket_order_custom = erpnext.blanket_order_custom || {};
 

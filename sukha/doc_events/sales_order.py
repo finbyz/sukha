@@ -15,7 +15,7 @@ def validate(self, method):
         field_map = {
             "custom_container_type": "container_type",
             "payment_terms_template": "customer_payment_terms",
-            "shipping_terms": "incoterm",
+            # "shipping_terms": "incoterm",
             "incoterm": "incoterm",
             "port_of_loading": "port_of_loading",
             "port_of_discharge": "port_of_discharge",

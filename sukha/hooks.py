@@ -168,7 +168,8 @@ doc_events = {
 # Override standard ERPNext methods
 override_doctype_class = {
     "Lead": "sukha.override.lead_override.CustomLead",
-    "Item":"sukha.override.item.Item"
+    "Item":"sukha.override.item.Item",
+    "Blanket Order": "sukha.override.blanket_order.CustomBlanketOrder"
 }
 
 # Override whitelisted methods
@@ -180,6 +181,7 @@ override_whitelisted_methods = {
     "erpnext.controllers.item_variant.create_variant": "sukha.override.item_varient.create_variant",
     "erpnext.controllers.item_variant.create_multiple_variants": "sukha.override.item_varient.create_multiple_variants",
     "erpnext.controllers.item_variant.enqueue_multiple_variant_creation": "sukha.override.item_varient.enqueue_multiple_variant_creation",
+    "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_order": "sukha.override.blanket_order.make_order",
 }
 
 # Add a Connections tab on Prospect showing linked Opportunities (Inquiries)
@@ -302,4 +304,5 @@ override_doctype_dashboards = {
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
+
 

@@ -69,7 +69,7 @@
   {
    "fetch_from": "address.city",
    "fieldname": "city",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "City",
    "options": "City"
@@ -122,7 +122,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-08 15:46:13.080632",
+ "modified": "2026-08-06 13:05:47.519100",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Notify Party Details",

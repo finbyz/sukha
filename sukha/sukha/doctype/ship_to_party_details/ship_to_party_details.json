@@ -28,7 +28,6 @@
    "in_list_view": 1,
    "label": "Address",
    "options": "Address"
-   
   },
   {
    "fetch_from": "address.country",
@@ -37,7 +36,6 @@
    "in_list_view": 1,
    "label": "Country",
    "options": "Country"
-   
   },
   {
    "fetch_from": "consignee_name.email_id",
@@ -46,7 +44,6 @@
    "in_list_view": 1,
    "label": "Email ID",
    "options": "Email"
-   
   },
   {
    "fieldname": "consignee_name",
@@ -54,7 +51,6 @@
    "in_list_view": 1,
    "label": "Name",
    "options": "Customer"
-   
   },
   {
    "fetch_from": "contact_person_name.mobile_no",
@@ -62,12 +58,11 @@
    "fieldtype": "Phone",
    "in_list_view": 1,
    "label": "Contact Number"
-   
   },
   {
    "fetch_from": "address.city",
    "fieldname": "city",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "City",
    "options": "City"
@@ -89,7 +84,6 @@
    "in_list_view": 1,
    "label": "Contact Person Name",
    "options": "Contact"
-   
   },
   {
    "fieldname": "column_break_jpye",
@@ -128,7 +122,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-06-08 14:53:29.062196",
+ "modified": "2026-08-06 13:05:32.948686",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Ship To Party Details",

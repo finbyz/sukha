@@ -821,7 +821,8 @@
             </div>
             <div class="form-group exw-hide">
               <label>Country Origin</label>
-              <select class="form-control" id="inp_country" onchange="window.populatePolByOrigin && window.populatePolByOrigin()">
+              <select class="form-control" id="inp_country"
+                onchange="window.populatePolByOrigin && window.populatePolByOrigin()">
                 <option value="" selected>Select Country Origin...</option>
               </select>
             </div>
@@ -2622,7 +2623,7 @@
         if (isDomestic || isRepack) {
           labelsTotalRs = v('inp_dom_labels_fcl') * totalFcl;
           labelsRsMt = labelsTotalRs / totalMt;
-          
+
           if ($('inp_labels_rs_mt')) setVal('inp_labels_rs_mt', labelsRsMt.toFixed(3));
         } else {
           labelsRsMt = v('inp_labels_rs_mt');
@@ -2701,7 +2702,7 @@
 
         const blMtRs = blCharges / totalMt;
         const blUsdTotal = blCharges / csExr;
-        
+
         const blUsdMt = blMtRs / csExr;
 
         const seaWayMtRs = seaWayBl / totalMt;
@@ -2759,14 +2760,14 @@
 
         // Sea freight inputs are in $/FCL
         const sfFclUsd = v('inp_tc_sf_fcl') + v('inp_tc_sf_haz');
-        
+
         // Rs Total = $/FCL * totalFcl * Shipping Exchange Rate
         const sfTotalRs = sfFclUsd * totalFcl * shipExr;
         const sfRsMt = totalMt > 0 ? sfTotalRs / totalMt : 0;
 
         // With Premium Exchange Rate (non-editable computed row) -->
         const sfWithPremium = baseRate > 0 ? sfFclUsd * shipExr / baseRate : 0;
-        
+
         // $ Total formula as requested by user: (Sea Freight + Haz Surcharge) / Effective Exchange Rate * Total FCL
         const sfTotalUsdDisplay = csExr > 0 ? (sfWithPremium * totalFcl) : 0;
         const sfUsdMtDisplay = totalMt > 0 ? sfTotalUsdDisplay / totalMt : 0;
@@ -2782,16 +2783,16 @@
         // $ Total using the specific formula
         setTxt('lbl-tc-sf-usd-tot', sfTotalUsdDisplay);
         setTxt('lbl-tc-sf-usd-mt', sfUsdMtDisplay, 1);
-        
+
         setTxt('lbl-tc-van-rs-tot', vanTotalRs);
         setTxt('lbl-tc-van-rs-mt', totalMt > 0 ? vanTotalRs / totalMt : 0);
         setTxt('lbl-tc-van-usd-mt', totalMt > 0 ? vanTotalUsd / totalMt : 0, 1);
-        
+
         setTxt('lbl-tc-tsf-rs-tot', seaFreightTotalRs);
         setTxt('lbl-tc-tsf-rs-mt', totalMt > 0 ? seaFreightTotalRs / totalMt : 0);
         setTxt('lbl-tc-tsf-usd-tot', seaFreightTotalUsd);
         setTxt('lbl-tc-tsf-usd-mt', totalMt > 0 ? seaFreightTotalUsd / totalMt : 0, 0);
-        
+
         if ($('lbl-tc-sf-with-premium')) $('lbl-tc-sf-with-premium').textContent = fmt(sfWithPremium, 3);
       }
 
@@ -3000,6 +3001,14 @@
       );
 
       // Collect all form data from the Cost Sheet Engine
+      const incoterm_currency = $('inp_user_incoterm')?.value || '';
+
+      const currency =
+        incoterm_currency === 'EXW'
+          ? 'INR'
+          : $('inp_cs_currency')?.value ||
+          $('inp_currency')?.value ||
+          'INR';
       const data = {
         // Required fields — from doctype
         name: $('inp_doc_name')?.value || '',
@@ -3016,7 +3025,7 @@
         company: $('inp_company')?.value ||
           (typeof frappe !== 'undefined' && frappe.defaults && frappe.defaults.get_user_default('Company')) ||
           '',
-        currency: $('inp_cs_currency')?.value || $('inp_currency')?.value || 'INR',
+        currency: currency,
 
         // Section 1: Master Variant Selection
         cost_sheet_type: convertCostSheetType($('inp_master_cs_type')?.value || 'India-CIF'),
@@ -3056,19 +3065,25 @@
         port_of_loading: $('inp_pol')?.value || '',
         port_of_discharge: $('inp_pod')?.value || '',
         shipping_line: $('inp_shipping_line')?.value || '',
-        comission_rsmt:parseFloat($('cell_comm_val_exw')?.value || 0),
-        any_other_cost:parseFloat($('inp_dom_labels_fcl')?.value || 0),
-        internal_cost_percentage:parseFloat($('inp_int_cost_pct')?.value || 0),
-        handling_cost:parseFloat($('inp_dom_handling_mt')?.value || 0),
-        freight_charges:parseFloat($('inp_dom_freight_out_mt')?.value || 0),
+        comission_rsmt: parseFloat($('cell_comm_val_exw')?.value || 0),
+        any_other_cost: parseFloat($('inp_dom_labels_fcl')?.value || 0),
+        internal_cost_percentage: parseFloat($('inp_int_cost_pct')?.value || 0),
+        handling_cost: parseFloat($('inp_dom_handling_mt')?.value || 0),
+        freight_charges: parseFloat($('inp_dom_freight_out_mt')?.value || 0),
         // Exchange Rate Details — read from the real visible inputs ()
         exchange_rate: parseFloat($('inp_base_rate')?.value || 0),
         exchange_premium: parseFloat($('inp_premium')?.value || 0),
         shipping_premium: parseFloat($('inp_ship_premium')?.value || 0),
-        special_export_documentation_cost :parseFloat($('inp_doc_usd_tot')?.value || 0),
+        special_export_documentation_cost: parseFloat($('inp_doc_usd_tot')?.value || 0),
         effective_exchange_rate: parseFloat($('lbl-cs-exr')?.value || 0),
-        total_product_cost: parseFloat($('lbl-ind-prod-tot-usd')?.textContent?.replace(/,/g, '') || 0),
-        total_warehouse_rent_considered : parseFloat($('inp_dom_warehouse_tot_input')?.value || 0),
+        total_product_cost: parseFloat(
+          $(
+            $('inp_user_incoterm')?.value === 'EXW'
+              ? 'lbl-ind-prod-tot-rs'
+              : 'lbl-ind-prod-tot-usd'
+          )?.textContent?.replace(/,/g, '') || 0
+        ),
+        total_warehouse_rent_considered: parseFloat($('inp_dom_warehouse_tot_input')?.value || 0),
         // Final Offered Price — resolved from active variant input
         final_offered_price: finalOfferedPrice,
 
@@ -3125,7 +3140,7 @@
         dom_ply_price: parseFloat($('inp_dom_ply_price')?.value || 0),
         dom_ply_units: parseFloat($('inp_dom_ply_units')?.value || 0),
 
-        internal_cost_percentage: parseFloat($('inp_internal_cost_pct')?.value || 0),
+        internal_cost_percentage: parseFloat($('inp_int_cost_pct')?.value || 0),
         domestic_credit_percentage: parseFloat($('inp_dom_credit_pct')?.value || 0),
         document_charges_usd: parseFloat($('inp_doc_charges_usd')?.value || 0),
         merchant_document_charges: parseFloat($('inp_mer_doc_usd_tot')?.value || 0),
@@ -3134,7 +3149,13 @@
         total_cnf_cost: parseFloat($('lbl-cnf-tot-rs')?.textContent?.replace(/,/g, '') || 0),
         total_freight_cost: parseFloat($('lbl-frt-tot-rs')?.textContent?.replace(/,/g, '') || 0),
         net_cost: parseFloat($('lbl-net-tot')?.textContent?.replace(/,/g, '') || 0),
-        profit_amount: parseFloat($('lbl-pft-utot')?.textContent?.replace(/,/g, '') || 0),
+        profit_amount: parseFloat(
+          $(
+            $('inp_user_incoterm')?.value === 'EXW'
+              ? 'lbl-pft-tot'
+              : 'lbl-pft-utot'
+          )?.textContent?.replace(/,/g, '') || 0
+        ),
         profit_margin_percentage: parseFloat($('lbl-resolved-pct')?.textContent?.replace('%', '') || 0)
       };
 
@@ -3517,7 +3538,7 @@
       const row = {
         analysis_type: 'Margin Analysis',
         credit_days: $('inp_cust_terms')?.value || '',
-        internal_cost_percentage: parseFloat($('inp_internal_cost_pct')?.value || 0),
+        internal_cost_percentage: parseFloat($('inp_int_cost_pct')?.value || 0),
         document_charges_usd: parseFloat($('inp_doc_charges_usd')?.value || 0),
         commission_value: parseFloat(($('inp_type_of_sale')?.value === 'Merchant Export EXW' ? $('cell_comm_val_exw')?.value : $('cell_comm_val')?.value) || 0),
         duty_drawback_percentage: parseFloat($('cell_dbk_pct')?.value || 0),
@@ -3525,7 +3546,13 @@
         base_cost: parseFloat($('lbl-margin-base')?.textContent?.replace(/,/g, '') || 0),
         net_cost_total_rs: parseFloat($('lbl-net-tot')?.textContent?.replace(/,/g, '') || 0),
         net_cost_per_mt_rs: parseFloat($('lbl-net-mt')?.textContent?.replace(/,/g, '') || 0),
-        profit_amount: parseFloat($('lbl-pft-utot')?.textContent?.replace(/,/g, '') || 0),
+        profit_amount: parseFloat(
+          $(
+            $('inp_user_incoterm')?.value === 'EXW'
+              ? 'lbl-pft-tot'
+              : 'lbl-pft-utot'
+          )?.textContent?.replace(/,/g, '') || 0
+        ),
         profit_margin_percentage: parseFloat($('lbl-resolved-pct')?.textContent?.replace('%', '') || 0),
         offered_price: parseFloat($('inp_final_offered_price')?.value || 0)
       };
@@ -4433,7 +4460,7 @@
           }
 
 
-          
+
           const fields = [fieldname];
           if (doctype === 'Item' && fieldname === 'name') {
             fields.push('item_name');
@@ -4679,7 +4706,7 @@
 
         // Mark that URL params have been applied
         window._urlParamsApplied = true;
-        
+
         // Sync country field based on origin after URL params are loaded
         if (typeof updateCountryFieldFromOrigin === 'function') {
           updateCountryFieldFromOrigin();

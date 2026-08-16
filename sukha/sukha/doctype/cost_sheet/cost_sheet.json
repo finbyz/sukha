@@ -17,6 +17,7 @@
   "lead",
   "prospect",
   "supplier",
+  "bill_to_party_name",
   "section_break_product",
   "product",
   "product_grade",
@@ -45,6 +46,7 @@
   "port_of_loading",
   "loading_location",
   "port_of_discharge",
+  "port_of_destination",
   "col_break_logistics",
   "delivery_location",
   "shipping_line",
@@ -100,6 +102,7 @@
   "special_export_documentation_cost",
   "comission_rsmt",
   "any_other_cost",
+  "warehouse_rsmt",
   "col_break_cnf_tc",
   "cnf_transportation",
   "cnf_thc",
@@ -116,6 +119,7 @@
   "tc_haz_surcharge_fcl",
   "handling_cost",
   "warehouse_rentstorage_charges",
+  "any_other",
   "col_break_dom_calc",
   "dom_basic_price",
   "dom_freight_inward",
@@ -130,7 +134,9 @@
   "document_charges_usd",
   "freight_charges",
   "merchant_document_charges",
-  "amended_from"
+  "amended_from",
+  "duty_drawback_rebate_claim_",
+  "rodtep_trade_rebate_"
  ],
  "fields": [
   {
@@ -836,13 +842,44 @@
    "fieldname": "warehouse_rentstorage_charges",
    "fieldtype": "Float",
    "label": "Warehouse Rent/Storage Charges"
+  },
+  {
+   "fieldname": "warehouse_rsmt",
+   "fieldtype": "Float",
+   "label": "Warehouse rs/mt"
+  },
+  {
+   "fieldname": "bill_to_party_name",
+   "fieldtype": "Data",
+   "label": "Bill to Party Name"
+  },
+  {
+   "fieldname": "port_of_destination",
+   "fieldtype": "Link",
+   "label": "Port of Destination",
+   "options": "Port Details"
+  },
+  {
+   "fieldname": "duty_drawback_rebate_claim_",
+   "fieldtype": "Float",
+   "label": "Duty Drawback Rebate Claim %"
+  },
+  {
+   "fieldname": "rodtep_trade_rebate_",
+   "fieldtype": "Float",
+   "label": "RoDTEP Trade Rebate %"
+  },
+  {
+   "fieldname": "any_other",
+   "fieldtype": "Float",
+   "label": "Any Other"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-07-22 23:36:28.189670",
+ "modified": "2026-08-14 18:02:29.223033",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

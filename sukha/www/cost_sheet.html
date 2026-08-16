@@ -1197,9 +1197,9 @@
                   <td>Warehouse Rent/Storage Charges</td>
                   <td class="text-right font-mono" id="lbl-dom-warehouse-tot">17,025</td>
                   <td style="padding:4px 12px">
-                    <input type="number" step="10" class="cell-input font-mono text-right"
-                      style="font-size:12px;padding:4px;background:var(--color-bg-subtle,#f3f4f6);color:var(--color-text-muted);cursor:not-allowed;"
-                      id="inp_dom_warehouse_rs_mt" readonly tabindex="-1">
+                    <input type="number" class="cell-input cell-manual font-mono text-right"
+                      style="font-size:12px;padding:4px;background:var(--color-bg-subtle,#f3f4f6);color:var(--color-text-muted);"
+                      id="inp_dom_warehouse_rs_mt" oninput="syncWarehousersTot()">
                   </td>
                   <td class="text-right font-mono col-usd">—</td>
                   <td class="text-right font-mono col-usd">—</td>
@@ -2019,7 +2019,75 @@
         window.populatePolByOrigin();
       }
     }
+    function normalizeExwSubType(value) {
+    const val = String(value || '').trim();
 
+    if (val === 'Merchant Export') return 'Merchant';
+    if (val === 'Domestic Sale') return 'Domestic';
+    if (val === 'Repacking Service') return 'Repacking Service';
+
+    return val;
+}
+
+
+// ADD THIS HERE
+function setDropdownValue(id, val, triggerChange = false) {
+    if (!val) return;
+
+    const sel = $(id);
+    if (!sel) return;
+
+    if (id === 'inp_exw_subtype') {
+        val = normalizeExwSubType(val);
+    }
+
+    let found = false;
+
+    for (let i = 0; i < sel.options.length; i++) {
+        if (
+            sel.options[i].value === val ||
+            sel.options[i].text === val
+        ) {
+            sel.selectedIndex = i;
+            found = true;
+            break;
+        }
+    }
+
+    // Never create a duplicate EXW subtype
+    if (!found && id === 'inp_exw_subtype') {
+        return;
+    }
+
+    if (!found) {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        opt.selected = true;
+        sel.appendChild(opt);
+
+        // Keep existing Item name fetching behavior
+        if (id === 'inp_product' && typeof frappe !== 'undefined' && frappe.call) {
+            frappe.call({
+                method: 'frappe.client.get_value',
+                args: {
+                    doctype: 'Item',
+                    filters: { name: val },
+                    fieldname: 'item_name'
+                },
+                callback: function (r) {
+                    if (r.message && r.message.item_name) {
+                        opt.textContent = r.message.item_name;
+                    }
+                }
+            });
+        }
+    }
+
+    if (triggerChange) {
+        sel.dispatchEvent(new Event('change'));
+    }
+}
     /* Derive underlying Master Variant ID automatically from sequential user input fields */
     function deriveMasterVariantFromFields() {
       const inc = $('inp_user_incoterm')?.value || '';
@@ -2046,7 +2114,25 @@
         if (inc === 'CIF') { masterVal = 'India-CIF'; saleType = 'Direct Export'; }
         else if (inc === 'FOB') { masterVal = 'India-FOB'; saleType = 'Direct Export'; }
         else if (inc === 'EXW') {
-          const sub = $('inp_exw_subtype')?.value;
+          const subtypeEl = $('inp_exw_subtype');
+
+          let sub = normalizeExwSubType(subtypeEl?.value);
+
+          // Remove duplicate Merchant Export option
+          if (subtypeEl) {
+            Array.from(subtypeEl.options).forEach(option => {
+              if (
+                option.text.trim() === 'Merchant Export' &&
+                option.value !== 'Merchant'
+              ) {
+                option.remove();
+              }
+            });
+
+            if (sub) {
+              subtypeEl.value = sub;
+            }
+          }
           if (sub === 'Merchant') {
             masterVal = 'India-Merchant-EXW';
             saleType = 'Merchant Export';
@@ -2384,7 +2470,11 @@
       if ($('kpi_off_uom')) $('kpi_off_uom').textContent = isExw ? 'Rs./MT Entry' : '$/MT Entry';
       if ($('kpi_net_uom')) $('kpi_net_uom').textContent = isExw ? 'Rs./MT' : '$/MT';
       if ($('kpi_exw_uom')) $('kpi_exw_uom').textContent = isExw ? 'Rs./MT' : '$/MT';
-
+      if (isExw) {
+        if ($('inp_base_rate')) $('inp_base_rate').value = 1;
+        if ($('inp_premium')) $('inp_premium').value = 0;
+        if ($('inp_exchange_premium')) $('inp_exchange_premium').value = 0;
+      }
       updateStuffingLoc();
       calculateEngine();
     }
@@ -2402,9 +2492,49 @@
     function syncWarehouseTot() {
       const fclRs = v('inp_dom_warehouse_tot_input');
       const totalFcl = v('inp_total_fcl');
+
+      const mtPerFcl =
+        (v('inp_units_per_fcl') * v('inp_unit_size')) / 1000;
+
       const totalRs = fclRs * totalFcl;
-      const totalMt = (v('inp_units_per_fcl') * v('inp_unit_size') / 1000) * totalFcl;
-      if ($('inp_dom_warehouse_rs_mt')) $('inp_dom_warehouse_rs_mt').value = totalMt > 0 ? (totalRs / totalMt).toFixed(3) : '';
+
+      if ($('inp_dom_warehouse_rs_mt')) {
+        $('inp_dom_warehouse_rs_mt').value =
+          mtPerFcl > 0
+            ? (fclRs / mtPerFcl).toFixed(3)
+            : '';
+      }
+
+      calculateEngine();
+    }
+    function syncWarehousersTot() {
+      const warehouseRsMt = v('inp_dom_warehouse_rs_mt');
+
+      const totalFcl = v('inp_total_fcl');
+
+      const mtPerFcl =
+        (v('inp_units_per_fcl') * v('inp_unit_size')) / 1000;
+
+      const totalMt = mtPerFcl * totalFcl;
+
+      // Overall warehouse rent
+      const totalRs = warehouseRsMt * totalMt;
+
+      // Total Warehouse Rent Considered is per FCL
+      const warehouseTotalPerFcl = warehouseRsMt * mtPerFcl;
+
+      if ($('lbl-dom-warehouse-tot')) {
+        $('lbl-dom-warehouse-tot').textContent =
+          totalRs > 0 ? totalRs.toFixed(2) : '0.00';
+      }
+
+      if ($('inp_dom_warehouse_tot_input')) {
+        $('inp_dom_warehouse_tot_input').value =
+          warehouseTotalPerFcl > 0
+            ? warehouseTotalPerFcl.toFixed(2)
+            : '';
+      }
+
       calculateEngine();
     }
 
@@ -2599,9 +2729,10 @@
           domesticHandlingTotalRs = handlingCostPerFcl * totalFcl;
           domesticHandlingRsMt = v('inp_dom_handling_mt') ? v('inp_dom_handling_mt') : (qtyFcl > 0 ? handlingCostPerFcl / qtyFcl : 0);
 
-          const warehouseFclRs = v('inp_dom_warehouse_tot_input');
-          domesticWarehouseTotalRs = warehouseFclRs * totalFcl;
-          domesticWarehouseRsMt = v('inp_dom_warehouse_rs_mt') ? v('inp_dom_warehouse_rs_mt') : (qtyFcl > 0 ? warehouseFclRs / qtyFcl : 0);
+          const warehouseRsMt = v('inp_dom_warehouse_rs_mt');
+
+          domesticWarehouseTotalRs = warehouseRsMt * totalMt;
+          domesticWarehouseRsMt = warehouseRsMt;
         }
 
         let qcTotalRs = 0;
@@ -2666,7 +2797,7 @@
         setTxt('lbl-labels-usd-mt', labelsUsdMt, 1);
         if ($('inp_dom_freight_out_mt')) setVal('inp_dom_freight_out_mt', domesticFreightRsMt.toFixed(3));
         if ($('inp_dom_handling_mt')) setVal('inp_dom_handling_mt', domesticHandlingRsMt.toFixed(3));
-        if ($('inp_dom_warehouse_rs_mt')) setVal('inp_dom_warehouse_rs_mt', domesticWarehouseRsMt.toFixed(3));
+        <!-- if ($('inp_dom_warehouse_rs_mt')) setVal('inp_dom_warehouse_rs_mt', domesticWarehouseRsMt.toFixed(3)); -->
         exwCostRs = rmTotalRs + pmTotalRs + plyTotalRs + repackTotalRs + vanningTotalRs + domesticFreightTotalRs + domesticHandlingTotalRs + domesticWarehouseTotalRs + labelsTotalRs + qcTotalRs + stickersTotalRs;
         exwCostMtRs = rmDisplayRsMt + pmRsMt + plyRsMt + repackRsMt + vanningRsMt + domesticFreightRsMt + domesticHandlingRsMt + domesticWarehouseRsMt + labelsRsMt + qcRsMt + (stickersTotalRs / totalMt || 0);
 
@@ -2809,10 +2940,12 @@
       if ($('lbl-rp-off')) $('lbl-rp-off').textContent = isExw ? `Rs. ${offeredMtRs}` : `$${offeredMtUsd}`;
 
       const intPctVal = parseFloat($('inp_int_cost_pct')?.value) || 0;
+      const intTotal = parseFloat($('lbl-marg-int-mt')?.value) || 0;
+      const inqty = parseFloat($('lbl-total-mt-box')?.value) || 0;
       let intTotalRs, intMtRs, intUsdMt, intUsdTotal;
       if (isExw) {
         intMtRs = offeredMtRs * (intPctVal / 100);
-        intTotalRs = exwCostRs * (intPctVal / 100);
+        intTotalRs = intMtRs * totalMt;
         intUsdTotal = csExr ? intTotalRs / csExr : 0;
         intUsdMt = intUsdTotal ? intUsdTotal / totalMt : 0;
       } else {
@@ -2830,26 +2963,24 @@
       // Credit Cost % is entered manually by user — do NOT auto-update from payment terms
       const creditPctVal = parseFloat($('inp_dom_credit_pct')?.value) || 0;
       const creditPct = creditPctVal / 100;
+
       let creditTotalRs, creditMtRs, creditUsdMt, creditUsdTotal;
+
       if (isExw) {
-        if (isRepack) {
-          // Repacking: Total based on EXW cost, Rs/MT pinned to offered price
-          creditTotalRs = exwCostRs * creditPct;
-          creditMtRs = offeredMtRs * creditPct;
-        } else {
-          // Domestic / Merchant EXW: Total based on EXW cost, Rs/MT back-derived
-          // e.g. 5,07,000 × 1% = 5,070 (not offeredPrice × totalMt = 5,865)
-          creditTotalRs = exwCostRs * creditPct;
-          creditMtRs = offeredMtRs * creditPct;
-          // creditMtRs = totalMt ? creditTotalRs / totalMt : 0;
-        }
+        // Rs./MT = Offered Price × Credit %
+        creditMtRs = offeredMtRs * creditPct;
+
+        // Rs. Total = Rs./MT × Total Quantity
+        creditTotalRs = creditMtRs * totalMt;
+
         creditUsdTotal = csExr ? creditTotalRs / csExr : 0;
-        creditUsdMt = creditUsdTotal ? creditUsdTotal / totalMt : 0;
+        creditUsdMt = totalMt ? creditUsdTotal / totalMt : 0;
       } else {
         creditMtRs = offeredMtRs * creditPct;
         creditTotalRs = creditMtRs * totalMt;
+
         creditUsdTotal = csExr ? creditTotalRs / csExr : 0;
-        creditUsdMt = creditUsdTotal ? creditUsdTotal / totalMt : 0;
+        creditUsdMt = totalMt ? creditUsdTotal / totalMt : 0;
       }
 
       setTxt('lbl-marg-cr-tot', creditTotalRs);
@@ -3042,6 +3173,7 @@
         customer: $('inp_customer')?.value || '',
         lead: $('inp_lead')?.value || '',
         prospect: $('inp_prospect')?.value || '',
+        bill_to_party_name: $('inp_party_name')?.value || '',
         customer_payment_terms: $('inp_cust_terms')?.value || '',
         country_of_destination: (($('inp_destination_text')?.style.display !== 'none') ? ($('inp_destination_text')?.value || '') : ($('inp_destination')?.value || '')),
         final_country_of_destination: $('inp_final_dest')?.value || '',
@@ -3063,6 +3195,7 @@
         total_quantity: parseFloat($('lbl-total-mt-box')?.value || 0),
         total_weight_mt: parseFloat($('lbl-total-mt-box')?.value || 0),
         port_of_loading: $('inp_pol')?.value || '',
+        port_of_destination: $('inp_pod')?.value || '',
         port_of_discharge: $('inp_pod')?.value || '',
         shipping_line: $('inp_shipping_line')?.value || '',
         comission_rsmt: parseFloat($('cell_comm_val_exw')?.value || 0),
@@ -3074,7 +3207,9 @@
         exchange_rate: parseFloat($('inp_base_rate')?.value || 0),
         exchange_premium: parseFloat($('inp_premium')?.value || 0),
         shipping_premium: parseFloat($('inp_ship_premium')?.value || 0),
-        special_export_documentation_cost: parseFloat($('inp_doc_usd_tot')?.value || 0),
+        duty_drawback_rebate_claim_: parseFloat($('cell_dbk_pct')?.value || 0),
+        rodtep_trade_rebate_: parseFloat($('cell_rodtep_pct')?.value || 0),
+        any_other: parseFloat($('inp_labels_rs_mt')?.value || 0),
         effective_exchange_rate: parseFloat($('lbl-cs-exr')?.value || 0),
         total_product_cost: parseFloat(
           $(
@@ -3085,6 +3220,8 @@
         ),
         total_warehouse_rent_considered: parseFloat($('inp_dom_warehouse_tot_input')?.value || 0),
         // Final Offered Price — resolved from active variant input
+        warehouse_rsmt: parseFloat($('inp_dom_warehouse_rs_mt')?.value || 0),
+
         final_offered_price: finalOfferedPrice,
 
         // Field specifics for Merchant Export EXW
@@ -4570,45 +4707,7 @@
         // Store URL params in window for dashboard to access
         window._costSheetUrlParams = urlParams;
 
-        const setDropdownValue = (id, val, triggerChange = false) => {
-          if (!val) return;
-          const sel = $(id);
-          if (!sel) return;
-          let found = false;
-          for (let i = 0; i < sel.options.length; i++) {
-            if (sel.options[i].value === val || sel.options[i].text === val) {
-              sel.selectedIndex = i;
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            const opt = document.createElement('option');
-            opt.value = val;
-            opt.textContent = val;
-            opt.selected = true;
-            sel.appendChild(opt);
-            if (id === 'inp_product' && typeof frappe !== 'undefined' && frappe.call) {
-              frappe.call({
-                method: 'frappe.client.get_value',
-                args: {
-                  doctype: 'Item',
-                  filters: { name: val },
-                  fieldname: 'item_name'
-                },
-                callback: function (r) {
-                  if (r.message && r.message.item_name) {
-                    opt.textContent = r.message.item_name;
-                  }
-                }
-              });
-            }
-          }
-          if (triggerChange) {
-            if (typeof sel.onchange === 'function') sel.onchange();
-            else sel.dispatchEvent(new Event('change'));
-          }
-        };
+
 
         const oppFrom = urlParams.get('opportunity_from');
         const partyName = urlParams.get('party_name');

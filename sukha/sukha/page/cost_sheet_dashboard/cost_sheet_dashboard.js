@@ -650,10 +650,10 @@ class CostSheetDashboard {
 						} else if (grade || packings.length || stdPackings.length || dbk !== undefined || rodtep !== undefined) {
 							postProductResponse();
 						} else {
-							iframe.contentWindow.postMessage({ 
-								type: 'product_grade_response', 
-								grade: '', 
-								packings: [], 
+							iframe.contentWindow.postMessage({
+								type: 'product_grade_response',
+								grade: '',
+								packings: [],
 								stdPackings: [],
 								custom_duty_drawback_: undefined,
 								custom_rodtep_: undefined
@@ -738,7 +738,7 @@ class CostSheetDashboard {
 						fieldname: ['customer_name', 'custom_stuffing_address']
 					},
 					callback: (r) => {
-					const customer_name = (r.message || {}).customer_name || '';
+						const customer_name = (r.message || {}).customer_name || '';
 						const stuffing_address = (r.message || {}).custom_stuffing_address || '';
 						iframe.contentWindow.postMessage({
 							type: 'customer_name_response',
@@ -1279,7 +1279,7 @@ class CostSheetDashboard {
 					linksHtml += `</div>`;
 
 					const msg = __('Cost Sheet created successfully.')
-						
+
 
 					frappe.msgprint({
 						title: __('Saved Successfully'),
@@ -1512,6 +1512,7 @@ class CostSheetDashboard {
 				'city': 'inp_city',
 				'port_of_discharge': 'inp_pod',
 				'port_of_loading': 'inp_pol',
+				"port_of_destination": 'inp_pod',
 				'loading_location': 'inp_loading_location',
 				'delivery_location': 'inp_destination',
 				'stuffing_at': 'inp_stuffing_at',
@@ -1520,12 +1521,17 @@ class CostSheetDashboard {
 				'packing_unit_size': 'inp_unit_size',
 				'units_per_fcl': 'inp_units_per_fcl',
 				'total_fcl': 'inp_total_fcl',
-				'special_export_documentation_cost':'inp_doc_usd_tot',
-				'total_warehouse_rent_considered':'inp_dom_warehouse_tot_input',
-				'comission_rsmt':'cell_comm_val_exw',
-				'any_other_cost':'inp_dom_labels_fcl',
-				'handling_cost':'inp_dom_handling_mt',
-				'internal_cost_percentage':'inp_int_cost_pct',
+				'special_export_documentation_cost': 'inp_doc_usd_tot',
+				'total_warehouse_rent_considered': 'inp_dom_warehouse_tot_input',
+				'duty_drawback_rebate_claim_': 'cell_dbk_pct',
+				'rodtep_trade_rebate_': 'cell_rodtep_pct',
+				'bill_to_party_name': 'inp_party_name',
+				"any_other":'inp_labels_rs_mt',
+				'warehouse_rsmt': 'inp_dom_warehouse_rs_mt',
+				'comission_rsmt': 'cell_comm_val_exw',
+				'any_other_cost': 'inp_dom_labels_fcl',
+				'handling_cost': 'inp_dom_handling_mt',
+				'internal_cost_percentage': 'inp_int_cost_pct',
 				'freight_charges': 'inp_dom_freight_out_mt',
 
 				// Container & Packing
@@ -1679,7 +1685,7 @@ class CostSheetDashboard {
 							element.dispatchEvent(changeEvent);
 						}
 
-					} 
+					}
 				}
 			});
 
@@ -1707,34 +1713,53 @@ class CostSheetDashboard {
 			if (data.final_offered_price) {
 				setInput('inp_offered_price_exw', data.final_offered_price);
 			}
-			if (data.special_export_documentation_cost){
+			if (data.special_export_documentation_cost) {
 				setInput('inp_doc_usd_tot', data.special_export_documentation_cost);
 			}
-			if (data.total_warehouse_rent_considered){
+			if (data.any_other) {
+				setInput('inp_labels_rs_mt', data.any_other);
+			}
+			if (data.total_warehouse_rent_considered) {
 				setInput('inp_dom_warehouse_tot_input', data.total_warehouse_rent_considered);
 			}
-			if (data.comission_rsmt){
+			if (data.bill_to_party_name) {
+				setInput('inp_party_name', data.bill_to_party_name);
+			}
+			if (data.warehouse_rsmt) {
+				setInput('inp_dom_warehouse_rs_mt', data.warehouse_rsmt);
+			}
+			if (data.comission_rsmt) {
 				setInput('cell_comm_val_exw', data.comission_rsmt);
 			}
-			if (data.any_other_cost){
+			if (data.any_other_cost) {
 				setInput('inp_dom_labels_fcl', data.any_other_cost);
 			}
-			if (data.handling_cost){
+			if (data.handling_cost) {
 				setInput('inp_dom_handling_mt', data.handling_cost);
 			}
-			if (data.internal_cost_percentage){
+			if (data.internal_cost_percentage) {
 				setInput('inp_int_cost_pct', data.internal_cost_percentage);
 			}
-			if (data.dom_loading_cost){
+			if (data.duty_drawback_rebate_claim_) {
+				setInput('cell_dbk_pct', data.duty_drawback_rebate_claim_);
+			}
+			if (data.rodtep_trade_rebate_) {
+				setInput('cell_rodtep_pct', data.rodtep_trade_rebate_);
+			}
+			
+			if (data.port_of_destination) {
+				setInput('inp_pod', data.port_of_destination);
+			}
+			if (data.dom_loading_cost) {
 				setInput('inp_dom_loading_tot', data.dom_loading_cost);
 			}
-			if (data.dom_unloading_cost){
+			if (data.dom_unloading_cost) {
 				setInput('inp_dom_unloading_tot', data.dom_unloading_cost);
 			}
-			if (data.freight_charges){
+			if (data.freight_charges) {
 				setInput('inp_dom_freight_out_mt', data.freight_charges);
 			}
-			if (data.shipping_premium){
+			if (data.shipping_premium) {
 				setInput('inp_ship_premium', data.shipping_premium);
 			}
 			if (data.name) {
@@ -1793,8 +1818,8 @@ class CostSheetDashboard {
 				setInput('inp_internal_cost_pct', margin.internal_cost_percentage);
 				setInput('inp_doc_charges_usd', margin.document_charges_usd);
 				setInput('cell_comm_val', margin.commission_value);
-				setInput('cell_dbk_pct', margin.duty_drawback_percentage);
-				setInput('cell_rodtep_pct', margin.rodtep_percentage);
+				// setInput('cell_dbk_pct', margin.duty_drawback_percentage);
+				// setInput('cell_rodtep_pct', margin.rodtep_percentage);
 			}
 
 			if (data.exchange_premium !== undefined) {
@@ -1884,6 +1909,16 @@ class CostSheetDashboard {
 				const calculateAndFinishLoad = () => {
 					if (iframe.contentWindow && typeof iframe.contentWindow.calculateEngine === 'function') {
 						iframe.contentWindow.calculateEngine();
+					}
+
+					// Re-apply computed/total fields that calculateEngine may have overwritten
+					if (data.total_warehouse_rent_considered !== undefined && data.total_warehouse_rent_considered !== null && data.total_warehouse_rent_considered !== '') {
+						const warehouseTotEl = doc.getElementById('inp_dom_warehouse_tot_input');
+						if (warehouseTotEl) {
+							warehouseTotEl.value = data.total_warehouse_rent_considered;
+							warehouseTotEl.dispatchEvent(new Event('input', { bubbles: true }));
+							warehouseTotEl.dispatchEvent(new Event('change', { bubbles: true }));
+						}
 					}
 
 					this.finish_cost_sheet_load(data);
@@ -2333,30 +2368,95 @@ class CostSheetDashboard {
 
 				// Set DBK and RoDTEP directly in iframe
 				const setDbkRodtep = (dbkVal, rodtepVal) => {
-					const dbkEl = doc.getElementById('cell_dbk_pct');
-					const rodtepEl = doc.getElementById('cell_rodtep_pct');
+
+					const dbkEl =
+						doc.getElementById('cell_dbk_pct');
+
+					const rodtepEl =
+						doc.getElementById('cell_rodtep_pct');
+
+					const saved =
+						this._savedBenefitState || {};
+
 					let hasValues = false;
-					if (dbkEl && dbkVal !== undefined && dbkVal !== null && dbkVal !== '') {
-						const dbkNum = parseFloat(dbkVal);
-						if (!isNaN(dbkNum) && dbkNum > 0) {
-							dbkEl.value = dbkNum.toFixed(1);
-							dbkEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+
+					// =================================================
+					// DBK
+					// =================================================
+
+					if (dbkEl) {
+
+						if (saved.hasSavedDbk) {
+
+							// Existing Cost Sheet value has priority
+							dbkEl.value =
+								Number(saved.savedDbk).toFixed(1);
+
 							hasValues = true;
+
+						} else {
+
+							// No saved value:
+							// use static/default/Product value
+							const dbkNum = parseFloat(dbkVal);
+
+							if (!isNaN(dbkNum) && dbkNum > 0) {
+
+								dbkEl.value =
+									dbkNum.toFixed(1);
+
+								hasValues = true;
+							}
 						}
 					}
-					if (rodtepEl && rodtepVal !== undefined && rodtepVal !== null && rodtepVal !== '') {
-						const rodtepNum = parseFloat(rodtepVal);
-						if (!isNaN(rodtepNum) && rodtepNum > 0) {
-							rodtepEl.value = rodtepNum.toFixed(1);
-							rodtepEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+
+					// =================================================
+					// RODTEP
+					// =================================================
+
+					if (rodtepEl) {
+
+						if (saved.hasSavedRodtep) {
+
+							// Existing Cost Sheet value has priority
+							rodtepEl.value =
+								Number(saved.savedRodtep).toFixed(1);
+
 							hasValues = true;
+
+						} else {
+
+							// No saved value:
+							// use static/default/Product value
+							const rodtepNum =
+								parseFloat(rodtepVal);
+
+							if (
+								!isNaN(rodtepNum) &&
+								rodtepNum > 0
+							) {
+
+								rodtepEl.value =
+									rodtepNum.toFixed(1);
+
+								hasValues = true;
+							}
 						}
 					}
+
+
+					// Keep scheme active if values exist
 					if (hasValues) {
-						const rodtepChk = doc.getElementById('chk_scheme_rodtep');
+
+						const rodtepChk =
+							doc.getElementById(
+								'chk_scheme_rodtep'
+							);
+
 						if (rodtepChk) {
 							rodtepChk.checked = true;
-							rodtepChk.dispatchEvent(new Event('change', { bubbles: true }));
 						}
 					}
 				};
@@ -2566,8 +2666,8 @@ class CostSheetDashboard {
 
 			if (!field) return;
 
-					field.dataset.required = "1";
-					if (fieldname === "inp_customer") {
+			field.dataset.required = "1";
+			if (fieldname === "inp_customer") {
 
 				const lead = doc.getElementById("inp_lead");
 				const prospect = doc.getElementById("inp_prospect");
@@ -2645,58 +2745,58 @@ class CostSheetDashboard {
 	}
 	validate_dynamic_required(iframe) {
 
-			const doc = iframe.contentDocument || iframe.contentWindow.document;
+		const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-			let valid = true;
-			let firstInvalid = null;
-			let missing = [];
+		let valid = true;
+		let firstInvalid = null;
+		let missing = [];
 
-			doc.querySelectorAll("[data-required='1']").forEach(field => {
+		doc.querySelectorAll("[data-required='1']").forEach(field => {
 
-				// Skip hidden fields
-				if (
-					field.offsetParent === null ||
-					field.closest('[style*="display:none"]')
-				) {
-					return;
-				}
-
-				const value = field.value;
-
-				const hasValue =
-					value !== null &&
-					value !== undefined &&
-					String(value).trim() !== "";
-
-				if (!hasValue) {
-
-					valid = false;
-
-					field.classList.add("required-empty");
-
-					missing.push(field.id);
-
-					if (!firstInvalid) {
-						firstInvalid = field;
-					}
-				}
-			});
-
-
-			if (!valid) {
-
-				frappe.msgprint({
-					title: __("Mandatory Fields"),
-					indicator: "red",
-					message:
-						__("Missing Fields") +
-						"<br><br>" +
-						missing.join("<br>")
-				});
-
-				return false;
+			// Skip hidden fields
+			if (
+				field.offsetParent === null ||
+				field.closest('[style*="display:none"]')
+			) {
+				return;
 			}
 
-			return true;
+			const value = field.value;
+
+			const hasValue =
+				value !== null &&
+				value !== undefined &&
+				String(value).trim() !== "";
+
+			if (!hasValue) {
+
+				valid = false;
+
+				field.classList.add("required-empty");
+
+				missing.push(field.id);
+
+				if (!firstInvalid) {
+					firstInvalid = field;
+				}
+			}
+		});
+
+
+		if (!valid) {
+
+			frappe.msgprint({
+				title: __("Mandatory Fields"),
+				indicator: "red",
+				message:
+					__("Missing Fields") +
+					"<br><br>" +
+					missing.join("<br>")
+			});
+
+			return false;
 		}
+
+		return true;
+	}
 }

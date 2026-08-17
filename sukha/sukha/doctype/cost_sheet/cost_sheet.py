@@ -268,7 +268,7 @@ class CostSheet(Document):
 
             # row.freight_per_mt = row.freight_amount / mt
             # row.usd_amount = row.freight_amount / ship_exr
-            total += row.freight_amount
+            total += flt(row.freight_amount)
 
         # NEW: tc_vanning_usd never lands in sea_freight_details rows — add it
         # directly, matching JS's `vanTotalRs = vanTotalUsd * shipExr`.
@@ -485,7 +485,7 @@ def create_from_dashboard(data):
         data["stuffing_at"] = "CFS / ICD"
 
     else:
-        data["stuffing_at"] = ""
+        data["stuffing_at"] = "Warehouse"
 
     # ── Normalize Supplier Payment Terms ──────────────────────
     # We no longer normalize this since it's a Link field and the dashboard

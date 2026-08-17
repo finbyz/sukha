@@ -1516,8 +1516,8 @@ class CostSheetDashboard {
 				'loading_location': 'inp_loading_location',
 				'delivery_location': 'inp_destination',
 				'stuffing_at': 'inp_stuffing_at',
-				'stuffing_location': 'inp_stuffing_loc',
-				'stuffing_warehouse': 'inp_stuffing_loc',
+				// 'stuffing_location': 'inp_stuffing_loc',
+				// 'stuffing_warehouse': 'inp_stuffing_loc',
 				'packing_unit_size': 'inp_unit_size',
 				'units_per_fcl': 'inp_units_per_fcl',
 				'total_fcl': 'inp_total_fcl',
@@ -1526,7 +1526,7 @@ class CostSheetDashboard {
 				'duty_drawback_rebate_claim_': 'cell_dbk_pct',
 				'rodtep_trade_rebate_': 'cell_rodtep_pct',
 				'bill_to_party_name': 'inp_party_name',
-				"any_other":'inp_labels_rs_mt',
+				"any_other": 'inp_labels_rs_mt',
 				'warehouse_rsmt': 'inp_dom_warehouse_rs_mt',
 				'comission_rsmt': 'cell_comm_val_exw',
 				'any_other_cost': 'inp_dom_labels_fcl',
@@ -1572,9 +1572,9 @@ class CostSheetDashboard {
 				'repack_qc_fcl': 'inp_repack_qc_fcl',
 				'repack_stickers_fcl': 'inp_repack_stickers_fcl',
 				'vanning_rs_fcl': 'inp_vanning_rs_fcl',
-				'labels_rs_mt': 'inp_labels_rs_mt',
+				// 'labels_rs_mt': 'inp_labels_rs_mt',
 				'labels_remarks': 'inp_labels_remarks',
-
+				'country_origin':'inp_country',
 				'cnf_transportation': 'inp_cnf_trans',
 				'cnf_thc': 'inp_cnf_thc',
 				'cnf_bl_charges': 'inp_bl_charges',
@@ -1634,35 +1634,109 @@ class CostSheetDashboard {
 						let valueToSet = data[docField];
 
 						// For select elements, ensure option exists before setting value
+						// For select elements, normalize value first
 						if (element.tagName === 'SELECT') {
-							const normalizedVal = this.normalize_default_value(valueToSet);
-							let optionExists = Array.from(element.options).some(
-								opt => opt.value === valueToSet || opt.value === normalizedVal
-							);
 
-							if (!optionExists && normalizedVal !== valueToSet) {
-								valueToSet = normalizedVal;
-								optionExists = Array.from(element.options).some(
-									opt => opt.value === valueToSet
-								);
+							// -----------------------------------------
+							// Origin Scope canonical value
+							// -----------------------------------------
+							if (inputId === 'inp_user_origin') {
+
+								const rawOrigin = String(valueToSet || '').trim();
+
+								if (
+									rawOrigin === 'TC' ||
+									rawOrigin === 'Third Country' ||
+									rawOrigin === 'TC (Third Country Sourcing)' ||
+									rawOrigin === 'TC (Third Country)'
+								) {
+									valueToSet = 'TC (Third Country)';
+								}
+
+								if (
+									rawOrigin === 'India' ||
+									rawOrigin === 'India (Local Sourcing)'
+								) {
+									valueToSet = 'India';
+								}
+
+
+								// Remove wrongly-created duplicate TC option
+								Array.from(element.options).forEach(opt => {
+
+									if (
+										opt.value === 'TC' ||
+										opt.value === 'Third Country' ||
+										(
+											opt.textContent.trim() === 'TC' &&
+											opt.value !== 'TC (Third Country)'
+										)
+									) {
+										opt.remove();
+									}
+								});
+							} else {
+
+								valueToSet =
+									this.normalize_default_value(valueToSet);
 							}
 
+
+							// Check canonical option
+							const optionExists =
+								Array.from(element.options).some(
+									opt => opt.value === valueToSet
+								);
+
+
+							// IMPORTANT:
+							// Never dynamically create Origin Scope options
+							if (
+								!optionExists &&
+								inputId === 'inp_user_origin'
+							) {
+								console.warn(
+									'Invalid Origin Scope:',
+									valueToSet
+								);
+
+								return;
+							}
+
+
+							// Other dropdowns can still add missing option
 							if (!optionExists) {
-								const opt = doc.createElement('option');
+
+								const opt =
+									doc.createElement('option');
+
 								opt.value = valueToSet;
 								opt.textContent = valueToSet;
+
 								element.appendChild(opt);
-								if (inputId === 'inp_product' || inputId.includes('product')) {
+
+
+								if (
+									inputId === 'inp_product' ||
+									inputId.includes('product')
+								) {
 									frappe.call({
 										method: 'frappe.client.get_value',
 										args: {
 											doctype: 'Item',
-											filters: { name: valueToSet },
+											filters: {
+												name: valueToSet
+											},
 											fieldname: 'item_name'
 										},
 										callback: function (r) {
-											if (r.message && r.message.item_name) {
-												opt.textContent = r.message.item_name;
+
+											if (
+												r.message &&
+												r.message.item_name
+											) {
+												opt.textContent =
+													r.message.item_name;
 											}
 										}
 									});
@@ -1672,7 +1746,12 @@ class CostSheetDashboard {
 
 						// Set the value
 						element.value = valueToSet;
-
+						if (
+							inputId === 'inp_labels_rs_mt' ||
+							inputId === 'inp_dom_labels_fcl'
+						) {
+							return;
+						}
 						// For numeric/manual input fields, trigger both change and input events
 						if (element.type === 'number' || element.classList.contains('manual-input')) {
 							const changeEvent = new Event('change', { bubbles: true });
@@ -1716,8 +1795,17 @@ class CostSheetDashboard {
 			if (data.special_export_documentation_cost) {
 				setInput('inp_doc_usd_tot', data.special_export_documentation_cost);
 			}
-			if (data.any_other) {
-				setInput('inp_labels_rs_mt', data.any_other);
+			if (
+				data.any_other !== undefined &&
+				data.any_other !== null &&
+				data.any_other !== ''
+			) {
+				const labelsRsMtEl =
+					doc.getElementById('inp_labels_rs_mt');
+
+				if (labelsRsMtEl) {
+					labelsRsMtEl.value = data.any_other;
+				}
 			}
 			if (data.total_warehouse_rent_considered) {
 				setInput('inp_dom_warehouse_tot_input', data.total_warehouse_rent_considered);
@@ -1731,8 +1819,20 @@ class CostSheetDashboard {
 			if (data.comission_rsmt) {
 				setInput('cell_comm_val_exw', data.comission_rsmt);
 			}
-			if (data.any_other_cost) {
-				setInput('inp_dom_labels_fcl', data.any_other_cost);
+			if (data.inp_country) {
+				setInput('cell_comm_val_exw', data.country_origin);
+			}
+			if (
+				data.any_other_cost !== undefined &&
+				data.any_other_cost !== null &&
+				data.any_other_cost !== ''
+			) {
+				const anyOtherCostEl =
+					doc.getElementById('inp_dom_labels_fcl');
+
+				if (anyOtherCostEl) {
+					anyOtherCostEl.value = data.any_other_cost;
+				}
 			}
 			if (data.handling_cost) {
 				setInput('inp_dom_handling_mt', data.handling_cost);
@@ -1746,7 +1846,15 @@ class CostSheetDashboard {
 			if (data.rodtep_trade_rebate_) {
 				setInput('cell_rodtep_pct', data.rodtep_trade_rebate_);
 			}
-			
+			if (data.stuffing_at) {
+				setInput('inp_stuffing_at', data.stuffing_at);
+			}
+			if (data.stuffing_location) {
+				setInput('inp_stuffing_loc', data.stuffing_location);
+			}
+			if (data.stuffing_warehouse) {
+				setInput('inp_stuffing_loc', data.stuffing_warehouse);
+			}
 			if (data.port_of_destination) {
 				setInput('inp_pod', data.port_of_destination);
 			}
@@ -1759,6 +1867,10 @@ class CostSheetDashboard {
 			if (data.freight_charges) {
 				setInput('inp_dom_freight_out_mt', data.freight_charges);
 			}
+			if (data.loading_location) {
+				setInput('inp_loading_location', data.loading_location);
+			}
+
 			if (data.shipping_premium) {
 				setInput('inp_ship_premium', data.shipping_premium);
 			}
@@ -1795,10 +1907,10 @@ class CostSheetDashboard {
 			if (data.cnf_charges && data.cnf_charges.length > 0) {
 				data.cnf_charges.forEach(row => {
 					switch (row.charge_type) {
-						case 'Transportation': setInput('inp_cnf_trans', row.rate); break;
+						case 'Transportation': setInput('inp_cnf_trans', row.amount); break;
 						case 'Total B/L charges': setInput('inp_bl_charges', row.rate); break;
 						case 'Sea Way BL Charges': setInput('inp_sea_way_bl_charges', row.rate); break;
-						case 'Any Other Charges': setInput('inp_cnf_other', row.rate); break;
+						case 'Any Other Charges': setInput('inp_cnf_other', row.amount); break;
 					}
 				});
 			}
@@ -1850,7 +1962,57 @@ class CostSheetDashboard {
 						gradeEl.dispatchEvent(new Event('change', { bubbles: true }));
 					}
 				}
+				const targetStuffingLoc = data.stuffing_at === 'Warehouse'
+					? data.stuffing_warehouse
+					: data.stuffing_location;
 
+				const restoreStuffingLocation = (attempt = 0) => {
+					const locEl = doc.getElementById('inp_stuffing_loc');
+					if (!targetStuffingLoc || !locEl) return;
+
+					const hasOption = Array.from(locEl.options).some(opt => opt.value === targetStuffingLoc);
+					if (hasOption) {
+						locEl.value = targetStuffingLoc;
+						locEl.disabled = false;
+						locEl.dispatchEvent(new Event('change', { bubbles: true }));
+						return;
+					}
+					if (attempt >= 15) {
+						console.warn('Cost Sheet: could not restore stuffing location — option never appeared:', targetStuffingLoc);
+						return;
+					}
+					setTimeout(() => restoreStuffingLocation(attempt + 1), 200);
+				};
+				restoreStuffingLocation();
+				const isMerchantExwNow = (data.cost_sheet_type === 'Merchant Export' || data.cost_sheet_type === 'India-Merchant-EXW');
+				const targetStuffingLoc = data.stuffing_at === 'Warehouse'
+					? data.stuffing_warehouse
+					: data.stuffing_location;
+				restoreSelectValue('inp_stuffing_loc', targetStuffingLoc);
+				const restoreSelectValue = (elId, targetVal, attempt = 0) => {
+					if (!targetVal) return;
+					const el = doc.getElementById(elId);
+					if (!el) return;
+
+					const hasOption = Array.from(el.options).some(opt => opt.value === targetVal);
+					if (hasOption) {
+						el.value = targetVal;
+						el.dispatchEvent(new Event('change', { bubbles: true }));
+						return;
+					}
+					if (attempt >= 15) {
+						console.warn(`Cost Sheet: could not restore ${elId} — option never appeared:`, targetVal);
+						return;
+					}
+					setTimeout(() => restoreSelectValue(elId, targetVal, attempt + 1), 200);
+				};
+				
+				if (isMerchantExwNow) {
+					restoreSelectValue('inp_pol', data.port_of_destination);
+				} else {
+					restoreSelectValue('inp_pol', data.port_of_loading);
+					restoreSelectValue('inp_pod', data.port_of_discharge || data.port_of_destination);
+				}
 				// Apply deferred fields after product-driven dropdowns settle.
 				const PACKING_TYPE_KEYS = ['packing_type', 'custom_packing_type', 'custom_packing_type_with_unit_size_kg'];
 				const STD_PACKING_KEYS = ['std_packing', 'custom_std_pakcing'];
@@ -1907,19 +2069,87 @@ class CostSheetDashboard {
 				};
 
 				const calculateAndFinishLoad = () => {
-					if (iframe.contentWindow && typeof iframe.contentWindow.calculateEngine === 'function') {
+
+					if (
+						iframe.contentWindow &&
+						typeof iframe.contentWindow.calculateEngine === 'function'
+					) {
 						iframe.contentWindow.calculateEngine();
 					}
 
-					// Re-apply computed/total fields that calculateEngine may have overwritten
-					if (data.total_warehouse_rent_considered !== undefined && data.total_warehouse_rent_considered !== null && data.total_warehouse_rent_considered !== '') {
-						const warehouseTotEl = doc.getElementById('inp_dom_warehouse_tot_input');
+
+					// Existing warehouse restore
+					if (
+						data.total_warehouse_rent_considered !== undefined &&
+						data.total_warehouse_rent_considered !== null &&
+						data.total_warehouse_rent_considered !== ''
+					) {
+						const warehouseTotEl =
+							doc.getElementById(
+								'inp_dom_warehouse_tot_input'
+							);
+
 						if (warehouseTotEl) {
-							warehouseTotEl.value = data.total_warehouse_rent_considered;
-							warehouseTotEl.dispatchEvent(new Event('input', { bubbles: true }));
-							warehouseTotEl.dispatchEvent(new Event('change', { bubbles: true }));
+
+							warehouseTotEl.value =
+								data.total_warehouse_rent_considered;
+
+							warehouseTotEl.dispatchEvent(
+								new Event('input', {
+									bubbles: true
+								})
+							);
+
+							warehouseTotEl.dispatchEvent(
+								new Event('change', {
+									bubbles: true
+								})
+							);
 						}
 					}
+
+
+					// ==============================================
+					// FINAL: any_other_cost -> inp_dom_labels_fcl
+					// ==============================================
+
+					if (
+						data.any_other_cost !== undefined &&
+						data.any_other_cost !== null &&
+						data.any_other_cost !== ''
+					) {
+						const el =
+							doc.getElementById(
+								'inp_dom_labels_fcl'
+							);
+
+						if (el) {
+							el.value =
+								data.any_other_cost;
+						}
+					}
+
+
+					// ==============================================
+					// FINAL: any_other -> inp_labels_rs_mt
+					// ==============================================
+
+					if (
+						data.any_other !== undefined &&
+						data.any_other !== null &&
+						data.any_other !== ''
+					) {
+						const el =
+							doc.getElementById(
+								'inp_labels_rs_mt'
+							);
+
+						if (el) {
+							el.value =
+								data.any_other;
+						}
+					}
+
 
 					this.finish_cost_sheet_load(data);
 				};
@@ -1964,6 +2194,12 @@ class CostSheetDashboard {
 	normalize_default_value(val) {
 		if (!val) return "";
 		const mapping = {
+
+			"TC": "TC (Third Country)",
+			"Third Country": "TC (Third Country)",
+			"TC (Third Country Sourcing)": "TC (Third Country)",
+			"TC (Third Country)": "TC (Third Country)",
+
 			"20' FCL": "20' FCL",
 			"40' FCL": "40' FCL",
 			"20' ISO": "20' ISO",
@@ -1975,8 +2211,8 @@ class CostSheetDashboard {
 			"40 FT": "40' FCL",
 			"40 HC": "40' FCL",
 			"ISO Tank Container": "20' ISO",
-			"Supplier's Place": "Supplier's Premises",
-			"Supplier Premises": "Supplier's Premises",
+			"Supplier's Place": "Supplier's Place",
+			"Warehouse":"Warehouse",
 			"Own Warehouse - Panoli": "Own Warehouse — Panoli",
 			"Own Warehouse - Mundra": "Own Warehouse — Mundra",
 			"IBC": "IBC Composite Pallet",
@@ -2178,7 +2414,6 @@ class CostSheetDashboard {
 				['#inp_pod', 'select[id*="pod"]'],
 				'Port Details'
 			);
-
 			// Country Origin — the iframe has no Frappe desk JS, so it cannot fill this itself
 			this.populate_select(doc, ['#inp_country'], 'Country');
 
@@ -2368,92 +2603,57 @@ class CostSheetDashboard {
 
 				// Set DBK and RoDTEP directly in iframe
 				const setDbkRodtep = (dbkVal, rodtepVal) => {
-
-					const dbkEl =
-						doc.getElementById('cell_dbk_pct');
-
-					const rodtepEl =
-						doc.getElementById('cell_rodtep_pct');
-
-					const saved =
-						this._savedBenefitState || {};
+					const dbkEl = doc.getElementById('cell_dbk_pct');
+					const rodtepEl = doc.getElementById('cell_rodtep_pct');
 
 					let hasValues = false;
 
-
-					// =================================================
-					// DBK
-					// =================================================
-
+					// DBK:
+					// Only set default/static value when saved/current field has no value
 					if (dbkEl) {
+						const currentDbk = parseFloat(dbkEl.value || 0);
 
-						if (saved.hasSavedDbk) {
-
-							// Existing Cost Sheet value has priority
-							dbkEl.value =
-								Number(saved.savedDbk).toFixed(1);
-
+						if (currentDbk > 0) {
+							// Saved value already loaded — KEEP IT
 							hasValues = true;
-
 						} else {
-
-							// No saved value:
-							// use static/default/Product value
 							const dbkNum = parseFloat(dbkVal);
 
-							if (!isNaN(dbkNum) && dbkNum > 0) {
-
-								dbkEl.value =
-									dbkNum.toFixed(1);
-
-								hasValues = true;
+							if (
+								!isNaN(dbkNum) &&
+								dbkNum > 0 &&
+								$('cell_dbk_pct') &&
+								!(parseFloat($('cell_dbk_pct').value || 0) > 0)
+							) {
+								$('cell_dbk_pct').value = dbkNum.toFixed(1);
 							}
 						}
 					}
 
-
-					// =================================================
-					// RODTEP
-					// =================================================
-
+					// RoDTEP:
+					// Only set default/static value when saved/current field has no value
 					if (rodtepEl) {
+						const currentRodtep = parseFloat(rodtepEl.value || 0);
 
-						if (saved.hasSavedRodtep) {
-
-							// Existing Cost Sheet value has priority
-							rodtepEl.value =
-								Number(saved.savedRodtep).toFixed(1);
-
+						if (currentRodtep > 0) {
+							// Saved value already loaded — KEEP IT
 							hasValues = true;
-
 						} else {
-
-							// No saved value:
-							// use static/default/Product value
-							const rodtepNum =
-								parseFloat(rodtepVal);
+							const rodtepNum = parseFloat(rodtepVal);
 
 							if (
 								!isNaN(rodtepNum) &&
-								rodtepNum > 0
+								rodtepNum > 0 &&
+								$('cell_rodtep_pct') &&
+								!(parseFloat($('cell_rodtep_pct').value || 0) > 0)
 							) {
-
-								rodtepEl.value =
-									rodtepNum.toFixed(1);
-
-								hasValues = true;
+								$('cell_rodtep_pct').value = rodtepNum.toFixed(1);
 							}
 						}
 					}
 
-
-					// Keep scheme active if values exist
 					if (hasValues) {
-
-						const rodtepChk =
-							doc.getElementById(
-								'chk_scheme_rodtep'
-							);
+						const rodtepChk = doc.getElementById('chk_scheme_rodtep');
 
 						if (rodtepChk) {
 							rodtepChk.checked = true;

@@ -1239,7 +1239,7 @@
                   <td class="text-right font-mono" id="lbl-labels-rs-tot">3,405</td>
                   <td style="padding:4px 12px">
                     <input type="number" step="10" class="cell-input cell-manual font-mono text-right"
-                      style="font-size:12px;padding:4px" id="inp_labels_rs_mt" oninput="syncLabelsMt()">
+                      style="font-size:12px;padding:4px" id="inp_labels_rs_mt" oninput="calculateEngine()">
                   </td>
                   <td class="text-right font-mono col-usd" id="lbl-labels-usd-tot">39</td>
                   <td class="text-right font-mono col-usd" id="lbl-labels-usd-mt">0.6</td>
@@ -2755,7 +2755,6 @@ function setDropdownValue(id, val, triggerChange = false) {
           labelsTotalRs = v('inp_dom_labels_fcl') * totalFcl;
           labelsRsMt = labelsTotalRs / totalMt;
 
-          if ($('inp_labels_rs_mt')) setVal('inp_labels_rs_mt', labelsRsMt.toFixed(3));
         } else {
           labelsRsMt = v('inp_labels_rs_mt');
           labelsTotalRs = labelsRsMt * totalMt;
@@ -3126,6 +3125,8 @@ function setDropdownValue(id, val, triggerChange = false) {
 
       // Resolve final offered price: use the visible active input
       const variant = $('inp_master_cs_type')?.value || 'India-CIF';
+      const isMerchantExwNow = ($('inp_master_cs_type')?.value === 'India-Merchant-EXW');
+
       const isExwVariantNow = isExwVariant(variant);
       const finalOfferedPrice = parseFloat(
         (isExwVariantNow ? $('inp_offered_price_exw')?.value : $('inp_offered_price')?.value) || 0
@@ -3178,13 +3179,14 @@ function setDropdownValue(id, val, triggerChange = false) {
         country_of_destination: (($('inp_destination_text')?.style.display !== 'none') ? ($('inp_destination_text')?.value || '') : ($('inp_destination')?.value || '')),
         final_country_of_destination: $('inp_final_dest')?.value || '',
         pincode: $('inp_pincode')?.value || '',
+        country_origin :$('inp_country')?.value || '',
         city: $('inp_city')?.value || '',
         delivery_location: (($('inp_destination_text')?.style.display !== 'none') ? ($('inp_destination_text')?.value || '') : ($('inp_destination')?.value || '')),
         loading_location: $('inp_loading_location')?.value || '',
         supplier: $('inp_supplier')?.value || '',
         supplier_payment_terms: $('inp_supp_terms')?.value || '',
         stuffing_at: $('inp_stuffing_at')?.value || '',
-        stuffing_location: $('inp_stuffing_loc')?.value || '',
+        stuffing_location: $('inp_stuffing_at')?.value === "Supplier's Place" ? ($('inp_stuffing_loc')?.value || '') : '',
         stuffing_warehouse: $('inp_stuffing_at')?.value === 'Warehouse' ? ($('inp_stuffing_loc')?.value || '') : '',
         container_type: $('inp_container')?.value || '',
         packing_type: $('inp_packing_type')?.value || '',
@@ -3195,7 +3197,8 @@ function setDropdownValue(id, val, triggerChange = false) {
         total_quantity: parseFloat($('lbl-total-mt-box')?.value || 0),
         total_weight_mt: parseFloat($('lbl-total-mt-box')?.value || 0),
         port_of_loading: $('inp_pol')?.value || '',
-        port_of_destination: $('inp_pod')?.value || '',
+
+        port_of_destination: isMerchantExwNow ? ($('inp_pol')?.value || '') : ($('inp_pod')?.value || ''),
         port_of_discharge: $('inp_pod')?.value || '',
         shipping_line: $('inp_shipping_line')?.value || '',
         comission_rsmt: parseFloat($('cell_comm_val_exw')?.value || 0),
@@ -3248,7 +3251,6 @@ function setDropdownValue(id, val, triggerChange = false) {
         repack_qc_fcl: parseFloat($('inp_repack_qc_fcl')?.value || 0),
         repack_stickers_fcl: parseFloat($('inp_repack_stickers_fcl')?.value || 0),
         vanning_rs_fcl: parseFloat($('inp_vanning_rs_fcl')?.value || 0),
-        labels_rs_mt: parseFloat($('inp_labels_rs_mt')?.value || 0),
         labels_remarks: $('inp_labels_remarks')?.value || '',
 
         cnf_transportation: parseFloat($('inp_cnf_trans')?.value || 0),
@@ -3261,7 +3263,7 @@ function setDropdownValue(id, val, triggerChange = false) {
         cnf_haz_surcharge: parseFloat($('inp_cnf_haz')?.value || 0),
         cnf_lolo_charges: parseFloat($('inp_cnf_lolo')?.value || 0),
         cnf_other_charges: parseFloat($('inp_cnf_other')?.value || 0),
-
+        special_export_documentation_cost: parseFloat($('inp_doc_usd_tot')?.value || 0),
         tc_rm_usd_mt: parseFloat($('inp_tc_usd_mt')?.value || 0),
         tc_vanning_usd: parseFloat($('inp_tc_van_usd')?.value || 0),
         tc_ocean_freight_fcl: parseFloat($('inp_tc_sf_fcl')?.value || 0),
@@ -3506,7 +3508,7 @@ function setDropdownValue(id, val, triggerChange = false) {
       }
 
       // Domestic: Freight to Destination
-      if (isDomestic) {
+      if (isDomestic || isRepack) {
         const freightDest = parseFloat($('inp_dom_freight_dest')?.value || 0);
         if (freightDest !== 0) {
           const freightDestRsMt = totalMt > 0 ? freightDest / totalMt : 0;
@@ -4081,7 +4083,15 @@ function setDropdownValue(id, val, triggerChange = false) {
     /* Listen for responses from parent window (product grade, exchange rate) */
     window.addEventListener('message', (e) => {
       if (!e.data) return;
+      if (e.data.type === 'fetch_pol_ports_response') {
+        const ports = Array.isArray(e.data.ports)
+            ? e.data.ports
+            : [];
 
+        fillPolOptions(
+            ports.map(row => typeof row === 'string' ? row : row.name)
+        );
+    }
 
       if (e.data.type === 'customer_name_response') {
         const partyNameEl = $('inp_party_name');
@@ -4223,18 +4233,35 @@ function setDropdownValue(id, val, triggerChange = false) {
       }
 
       if (e.data.type === 'warehouses_response') {
-        const locField = $('inp_stuffing_loc');
-        if (locField && e.data.warehouses) {
-          locField.innerHTML = '<option value="">Select warehouse...</option>';
-          e.data.warehouses.forEach(warehouse => {
+    const locField = $('inp_stuffing_loc');
+
+    if (locField && e.data.warehouses) {
+
+        // Preserve value already restored by Cost Sheet loader
+        const savedValue = locField.value || '';
+
+        locField.innerHTML =
+            '<option value="">Select warehouse...</option>';
+
+        e.data.warehouses.forEach(warehouse => {
             const option = document.createElement('option');
             option.value = warehouse.name;
             option.textContent = warehouse.name;
             locField.appendChild(option);
-          });
-          locField.disabled = false;
+        });
+
+        // Restore saved warehouse after options are loaded
+        if (
+            savedValue &&
+            Array.from(locField.options)
+                .some(opt => opt.value === savedValue)
+        ) {
+            locField.value = savedValue;
         }
-      }
+
+        locField.disabled = false;
+    }
+}
 
       if (e.data.type === 'payment_terms_data') {
         const hiddenDays = $('inp_cust_credit_days');
@@ -4640,46 +4667,132 @@ function setDropdownValue(id, val, triggerChange = false) {
       // ─── PORT OF LOADING — FILTERED BY COUNTRY ────────────────────────────
       // When Sourcing Origin = India, filter ports by country = India.
       // When Sourcing Origin = TC, filter ports by the selected Country Origin.
-      const populatePolByOrigin = () => {
-        const sel = $('inp_pol');
-        if (!sel) return Promise.resolve();
+      // ─── PORT OF LOADING — FILTERED BY COUNTRY ────────────────────────────
+// When Sourcing Origin = India, filter ports by country = India.
+// When Sourcing Origin = TC, filter ports by the selected Country Origin.
+const populatePolByOrigin = () => {
 
-        const filterCountry = getPolFilterCountry();
+    const sel = $('inp_pol');
 
-        // The iframe has no Frappe desk JS, so ask the parent dashboard for the ports.
-        if (typeof frappe === 'undefined' || !frappe.call) {
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'fetch_pol_ports', country: filterCountry }, '*');
-          }
-          return Promise.resolve();
+    if (!sel) {
+        return Promise.resolve();
+    }
+
+
+    // Current sourcing origin
+    const origin =
+        $('inp_user_origin')?.value || '';
+
+
+    // India => India
+    // TC => selected Country Origin
+    const filterCountry =
+        getPolFilterCountry();
+
+
+    // ==========================================================
+    // TC selected but Country Origin not selected yet
+    // Do nothing and DO NOT clear existing POL selection
+    // ==========================================================
+    if (
+        origin === 'TC (Third Country)' &&
+        !filterCountry
+    ) {
+        return Promise.resolve();
+    }
+
+
+    // ==========================================================
+    // Iframe does not have Frappe desk API:
+    // ask parent dashboard to fetch filtered ports
+    // ==========================================================
+    if (
+        typeof frappe === 'undefined' ||
+        !frappe.call
+    ) {
+
+        if (
+            window.parent &&
+            window.parent !== window
+        ) {
+            window.parent.postMessage(
+                {
+                    type: 'fetch_pol_ports',
+                    country: filterCountry
+                },
+                '*'
+            );
         }
 
-        return new Promise((resolve) => {
-          let resolved = false;
-          const done = () => { if (!resolved) { resolved = true; resolve(); } };
-          setTimeout(done, 3000);
+        return Promise.resolve();
+    }
 
-          const args = {
+
+    // ==========================================================
+    // Frappe available directly
+    // ==========================================================
+    return new Promise((resolve) => {
+
+        let resolved = false;
+
+        const done = () => {
+            if (!resolved) {
+                resolved = true;
+                resolve();
+            }
+        };
+
+
+        // Failsafe
+        setTimeout(done, 3000);
+
+
+        const args = {
             doctype: 'Port Details',
             fields: ['name'],
             limit_page_length: 9999,
             order_by: 'name asc'
-          };
-          if (filterCountry) args.filters = { country: filterCountry };
+        };
 
-          frappe.call({
+
+        // Always filter by selected/derived country
+        if (filterCountry) {
+            args.filters = {
+                country: filterCountry
+            };
+        }
+
+
+        frappe.call({
             method: 'frappe.client.get_list',
             args: args,
+
             callback: function (r) {
-              if (r.message && Array.isArray(r.message)) {
-                fillPolOptions(r.message.map(row => row.name));
-              }
-              done();
+
+                if (
+                    r.message &&
+                    Array.isArray(r.message)
+                ) {
+                    fillPolOptions(
+                        r.message.map(row => row.name)
+                    );
+                }
+
+                done();
             },
-            error: function () { done(); }
-          });
+
+            error: function (err) {
+
+                console.error(
+                    'Unable to fetch Port of Loading:',
+                    err
+                );
+
+                done();
+            }
         });
-      };
+    });
+};
 
       // Expose on window so deriveMasterVariantFromFields (outer scope) can call it on origin change
       window.populatePolByOrigin = populatePolByOrigin;

@@ -35,6 +35,7 @@
   "city",
   "col_break_party_terms",
   "supplier_payment_terms",
+  "country_origin",
   "section_break_currency",
   "currency",
   "exchange_rate",
@@ -50,11 +51,11 @@
   "col_break_logistics",
   "delivery_location",
   "shipping_line",
-  "stuffing_location",
-  "stuffing_warehouse",
   "section_break_stuffing",
   "stuffing_at",
   "col_break_stuffing",
+  "stuffing_warehouse",
+  "stuffing_location",
   "section_break_container",
   "container_type",
   "packing_type",
@@ -103,6 +104,7 @@
   "comission_rsmt",
   "any_other_cost",
   "warehouse_rsmt",
+  "total_freight_to_destination",
   "col_break_cnf_tc",
   "cnf_transportation",
   "cnf_thc",
@@ -367,7 +369,8 @@
    "fieldname": "stuffing_location",
    "fieldtype": "Data",
    "label": "Stuffing Location",
-   "options": "Warehouse"
+   "options": "Warehouse",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_stuffing",
@@ -588,7 +591,8 @@
    "fieldname": "stuffing_warehouse",
    "fieldtype": "Link",
    "label": "Stuffing Warehouse",
-   "options": "Warehouse"
+   "options": "Warehouse",
+   "read_only": 1
   },
   {
    "collapsible": 1,
@@ -873,13 +877,24 @@
    "fieldname": "any_other",
    "fieldtype": "Float",
    "label": "Any Other"
+  },
+  {
+   "fieldname": "total_freight_to_destination",
+   "fieldtype": "Float",
+   "label": "Total Freight to Destination"
+  },
+  {
+   "fieldname": "country_origin",
+   "fieldtype": "Link",
+   "label": "Country Origin",
+   "options": "Country"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-08-14 18:02:29.223033",
+ "modified": "2026-08-17 14:48:39.242206",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

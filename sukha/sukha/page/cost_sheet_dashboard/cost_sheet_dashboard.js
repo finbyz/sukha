@@ -1574,7 +1574,7 @@ class CostSheetDashboard {
 				'vanning_rs_fcl': 'inp_vanning_rs_fcl',
 				// 'labels_rs_mt': 'inp_labels_rs_mt',
 				'labels_remarks': 'inp_labels_remarks',
-				'country_origin':'inp_country',
+				'country_origin': 'inp_country',
 				'cnf_transportation': 'inp_cnf_trans',
 				'cnf_thc': 'inp_cnf_thc',
 				'cnf_bl_charges': 'inp_bl_charges',
@@ -1985,10 +1985,7 @@ class CostSheetDashboard {
 				};
 				restoreStuffingLocation();
 				const isMerchantExwNow = (data.cost_sheet_type === 'Merchant Export' || data.cost_sheet_type === 'India-Merchant-EXW');
-				const targetStuffingLoc = data.stuffing_at === 'Warehouse'
-					? data.stuffing_warehouse
-					: data.stuffing_location;
-				restoreSelectValue('inp_stuffing_loc', targetStuffingLoc);
+
 				const restoreSelectValue = (elId, targetVal, attempt = 0) => {
 					if (!targetVal) return;
 					const el = doc.getElementById(elId);
@@ -2006,13 +2003,16 @@ class CostSheetDashboard {
 					}
 					setTimeout(() => restoreSelectValue(elId, targetVal, attempt + 1), 200);
 				};
-				
+
+				restoreSelectValue('inp_stuffing_loc', targetStuffingLoc);
+
 				if (isMerchantExwNow) {
 					restoreSelectValue('inp_pol', data.port_of_destination);
 				} else {
 					restoreSelectValue('inp_pol', data.port_of_loading);
 					restoreSelectValue('inp_pod', data.port_of_discharge || data.port_of_destination);
 				}
+
 				// Apply deferred fields after product-driven dropdowns settle.
 				const PACKING_TYPE_KEYS = ['packing_type', 'custom_packing_type', 'custom_packing_type_with_unit_size_kg'];
 				const STD_PACKING_KEYS = ['std_packing', 'custom_std_pakcing'];
@@ -2212,7 +2212,7 @@ class CostSheetDashboard {
 			"40 HC": "40' FCL",
 			"ISO Tank Container": "20' ISO",
 			"Supplier's Place": "Supplier's Place",
-			"Warehouse":"Warehouse",
+			"Warehouse": "Warehouse",
 			"Own Warehouse - Panoli": "Own Warehouse — Panoli",
 			"Own Warehouse - Mundra": "Own Warehouse — Mundra",
 			"IBC": "IBC Composite Pallet",

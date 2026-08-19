@@ -20,7 +20,7 @@ def validate(self, method):
             "port_of_loading": "port_of_loading",
             "port_of_discharge": "port_of_discharge",
             "country_of_destination": "country_of_destination",
-            "pre_carriage_by": "loading_location",
+            # "pre_carriage_by": "loading_location",
             "custom_std_pakcing": "custom_std_pakcing",
             "custom_number_of_containers":"total_fcl"
         }

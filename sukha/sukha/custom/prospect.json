@@ -4639,7 +4639,7 @@
    "description": null,
    "docstatus": 0,
    "dt": "Prospect",
-   "fetch_from": "custom_product_name.custom_purity_",
+   "fetch_from": "custom_product_name.custom_purity",
    "fetch_if_empty": 0,
    "fieldname": "custom_product_concentration",
    "fieldtype": "Data",

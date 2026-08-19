@@ -29,6 +29,7 @@ def make_order(source_name, target_doctype=None, selected_items=None, country=No
 		if not target_doc.payment_terms_template:
 			target_doc.payment_terms_template = source_doc.payment_terms_template
 		# Copy currency and conversion rate to target document
+		target_doc.custom_pi_no = source_name
 		if hasattr(source_doc, "currency"):
 			target_doc.currency = source_doc.currency
 		if hasattr(source_doc, "conversion_rate"):

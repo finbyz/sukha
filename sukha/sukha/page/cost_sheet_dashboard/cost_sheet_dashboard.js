@@ -2808,20 +2808,27 @@ class CostSheetDashboard {
 		const refreshFieldState = (field) => {
 			if (!field) return;
 
-			const required = field.dataset.required === "1";
-
-			if (!required) return;
-
-			const value = (field.value || "").trim();
-
 			const formGroup = field.closest(".form-group");
 			const label = formGroup ? formGroup.querySelector("label") : null;
-
-			const existingMarker = label
-				? label.querySelector(".req, .req-marker, .required-star")
-				: null;
 			const dynamicMarker = label
 				? label.querySelector(".req-marker")
+				: null;
+			const variant = doc.getElementById("inp_master_cs_type")?.value || "";
+			const required = field.dataset.required === "1" && !(
+				field.id === "inp_pol" && variant === "India-Merchant-EXW"
+			);
+
+			if (!required) {
+				field.classList.remove("required-empty");
+				field.style.border = "";
+				field.style.boxShadow = "";
+				if (dynamicMarker) dynamicMarker.remove();
+				return;
+			}
+
+			const value = (field.value || "").trim();
+			const existingMarker = label
+				? label.querySelector(".req, .req-marker, .required-star")
 				: null;
 
 			if (!value) {
@@ -2842,6 +2849,19 @@ class CostSheetDashboard {
 					dynamicMarker.remove();
 				}
 			}
+		};
+
+		const syncPolRequiredState = () => {
+			const polField = doc.getElementById("inp_pol");
+			if (!polField) return;
+
+			const variant = doc.getElementById("inp_master_cs_type")?.value || "";
+			if (variant === "India-Merchant-EXW") {
+				delete polField.dataset.required;
+			} else {
+				polField.dataset.required = "1";
+			}
+			refreshFieldState(polField);
 		};
 
 		// All mandatory fields
@@ -2866,7 +2886,6 @@ class CostSheetDashboard {
 
 			if (!field) return;
 
-			field.dataset.required = "1";
 			if (fieldname === "inp_customer") {
 
 				const lead = doc.getElementById("inp_lead");
@@ -2899,6 +2918,19 @@ class CostSheetDashboard {
 
 			refreshFieldState(field);
 		});
+
+		// The master variant is derived from these controls. Re-evaluate after
+		// their own change handlers have updated inp_master_cs_type.
+		["inp_user_incoterm", "inp_user_origin", "inp_exw_subtype"].forEach(fieldname => {
+			const field = doc.getElementById(fieldname);
+			if (!field) return;
+
+			field.removeEventListener("change", field._polRequiredHandler);
+			field._polRequiredHandler = () => setTimeout(syncPolRequiredState, 0);
+			field.addEventListener("change", field._polRequiredHandler);
+		});
+
+		syncPolRequiredState();
 	}
 
 	apply_required_fields(doc, rule_name) {
@@ -2952,6 +2984,11 @@ class CostSheetDashboard {
 		let missing = [];
 
 		doc.querySelectorAll("[data-required='1']").forEach(field => {
+			const variant = doc.getElementById("inp_master_cs_type")?.value || "";
+			if (field.id === "inp_pol" && variant === "India-Merchant-EXW") {
+				field.classList.remove("required-empty");
+				return;
+			}
 
 			// Skip hidden fields
 			if (

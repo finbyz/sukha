@@ -9,46 +9,35 @@ frappe.ui.form.on("Quotation", {
 
     refresh(frm) {
         setTimeout(() => {
-        frm.page.remove_inner_button(__("Sales Order"), __("Create"));
-    }, 300);
+            frm.page.remove_inner_button(__("Sales Order"), __("Create"));
+        }, 300);
+
         if (frm.doc.docstatus == 0) {
             frm.add_custom_button(__("Cost Sheet"), () => {
-                frappe.call({
-                    method: "sukha.doc_events.quotation.get_used_cost_sheets",
-                    callback: function (r) {
-                        let used_cost_sheets = (r.message && r.message.length)
-                            ? r.message
-                            : ["__none__"];
-
-                        erpnext.utils.map_current_doc({
-                            method: "sukha.doc_events.quotation.make_quotation",
-                            source_doctype: "Cost Sheet",
-                            target: frm,
-                            setters: {
-                                customer: undefined,
-                                company: frm.doc.company
-                            },
-                            get_query_filters: {
-                                docstatus: ["!=", 2],
-                                name: ["not in", used_cost_sheets]
-                            }
-                        });
+                erpnext.utils.map_current_doc({
+                    method: "sukha.doc_events.quotation.make_quotation",
+                    source_doctype: "Cost Sheet",
+                    target: frm,
+                    setters: {
+                        customer: undefined,
+                        company: frm.doc.company
+                    },
+                    get_query_method: "sukha.doc_events.quotation.get_available_cost_sheets",
+                    get_query_filters: {
+                        docstatus: ["!=", 2]
                     }
                 });
             }, __("Get Items From"));
         }
 
-        // Buttons for Submitted Documents
         if (frm.doc.docstatus === 1) {
 
-            // 1. Button to Create Customer (Only show if customer is missing)
-            if (frm.doc.quotation_to !=="Customer" && !frm.doc.custom_new_customer) {
+            if (frm.doc.quotation_to !== "Customer" && !frm.doc.custom_new_customer) {
                 frm.add_custom_button(__("Customer"), () => {
                     show_customer_creation_dialog(frm);
                 }, __("Create"));
             }
 
-            // 2. Button to Create Blanket Order
             frm.add_custom_button(__("Blanket Order"), () => {
                 if (!frm.doc.party_name && !frm.doc.custom_new_customer) {
                     frappe.msgprint({
@@ -66,6 +55,8 @@ frappe.ui.form.on("Quotation", {
             }, __("Create"));
         }
     }
+
+
 });
 
 

@@ -150,6 +150,36 @@ def get_used_cost_sheets():
     return [d.cost_sheet for d in used]
 
 
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_available_cost_sheets(doctype, txt, searchfield, start, page_len, filters=None, as_dict=False, **kwargs):
+    """Keep used Cost Sheet exclusions on the server to avoid oversized search URLs."""
+    from frappe.desk.search import search_widget
+    from frappe.utils.data import make_filter_tuple
+
+    filters = frappe.parse_json(filters) if isinstance(filters, str) else filters
+    if isinstance(filters, dict):
+        filters = [make_filter_tuple("Cost Sheet", key, value) for key, value in filters.items()]
+    else:
+        filters = list(filters or [])
+
+    used_cost_sheets = get_used_cost_sheets()
+    if used_cost_sheets:
+        filters.append(["Cost Sheet", "name", "not in", used_cost_sheets])
+
+    return search_widget(
+        "Cost Sheet",
+        txt,
+        searchfield=searchfield,
+        start=start,
+        page_length=page_len,
+        filters=filters,
+        filter_fields=frappe.as_json(["customer", "company"]),
+        as_dict=as_dict,
+        reference_doctype=kwargs.get("reference_doctype"),
+    )
+
+
 
 @frappe.whitelist()
 def make_blanket_order(source_name, target_doc=None):

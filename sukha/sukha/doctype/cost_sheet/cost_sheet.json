@@ -809,8 +809,7 @@
    "fieldtype": "Link",
    "label": "Inquiry",
    "options": "Opportunity",
-   "read_only": 1,
-   "unique": 1
+   "read_only": 1
   },
   {
    "fieldname": "total_warehouse_rent_considered",
@@ -894,7 +893,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-08-17 14:48:39.242206",
+ "modified": "2026-10-01 13:17:51.798580",
  "modified_by": "Administrator",
  "module": "Sukha",
  "name": "Cost Sheet",

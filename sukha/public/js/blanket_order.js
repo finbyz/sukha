@@ -1,4 +1,39 @@
+erpnext.accounts.taxes.setup_tax_validations("Blanket Order");
+erpnext.accounts.taxes.setup_tax_filters("Sales Taxes and Charges");
+
 frappe.ui.form.on("Blanket Order", {
+    tax_category(frm) {
+        select_blanket_order_taxes(frm);
+    },
+    taxes_and_charges(frm) {
+        if (!frm.doc.taxes_and_charges) {
+            frm.set_value("taxes", []);
+            queue_blanket_tax_calculation(frm);
+            return;
+        }
+        const template = frm.doc.taxes_and_charges;
+        frappe.call({
+            method: "erpnext.controllers.accounts_controller.get_taxes_and_charges",
+            args: {
+                master_doctype: "Sales Taxes and Charges Template",
+                master_name: template,
+            },
+            callback(r) {
+                if (!r.exc && frm.doc.taxes_and_charges === template) {
+                    frm.set_value("taxes", r.message || []).then(() => queue_blanket_tax_calculation(frm));
+                }
+            },
+        });
+    },
+    taxes_add(frm) {
+        queue_blanket_tax_calculation(frm);
+    },
+    taxes_remove(frm) {
+        queue_blanket_tax_calculation(frm);
+    },
+    customer(frm) {
+        if (!frm.doc.taxes_and_charges) select_blanket_order_taxes(frm);
+    },
 	customer_address:function(frm){
 		if (frm.doc.customer_address) {
 			frappe.call({
@@ -54,11 +89,18 @@ frappe.ui.form.on("Blanket Order", {
 		}
 	},
 	setup: function (frm) {
+        frm.cscript.tax_table = "Sales Taxes and Charges";
 		if (frm.custom_make_buttons) {
 			delete frm.custom_make_buttons["Sales Order"];
 		}
 	},
 	refresh: function (frm) {
+        frm.set_query("taxes_and_charges", () => ({
+            filters: { company: frm.doc.company, disabled: 0 },
+        }));
+        if (frm.doc.__islocal && frm.doc.blanket_order_type === "Selling") {
+            queue_blanket_tax_calculation(frm);
+        }
 		if (frm.doc.__islocal) {
             if (!frm.doc.currency) {
                 frm.set_value('currency', frappe.defaults.get_user_default('currency'));
@@ -109,6 +151,7 @@ frappe.ui.form.on("Blanket Order", {
     },
 	conversion_rate: function(frm) {
         calculate_base_rate(frm);
+        queue_blanket_tax_calculation(frm);
     },
 	transaction_date: function(frm) {
         if (frm.doc.currency && frm.doc.company) {
@@ -122,6 +165,7 @@ frappe.ui.form.on("Blanket Order", {
         if (frm.doc.__islocal || frm.doc.currency) {
             frm.trigger('currency');
         }
+        if (!frm.doc.taxes_and_charges) select_blanket_order_taxes(frm);
     }
 });
 
@@ -134,6 +178,7 @@ frappe.ui.form.on('Blanket Order Item', {
             frappe.model.set_value(cdt, cdn, 'base_amount', base_rate * flt(row.qty));
         }
         frappe.model.set_value(cdt, cdn, 'amount', flt(row.rate) * flt(row.qty));
+        queue_blanket_tax_calculation(frm);
     },
 
     qty: function(frm, cdt, cdn) {
@@ -144,6 +189,7 @@ frappe.ui.form.on('Blanket Order Item', {
             frappe.model.set_value(cdt, cdn, 'base_amount', base_rate * flt(row.qty));
         }
         frappe.model.set_value(cdt, cdn, 'amount', flt(row.rate) * flt(row.qty));
+        queue_blanket_tax_calculation(frm);
     }
 });
 
@@ -163,7 +209,70 @@ function calculate_base_rate(frm) {
     });
 
     frm.refresh_field('items');
+    queue_blanket_tax_calculation(frm);
 }
+
+
+function select_blanket_order_taxes(frm) {
+    if (frm.doc.blanket_order_type !== "Selling" || !frm.doc.company || !frm.doc.customer) return;
+    const company = frm.doc.company;
+    const customer = frm.doc.customer;
+    const tax_category = frm.doc.tax_category;
+    frappe.call({
+        method: "erpnext.accounts.party.set_taxes",
+        args: {
+            party: customer,
+            party_type: "Customer",
+            posting_date: frm.doc.order_date || frm.doc.from_date || frappe.datetime.get_today(),
+            company: company,
+            tax_category: tax_category,
+            billing_address: frm.doc.customer_address,
+            shipping_address: frm.doc.shipping_address_name,
+        },
+        callback(r) {
+            if (!r.exc && r.message && frm.doc.company === company &&
+                frm.doc.customer === customer && frm.doc.tax_category === tax_category &&
+                r.message !== frm.doc.taxes_and_charges) {
+                frm.set_value("taxes_and_charges", r.message);
+            }
+        },
+    });
+}
+
+function queue_blanket_tax_calculation(frm) {
+    if (frm.doc.blanket_order_type !== "Selling") return;
+    clearTimeout(frm._blanket_tax_timer);
+    const request_id = (frm._blanket_tax_request_id || 0) + 1;
+    frm._blanket_tax_request_id = request_id;
+    frm._blanket_tax_timer = setTimeout(() => {
+        if (!frm.doc.company || !frm.doc.currency || !frm.doc.conversion_rate) return;
+        frappe.call({
+            method: "sukha.override.blanket_order.preview_blanket_order_taxes",
+            args: { doc: frm.doc },
+            callback(r) {
+                if (r.exc || !r.message || request_id !== frm._blanket_tax_request_id) return;
+                (frm.doc.taxes || []).forEach((row, index) => {
+                    const amounts = r.message.taxes[index] || {};
+                    Object.assign(row, amounts);
+                });
+                frm.refresh_field("taxes");
+                frm.set_value({
+                    total_taxes_and_charges: r.message.total_taxes_and_charges,
+                    base_total_taxes_and_charges: r.message.base_total_taxes_and_charges,
+                });
+            },
+        });
+    }, 200);
+}
+
+frappe.ui.form.on("Sales Taxes and Charges", {
+    charge_type: queue_blanket_tax_calculation,
+    account_head: queue_blanket_tax_calculation,
+    rate: queue_blanket_tax_calculation,
+    tax_amount: queue_blanket_tax_calculation,
+    row_id: queue_blanket_tax_calculation,
+    included_in_print_rate: queue_blanket_tax_calculation,
+});
 
 erpnext.blanket_order_custom = erpnext.blanket_order_custom || {};
 

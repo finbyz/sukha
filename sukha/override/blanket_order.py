@@ -5,7 +5,73 @@ from frappe.utils import flt, getdate
 from frappe.model.mapper import get_mapped_doc
 from erpnext.stock.get_item_details import get_item_defaults
 from erpnext.setup.utils import get_exchange_rate
+from erpnext.controllers.taxes_and_totals import calculate_taxes_and_totals
+from erpnext.controllers.accounts_controller import get_taxes_and_charges
 from erpnext.manufacturing.doctype.blanket_order.blanket_order import BlanketOrder
+
+
+TAX_AMOUNT_FIELDS = (
+    "net_amount", "tax_amount", "total", "tax_amount_after_discount_amount",
+    "base_net_amount", "base_tax_amount", "base_total",
+    "base_tax_amount_after_discount_amount",
+)
+
+
+def calculate_blanket_order_taxes(doc):
+    """Calculate selling taxes with the same engine used by Quotation."""
+    if doc.blanket_order_type != "Selling":
+        return
+
+    quotation = frappe.new_doc("Quotation")
+    quotation.company = doc.company
+    quotation.currency = doc.currency
+    quotation.conversion_rate = doc.conversion_rate
+    quotation.tax_category = doc.tax_category
+    quotation.taxes_and_charges = doc.taxes_and_charges
+    quotation.transaction_date = doc.order_date or doc.from_date
+    quotation.quotation_to = "Customer"
+    quotation.party_name = doc.customer
+
+    for item in doc.get("items") or []:
+        quotation.append("items", {
+            "item_code": item.item_code,
+            "item_name": item.item_name,
+            "qty": item.qty,
+            "rate": item.rate,
+            "uom": item.get("uom"),
+        })
+
+    for tax in doc.get("taxes") or []:
+        quotation.append("taxes", tax.as_dict())
+
+    if quotation.items:
+        calculate_taxes_and_totals(quotation)
+    else:
+        for tax in quotation.taxes:
+            for field in TAX_AMOUNT_FIELDS:
+                tax.set(field, 0)
+        quotation.total_taxes_and_charges = 0
+        quotation.base_total_taxes_and_charges = 0
+
+    for source, calculated in zip(doc.get("taxes") or [], quotation.taxes):
+        for field in TAX_AMOUNT_FIELDS:
+            source.set(field, calculated.get(field))
+
+    doc.total_taxes_and_charges = quotation.total_taxes_and_charges or 0
+    doc.base_total_taxes_and_charges = quotation.base_total_taxes_and_charges or 0
+
+
+@frappe.whitelist()
+def preview_blanket_order_taxes(doc):
+    """Return current tax amounts for live form updates without saving."""
+    doc = frappe.get_doc(frappe.parse_json(doc))
+    doc.check_permission("create" if doc.is_new() else "write")
+    calculate_blanket_order_taxes(doc)
+    return {
+        "taxes": [{field: row.get(field) for field in TAX_AMOUNT_FIELDS} for row in doc.get("taxes") or []],
+        "total_taxes_and_charges": doc.get("total_taxes_and_charges") or 0,
+        "base_total_taxes_and_charges": doc.get("base_total_taxes_and_charges") or 0,
+    }
 
 
 @frappe.whitelist()
@@ -95,6 +161,10 @@ class CustomBlanketOrder(BlanketOrder):
 		self.set_price_list_and_exchange_rate()
 		self.check_conversion_rate()
 		self.calculate_base_rate()
+		if self.blanket_order_type == "Selling" and self.taxes_and_charges and not self.get("taxes"):
+			for tax in get_taxes_and_charges("Sales Taxes and Charges Template", self.taxes_and_charges):
+				self.append("taxes", tax)
+		calculate_blanket_order_taxes(self)
 
 	def set_price_list_and_exchange_rate(self):
 		"""Set currency and conversion rate similar to Quotation"""

@@ -977,10 +977,25 @@ class CostSheetDashboard {
 		if (docstatus === 2) return;
 
 		try {
-			const { has_workflow, transitions } = await this.get_workflow_transition_context();
+			const [workflow_context, version_state] = await Promise.all([
+				this.get_workflow_transition_context(),
+				docstatus === 1 ? this.call_frappe(
+					'sukha.sukha.doctype.cost_sheet.cost_sheet.get_new_version_state',
+					{ name: this.current_cost_sheet_doc.name }
+				).catch((e) => {
+					console.error('Unable to check Cost Sheet version status:', e);
+					return { can_create: false };
+				}) : Promise.resolve({ can_create: false })
+			]);
 			if (refresh_id !== this.workflow_refresh_id) return;
+			const { has_workflow, transitions } = workflow_context;
 
 			this.clear_page_actions();
+			if (version_state && version_state.can_create) {
+				this.page.set_primary_action(__('New Version'), () => {
+					this.create_new_version();
+				}, 'octicon octicon-copy');
+			}
 
 			if (transitions.length) {
 				transitions.forEach((transition) => {
@@ -1029,6 +1044,32 @@ class CostSheetDashboard {
 
 	async refresh_workflow_actions(opts = {}) {
 		return this.render_actions(opts);
+	}
+
+	async create_new_version() {
+		if (this.creating_new_version || !this.current_cost_sheet_doc ||
+			Number(this.current_cost_sheet_doc.docstatus) !== 1) return;
+
+		this.creating_new_version = true;
+		try {
+			const result = await this.call_frappe(
+				'sukha.sukha.doctype.cost_sheet.cost_sheet.create_new_version',
+				{ name: this.current_cost_sheet_doc.name }
+			);
+			if (!result || !result.cost_sheet) return;
+
+			const params = new URLSearchParams({
+				source_doctype: 'Cost Sheet',
+				source_name: result.cost_sheet
+			});
+			window.location.href = `/app/cost-sheet-dashboard?${params.toString()}`;
+		} catch (e) {
+			console.error('Unable to create Cost Sheet version:', e);
+			frappe.msgprint(__('Unable to create a new Cost Sheet version. Check that the latest version is submitted, then refresh the page.'));
+			this.render_actions();
+		} finally {
+			this.creating_new_version = false;
+		}
 	}
 
 	async submit_current_cost_sheet() {
@@ -1493,6 +1534,7 @@ class CostSheetDashboard {
 			// Map Cost Sheet doctype fields to iframe input IDs
 			const fieldMapping = {
 				// Basic Info
+				'cost_sheet_name': 'inp_cost_sheet_name',
 				'product': 'inp_product',
 				'product_grade': 'inp_grade',
 				'customer': 'inp_customer',

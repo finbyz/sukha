@@ -1,6 +1,8 @@
 # Copyright (c) 2026
 # cost_sheet.py
 
+import re
+
 import frappe
 from frappe.model.document import Document
 from frappe.utils import flt, cstr
@@ -390,6 +392,95 @@ class CostSheet(Document):
         self.profit_amount=0
         self.profit_margin_percentage=0
 
+
+
+def _get_original_cost_sheet(source):
+    id_match = re.fullmatch(r"(.+)\.(\d+)", source.name)
+    original_name = (
+        frappe.db.exists("Cost Sheet", id_match.group(1)) if id_match else None
+    )
+    title_match = re.fullmatch(r"(.+)\.(\d+)", source.cost_sheet_name or "")
+    if not original_name and title_match:
+        original_name = frappe.db.get_value(
+            "Cost Sheet", {"cost_sheet_name": title_match.group(1)}, "name"
+        )
+    if not original_name:
+        return source
+
+    original = frappe.get_doc("Cost Sheet", original_name)
+    original.check_permission("read")
+    return original
+
+
+def _next_cost_sheet_version(source):
+    """Return the next suffix and the most recent version's document name."""
+    base_id = source.name
+    base_title = source.cost_sheet_name or source.name
+    version = 1
+    latest_name = None
+    while True:
+        existing_name = frappe.db.exists("Cost Sheet", f"{base_id}.{version}") or frappe.db.get_value(
+            "Cost Sheet", {"cost_sheet_name": f"{base_title}.{version}"}, "name"
+        )
+        if not existing_name:
+            break
+        latest_name = existing_name
+        version += 1
+    return version, latest_name
+
+
+@frappe.whitelist()
+def get_new_version_state(name):
+    source = frappe.get_doc("Cost Sheet", name)
+    source.check_permission("read")
+    if source.docstatus != 1:
+        return {"can_create": False}
+
+    original = _get_original_cost_sheet(source)
+    version, latest_name = _next_cost_sheet_version(original)
+    eligible_source_name = latest_name or original.name
+    latest_submitted = not latest_name or frappe.db.get_value(
+        "Cost Sheet", latest_name, "docstatus"
+    ) == 1
+    return {
+        "can_create": bool(
+            latest_submitted
+            and source.name == eligible_source_name
+            and frappe.has_permission("Cost Sheet", "create")
+        ),
+        "next_version": version,
+    }
+
+
+@frappe.whitelist()
+def create_new_version(name):
+    """Copy the original or latest submitted version into the next numbered draft."""
+    source = frappe.get_doc("Cost Sheet", name)
+    source.check_permission("read")
+    if source.docstatus != 1:
+        frappe.throw("Only submitted Cost Sheets can have a new version.")
+    if not frappe.has_permission("Cost Sheet", "create"):
+        frappe.throw("You do not have permission to create a Cost Sheet.", frappe.PermissionError)
+
+    original = _get_original_cost_sheet(source)
+    version, latest_name = _next_cost_sheet_version(original)
+    if source.name != (latest_name or original.name):
+        frappe.throw("Create the next version from the latest Cost Sheet only.")
+    if latest_name and frappe.db.get_value("Cost Sheet", latest_name, "docstatus") != 1:
+        frappe.throw("Submit the latest Cost Sheet version before creating another one.")
+
+    base_id = original.name
+    base_title = original.cost_sheet_name or original.name
+
+    doc = frappe.copy_doc(source)
+    doc.docstatus = 0
+    doc.cost_sheet_name = f"{base_title}.{version}"
+    doc.workflow_state = "Draft"
+    doc.status = "Draft"
+    doc.remarks = None
+    doc.amended_from = None
+    doc.insert(set_name=f"{base_id}.{version}")
+    return {"cost_sheet": doc.name, "cost_sheet_name": doc.cost_sheet_name}
 
 
 @frappe.whitelist()

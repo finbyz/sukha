@@ -719,6 +719,7 @@ def create_quotation_from_cost_sheet(cost_sheet):
     # ---------------------------------
     customer = cstr(doc.customer).strip()
     lead = cstr(doc.lead).strip()
+    prospect = cstr(doc.prospect).strip()
 
     if customer:
         quotation_to = "Customer"
@@ -734,8 +735,15 @@ def create_quotation_from_cost_sheet(cost_sheet):
             frappe.db.get_value("Lead", lead, "lead_name")
             or lead
         )
+    elif prospect:
+        quotation_to = "Prospect"
+        party_name = prospect
+        customer_name = (
+            frappe.db.get_value("Prospect", prospect, "company_name")
+            or prospect
+        )
     else:
-        frappe.throw("Please select Customer or Lead before creating a Quotation.")
+        frappe.throw("Please select Customer, Lead, or L3/Qualified Lead (Prospect) before creating a Quotation.")
 
     product = cstr(doc.product).strip()
 

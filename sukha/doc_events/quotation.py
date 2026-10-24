@@ -47,6 +47,9 @@ def make_quotation(source_name, target_doc=None):
         elif source.lead:
             quotation_to = "Lead"
             party_name = source.lead
+        elif source.prospect:
+            quotation_to = "Prospect"
+            party_name = source.prospect
         target.custom_quotation = source.name
         if source.currency:
             target.currency = source.currency
@@ -56,7 +59,7 @@ def make_quotation(source_name, target_doc=None):
         # ---------------------------------
         if target.party_name and target.party_name != party_name:
             frappe.throw(
-                f"Customer/Lead mismatch.<br><br>"
+                f"Customer/Lead/Prospect mismatch.<br><br>"
                 f"Quotation Party: <b>{target.party_name}</b><br>"
                 f"Cost Sheet Party: <b>{party_name}</b>"
             )
@@ -82,9 +85,12 @@ def make_quotation(source_name, target_doc=None):
         # ---------------------------------
         # Set header values
         # ---------------------------------
-        if not target.party_name:
+        if not target.party_name and quotation_to:
             target.quotation_to = quotation_to
             target.party_name = party_name
+
+        if hasattr(target, "set_customer_name"):
+            target.set_customer_name()
 
         if not target.company:
             target.company = source.company
@@ -167,6 +173,19 @@ def get_available_cost_sheets(doctype, txt, searchfield, start, page_len, filter
     if used_cost_sheets:
         filters.append(["Cost Sheet", "name", "not in", used_cost_sheets])
 
+    filter_fields = kwargs.get("filter_fields") or ["customer", "company"]
+    if isinstance(filter_fields, str):
+        try:
+            filter_fields = frappe.parse_json(filter_fields)
+        except Exception:
+            filter_fields = [filter_fields]
+    if not isinstance(filter_fields, list):
+        filter_fields = list(filter_fields)
+
+    for fld in ["customer", "company"]:
+        if fld not in filter_fields:
+            filter_fields.append(fld)
+
     return search_widget(
         "Cost Sheet",
         txt,
@@ -174,7 +193,7 @@ def get_available_cost_sheets(doctype, txt, searchfield, start, page_len, filter
         start=start,
         page_length=page_len,
         filters=filters,
-        filter_fields=frappe.as_json(["customer", "company"]),
+        filter_fields=frappe.as_json(filter_fields),
         as_dict=as_dict,
         reference_doctype=kwargs.get("reference_doctype"),
     )

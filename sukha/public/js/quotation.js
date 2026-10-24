@@ -14,14 +14,26 @@ frappe.ui.form.on("Quotation", {
 
         if (frm.doc.docstatus == 0) {
             frm.add_custom_button(__("Cost Sheet"), () => {
+                let setters = {
+                    company: frm.doc.company
+                };
+                if (frm.doc.party_name) {
+                    if (frm.doc.quotation_to === "Customer") {
+                        setters.customer = frm.doc.party_name;
+                    } else if (frm.doc.quotation_to === "Lead") {
+                        setters.lead = frm.doc.party_name;
+                    } else if (frm.doc.quotation_to === "Prospect") {
+                        setters.prospect = frm.doc.party_name;
+                    }
+                } else {
+                    setters.customer = undefined;
+                }
+
                 erpnext.utils.map_current_doc({
                     method: "sukha.doc_events.quotation.make_quotation",
                     source_doctype: "Cost Sheet",
                     target: frm,
-                    setters: {
-                        customer: undefined,
-                        company: frm.doc.company
-                    },
+                    setters: setters,
                     get_query_method: "sukha.doc_events.quotation.get_available_cost_sheets",
                     get_query_filters: {
                         docstatus: ["!=", 2]
@@ -61,11 +73,12 @@ frappe.ui.form.on("Quotation", {
 
 
 function show_customer_creation_dialog(frm) {
-    let lead_promise = frm.doc.party_name
-        ? frappe.db.get_doc("Lead", frm.doc.party_name)
+    let party_promise = (frm.doc.party_name && frm.doc.quotation_to)
+        ? frappe.db.get_doc(frm.doc.quotation_to, frm.doc.party_name).catch(() => ({}))
         : Promise.resolve({});
 
-    lead_promise.then((lead) => {
+    party_promise.then((party_doc) => {
+        party_doc = party_doc || {};
         let dialog = new frappe.ui.Dialog({
             title: __("Create Customer"),
             fields: [
@@ -75,7 +88,7 @@ function show_customer_creation_dialog(frm) {
                     fieldname: "custom_customer_profile_type",
                     reqd: 1,
                     options: "\nDirect Export Sales\nDomestic / Merchant",
-                    default: lead.custom_sales_type || "",
+                    default: party_doc.custom_sales_type || "",
                 },
                 {
                     fieldtype: "Select",
@@ -84,7 +97,7 @@ function show_customer_creation_dialog(frm) {
                     options: "\nDomestic\nMerchant",
                     depends_on: 'eval:doc.custom_customer_profile_type=="Domestic / Merchant"',
                     mandatory_depends_on: 'eval:doc.custom_customer_profile_type=="Domestic / Merchant"',
-                    default: lead.custom_buyer_type || "",
+                    default: party_doc.custom_buyer_type || "",
                 },
                 {
                     fieldtype: "Select",
@@ -98,7 +111,7 @@ function show_customer_creation_dialog(frm) {
                     fieldtype: "Data",
                     label: __("Customer Name"),
                     fieldname: "customer_name",
-                    default: frm.doc.customer_name,
+                    default: frm.doc.customer_name || frm.doc.party_name || "",
                     reqd: 1
                 },
                 {

@@ -2,6 +2,12 @@ from frappe.model.mapper import get_mapped_doc
 import frappe
 from frappe.utils import flt
 
+def validate(doc,method):
+    for row in doc.items:
+        if row.custom_cost_sheet:
+            cost_sheet_rate = frappe.db.get_value("Cost Sheet", row.custom_cost_sheet, "final_offered_price")
+            row.rate = cost_sheet_rate
+            
 def on_submit(doc, method):
     """Set the status of the linked Cost Sheet to 'Quotation Submitted' when a Quotation is submitted."""
     for item in doc.items:

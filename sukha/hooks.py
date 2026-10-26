@@ -160,6 +160,7 @@ doc_events = {
     },
     "Quotation": {
         "on_submit": "sukha.doc_events.quotation.on_submit",
+        "validate": "sukha.doc_events.quotation.validate"
     },
     "Sales Order":{
         "validate": "sukha.doc_events.sales_order.validate",
